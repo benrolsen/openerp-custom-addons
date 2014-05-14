@@ -1,0 +1,77 @@
+﻿<?xml version="1.0"?>
+
+<openerp>
+    <data>
+        <record id="action_picking_in_tree_single_partner_deliveries" model="ir.actions.act_window">
+            <field name="name">Incoming Shipments</field>
+            <field name="res_model">stock.picking.in</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain">[('type','=','in')]</field>
+            <field name="context">{'search_default_partner_id': active_id}</field>
+            <field name="search_view_id" ref="stock.view_picking_in_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to view the supplier's incoming shipments. 
+              </p><p>
+                This is the list of all incoming shipments that have to be
+                prepared, according to your different purchase orders.
+              </p>
+            </field>
+        </record>        
+        <record id="action_helpdesk_single_partner" model="ir.actions.act_window">
+            <field name="name">Helpdesk Issues</field>
+            <field name="res_model">crm.helpdesk</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="context">{'search_default_partner_id': active_id}</field>
+            <field name="search_view_id" ref="crm_helpdesk.view_crm_case_helpdesk_filter"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to view the customer's helpdesk tickets. 
+              </p><p>
+                This is the list of all tickets opened for the customer.
+              </p>
+            </field>
+        </record>
+        <record id="action_claims_single_partner" model="ir.actions.act_window">
+            <field name="name">Claims</field>
+            <field name="res_model">crm.claim</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="context">{'search_default_partner_id': active_id}</field>
+            <field name="search_view_id" ref="crm_claim.view_crm_case_claims_filter"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to view the customer's claims. 
+              </p><p>
+                This is the list of all claims for the customer.
+              </p>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="res_partner_view_buttons2">
+            <field name="name">res.partner.view.buttons2</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button type="action" string="Incoming Shipments" attrs="{'invisible': [('supplier', '=', False)]}" 
+                   name="%(partner_buttons.action_picking_in_tree_single_partner_deliveries)d" context="{'search_default_partner_id': active_id}"/> 
+                </xpath>                
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button type="action" string="Helpdesk Issues"  
+                   name="%(partner_buttons.action_helpdesk_single_partner)d" context="{'search_default_partner_id': active_id}"/> 
+                </xpath>                
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button type="action" string="Claims" attrs="{'invisible': [('customer', '=', False)]}" 
+                   name="%(partner_buttons.action_claims_single_partner)d" context="{'search_default_partner_id': active_id}"/> 
+                </xpath>                
+            </field>
+        </record>
+    </data>
+</openerp>

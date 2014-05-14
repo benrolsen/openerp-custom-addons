@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record id="action_picking_in_tree" model="ir.actions.act_window">
+        <field name="name">Incoming Shipments</field>
+        <field name="res_model">stock.picking.in</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('type','=','in'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="stock.view_picking_in_search"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's incoming shipments. 
+          </p><p>
+            This is the list of all incoming shipments for the contract.
+          </p>
+        </field>
+    </record>        
+    <record id="action_picking_out_tree" model="ir.actions.act_window">
+        <field name="name">Delivery Orders</field>
+        <field name="res_model">stock.picking.out</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('type','=','out'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="stock.view_picking_out_search"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's delivery orders. 
+          </p><p>
+            This is the list of all delivery orders for the contract.
+          </p>
+        </field>
+    </record>        
+    <record id="action_contract_sale_order_tree" model="ir.actions.act_window">
+        <field name="name">Quotations/Sale Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('state','!=','cancel'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's sales orders. 
+          </p><p>
+            This is the list of all sales orders for the contract.
+          </p>
+        </field>
+    </record>        
+    <record id="action_contract_supplier_invoice_tree" model="ir.actions.act_window">
+        <field name="name">Supplier Invoices</field>
+        <field name="res_model">account.invoice</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('type','=','in_invoice'),('state','!=','cancel'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's supplier invoices. 
+          </p><p>
+            This is the list of all supplier invoices for the contract.
+          </p>
+        </field>
+    </record>        
+    <record id="action_contract_purchase_order_tree" model="ir.actions.act_window">
+        <field name="name">Quotations/Purchase Orders</field>
+        <field name="res_model">purchase.order</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('state','!=','cancel'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's purchase orders. 
+          </p><p>
+            This is the list of all purchase orders for the contract.
+          </p>
+        </field>
+    </record>        
+    <record id="action_contract_sale_invoice_tree" model="ir.actions.act_window">
+        <field name="name">Customer Invoices</field>
+        <field name="res_model">account.invoice</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,calendar</field>
+        <field name="domain">[('type','=','out_invoice'),('state','!=','cancel'),('project_id','=',active_id)]</field>
+        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the contract's sale invoices. 
+          </p><p>
+            This is the list of all sale invoices for the contract.
+          </p>
+        </field>
+    </record>        
+    
+    <record model="ir.ui.view" id="ursa_view_account_analytic_account_form">
+        <field name="name">ursa_view_account_analytic_account_form</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form" />
+        <field name="priority" eval="20"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Sale Orders"  
+                name="%(ursa_analytic.action_contract_sale_order_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Purchase Orders"  
+                name="%(ursa_analytic.action_contract_purchase_order_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Sale Invoices"  
+                name="%(ursa_analytic.action_contract_sale_invoice_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Supplier Invoices"  
+                name="%(ursa_analytic.action_contract_supplier_invoice_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>            
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Incoming Shipments"  
+                name="%(ursa_analytic.action_picking_in_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>
+            <xpath expr="//div[@name='buttons']" position="inside">
+                <button type="action" string="Delivery Orders"
+                name="%(ursa_analytic.action_picking_out_tree)d" context="{'search_default_project_id': active_id}"/> 
+            </xpath>            
+        </field>
+    </record> 
+    <record id="ursa_stock_picking_out_analytic" model="ir.ui.view">
+        <field name="name">ursa_stock_picking_out_analytic</field>
+        <field name="model">stock.picking.out</field>
+        <field name="inherit_id" ref="stock.view_picking_out_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="project_id" string="Contract" />
+            </field>
+        </field>
+    </record>
+    <record id="ursa_stock_picking_in_analytic" model="ir.ui.view">
+        <field name="name">ursa_stock_picking_in_analytic</field>
+        <field name="model">stock.picking.in</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="project_id" string="Contract" />
+            </field>
+        </field>
+    </record>
+    <record id="ursa_sale_order_analytic" model="ir.ui.view">
+        <field name="name">ursa_sale_order_analytic</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <field name="project_id" position="replace">
+                 <field name="project_id" context="{'partner_id':partner_invoice_id, 'default_pricelist_id':pricelist_id, 'default_name':name, 'default_type': 'contract'}" 
+                 groups="sale.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>>
+            </field>
+        </field>
+    </record>
+    <record id="ursa_purchase_order_analytic" model="ir.ui.view">
+        <field name="name">ursa_purchase_order_analytic</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="project_id" context="{'partner_id':partner_id, 'default_pricelist_id':pricelist_id, 'default_name':name, 'default_type': 'contract'}" 
+                groups="purchase.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>>
+            </field>
+        </field>
+    </record>
+    <record id="ursa_supplier_invoice_analytic" model="ir.ui.view">
+        <field name="name">ursa_supplier_invoice_analytic</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="project_id" context="{'partner_id':partner_id, 'default_name':name, 'default_type': 'contract'}" 
+                groups="purchase.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>>
+            </field>
+        </field>
+    </record>
+    <record id="ursa_customer_invoice_analytic" model="ir.ui.view">
+        <field name="name">ursa_customer_invoice_analytic</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="project_id" context="{'partner_id':partner_id, 'default_name':name, 'default_type': 'contract'}" 
+                groups="purchase.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>>
+            </field>
+        </field>
+    </record>
+    
+</data>
+</openerp>

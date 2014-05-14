@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <delete model="ir.ui.menu" id="account_check_writing.menu_action_write_check" />
+
+        <menuitem name="Vendor Payments-Check" id="menu_action_write_check" icon="STOCK_JUSTIFY_FILL" sequence="12"
+            parent="account.menu_finance_payables" action="account_check_writing.action_write_check"/>
+        
+        <delete model="ir.ui.menu" id="account_voucher.menu_action_vendor_payment" />
+        
+        <menuitem name="Vendor Payments-Other" action="account_voucher.action_vendor_payment" icon="STOCK_JUSTIFY_FILL" sequence="13"
+            id="menu_action_vendor_payment"  parent="account.menu_finance_payables"/>
+
+            
+    </data>
+</openerp>
