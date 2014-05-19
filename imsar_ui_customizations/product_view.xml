@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+        
+    <record id="imsar_product_tree_view" model="ir.ui.view">
+            <field name="name">imsar_product.view.tree</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_product_tree_view"/>
+            <field name="arch" type="xml">
+                <field name="standard_price" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </field>
+                <field name="default_code" position="replace">
+                   <field name="default_code" string="Imsar Part #" />
+                </field>                
+            </field>
+    </record>
+    <record id="imsar_product_form_view" model="ir.ui.view">
+        <field name="name">imsar_product.view.form</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <field name="default_code" position="replace">
+               <field name="default_code" string="Imsar Part #" />
+            </field>
+        </field>
+    </record>
+    <record id="imsar_procurement_locations_form" model="ir.ui.view">
+        <field name="name">imsar.product.normal.procurement.locations.inherit</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <button name="%(action_view_change_product_quantity)d" position="replace">
+                <field name="default_code" string="Imsar Part #" />
+            </button>
+        </field>
+    </record>
+
+</data>
+</openerp>

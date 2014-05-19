@@ -26,7 +26,7 @@
                 <field name="manf_country" placeholder="e.g. United States" />                
             </field>
             <field name="default_code" position="after">
-               <field name="scheduleb" string="Harmonized Code" placeholder="Harmonized Code or Schedule B Number" />
+               <field name="scheduleb" string="Harmonized Code" placeholder="Schedule B Number" />
             </field>                            
         </field>
     </record>
