@@ -8,11 +8,8 @@
         <field name="inherit_id" ref="account.invoice_form"/>
         <field name="arch" type="xml">
 
-            <field name="fiscal_position" position="replace">
-               <field name="fiscal_position" invisible="True" />
-            </field>
-            <field name="account_id" position="replace">
-               <field name="account_id" string="Asset Account" />
+            <field name="fiscal_position" position="attributes">
+               <attribute name="invisible">True</attribute>
             </field>
 
         </field>
