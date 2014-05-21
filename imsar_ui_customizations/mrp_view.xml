@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="imsar_mrp_production_workcenter_tree_view_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.workcenter.line.tree</field>
+        <field name="model">mrp.production.workcenter.line</field>
+        <field name="inherit_id" ref="mrp_operations.mrp_production_workcenter_tree_view_inherit"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='uom']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='cycle']" position="after">
+                <field name="sequence" string="Sequence" />
+            </xpath>
+
+        </field>
+    </record>
+
+</data>
+</openerp>

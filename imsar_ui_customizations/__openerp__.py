@@ -30,10 +30,10 @@
     Interface customizations:
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', "product", "account", "stock"],
+    "depends" : ['base', "product", "account", "stock", "mrp", "mrp_operations"],
     "data" : [],
     'init_xml': [],
-    'update_xml': ['product_view.xml', 'invoice_view.xml'],
+    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml'],
     'demo_xml': [],
     'installable': True,
     'auto_install': False,
