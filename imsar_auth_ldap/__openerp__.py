@@ -20,20 +20,15 @@
 ############################################################################################################################################################
 
 {
-    "name" : "IMSAR Interface Customizations",
+    "name" : "IMSAR Customized LDAP Auth",
     "version" : "1.0",
     "author" : "IMSAR LLC",
     "category": 'Uncategorized',
     'complexity': "normal",
-    "description": """
-    Interface customizations:
-    """,
+    "description": """Changed to support more LDAP connection types and to automatically create an HR employee.""",
     'website': 'http://www.imsar.com',
-    "depends" : ['base', "product", "account", "stock", "mrp", "mrp_operations"],
-    "data" : [],
-    'init_xml': [],
-    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml'],
-    'demo_xml': [],
+    "depends" : ['base', "hr", "auth_ldap"],
+    "data" : ['ldap_view.xml'],
     'installable': True,
     'auto_install': False,
 }
