@@ -32,7 +32,7 @@
     "depends" : ['base', "product", "account", "stock", "mrp", "mrp_operations"],
     "data" : [],
     'init_xml': [],
-    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml'],
+    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml', 'menus.xml'],
     'demo_xml': [],
     'installable': True,
     'auto_install': False,

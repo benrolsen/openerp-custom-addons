@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Settings -->
+        <record id="all_module_tree" model="ir.actions.act_window">
+            <field name="name">All Modules</field>
+            <field name="res_model">ir.module.module</field>
+            <field name="inherit_id" ref="base.open_module_tree"/>
+        </record>
+        <menuitem id="menu_all_module_tree" parent="base.menu_management" sequence="31" action="all_module_tree" />
+
+
+        <menuitem id="base.module_mi" parent="base.menu_management" sequence="100" name="App Store" action="base.modules_act_cl" />
+        <menuitem id="base.menu_module_updates" parent="base.menu_management" sequence="120" action="base.modules_updates_act_cl" />
+
+        <!-- Accounting -->
+        <menuitem id="account.menu_finance_entries" name="Journal Entries" parent="account.menu_finance" sequence="1"
+                  groups="account.group_account_user,account.group_account_manager"/>
+        <menuitem id="account.menu_finance_charts" name="Charts" parent="account.menu_finance" groups="account.group_account_user" sequence="3"/>
+        <menuitem id="account.menu_finance_configuration" name="Configuration" parent="account.menu_finance" sequence="5" groups="account.group_account_manager"/>
+        <menuitem id="account.menu_finance_receivables" name="Customers" parent="account.menu_finance" sequence="8"/>
+        <menuitem id="account.menu_finance_payables" name="Suppliers" parent="account.menu_finance" sequence="9"/>
+
+
+    </data>
+</openerp>
