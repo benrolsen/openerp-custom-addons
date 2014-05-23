@@ -22,6 +22,8 @@
         <menuitem id="account.menu_finance_receivables" name="Customers" parent="account.menu_finance" sequence="8"/>
         <menuitem id="account.menu_finance_payables" name="Suppliers" parent="account.menu_finance" sequence="9"/>
 
+        <!-- Sales -->
+        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action" />
 
     </data>
 </openerp>
