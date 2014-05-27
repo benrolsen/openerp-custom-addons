@@ -22,6 +22,13 @@
 
 from osv import fields, osv
 
-#class product_product(osv.osv):
-#    _inherit = "product.product"
+class mrp_bom_custom(osv.osv):
+   _inherit = "mrp.bom"
+
+   _columns = {
+       'type': fields.selection([('normal','Assembly BoM'),('phantom','Package BoM')], 'BoM Type', required=True,
+                                 help= "If a by-product is used in several products, it can be useful to create its own BoM. "\
+                                 "Though if you don't want separated production orders for this by-product, select Package as BoM type. "\
+                                 "If a Package BoM is used for a root product, it will be sold and shipped as a set of components, instead of being produced."),
+   }
 
