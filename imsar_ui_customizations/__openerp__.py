@@ -29,7 +29,7 @@
     Interface customizations:
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', "product", "account", "stock", "mrp", "mrp_operations"],
+    "depends" : ['base', "product", "account", "stock", "mrp", "mrp_operations", "purchase", "sale"],
     "data" : [],
     'init_xml': [],
     'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml', 'menus.xml'],
