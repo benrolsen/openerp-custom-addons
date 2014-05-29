@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+        <record id="base.main_partner" model="res.partner" context="{'default_is_company': True}">
+            <field name="name">IMSAR LLC</field>
+            <field name="rml_header1">The Radar Revolution</field>
+            <field name="company_id" eval="None"/>
+            <field name="image" eval="False"/>
+            <field name="customer" eval="False"/>
+            <field name="is_company" eval="True"/>
+            <field name="street">940 South 2000 West, Ste. 140</field>
+            <field name="city">Springville</field>
+            <field name="state_id" ref="base.state_us_45"/>
+            <field name="zip">84663</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="phone">801.798.8440</field>
+            <field name="fax">801.798.2814</field>
+            <field name="email">sales@imsar.com</field>
+            <field name="website">www.imsar.com</field>
+        </record>
+
+        <record id="base.main_company" model="res.company">
+            <field name="name">IMSAR LLC</field>
+            <field name="partner_id" ref="base.main_partner"/>
+            <field name="rml_header1">The Radar Revolution</field>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+
+        <record id="base.partner_root" model="res.partner">
+            <field name="name">Administrator</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="customer" eval="False"/>
+            <field name="email">admin@imsar.com</field>
+        </record>
+
+        <record id="base.user_root" model="res.users">
+            <field name="sel_groups_7_8">8</field>
+            <field name="in_group_6">True</field>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="imsar_ldap" model="res.company.ldap">
+            <field name="company" ref="base.main_company" />
+            <field name="sequence">10</field>
+            <field name="ldap_server">ldap.imsar.us</field>
+            <field name="ldap_server_port">636</field>
+            <field name="ldap_filter">uid=%s</field>
+            <field name="ldap_base">dc=imsar,dc=com</field>
+            <field name="create_user">True</field>
+            <field name="create_employee">True</field>
+            <field name="ldap_ssl">True</field>
+        </record>
+
+    </data>
+</openerp>

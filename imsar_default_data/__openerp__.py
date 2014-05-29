@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    IMSAR LLC
-#    Author: IMSAR LLC
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2013 IMSAR
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -17,20 +17,19 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-############################################################################################################################################################
+##############################################################################
 
 {
-    "name" : "IMSAR Customized LDAP Auth",
-    "version" : "1.0",
-    "author" : "IMSAR LLC",
-    "category": 'Uncategorized',
-    'complexity': "normal",
-    "description": """Changed to support more LDAP connection types and to automatically create an HR employee.""",
-    'website': 'http://www.imsar.com',
-    "depends" : ['base', "hr", "auth_ldap"],
-    "data" : ['ldap_view.xml', 'ldap_data.xml'],
+    'name': "IMSAR Default Data",
+    'version': "1.0",
+    'depends': [
+        "base",
+        ],
+    'author': "Ben Olsen",
+    'description': "Loads default data customized for IMSAR",
+    'category': "Uncategorized",
+    'data': ['default_data.xml'],
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
 }
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
