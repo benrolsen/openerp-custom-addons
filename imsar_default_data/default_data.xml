@@ -38,5 +38,8 @@
             <field name="sel_groups_7_8">8</field>
             <field name="in_group_6">True</field>
         </record>
+
+
+
     </data>
 </openerp>
