@@ -47,18 +47,6 @@
         </field>
     </record>
 
-    <record id="imsar_sale_order_view" model="ir.ui.view">
-        <field name="name">imsar_sale.view.form</field>
-        <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_order_form"/>
-        <field name="arch" type="xml">
-            <field name="price_subtotal" position="after">
-                <!-- "invoiced" seems broken at the moment, using this instead until it's fixed -->
-                <field name="invoice_lines" />
-            </field>
-        </field>
-    </record>
-
     <record id="imsar_production_form_view" model="ir.ui.view">
         <field name="name">imsar_production.view.form</field>
         <field name="model">mrp.production</field>

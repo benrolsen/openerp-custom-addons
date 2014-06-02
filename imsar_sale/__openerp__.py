@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2013 IMSAR
+#    IMSAR LLC
+#    Author: IMSAR LLC
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -17,19 +17,25 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-##############################################################################
+############################################################################################################################################################
 
 {
-    'name': "IMSAR Default Data",
-    'version': "1.0",
-    'depends': [
-        'base', 'web_m2x_options',
-        ],
-    'author': "Ben Olsen",
-    'description': "Loads default data customized for IMSAR",
-    'category': "Uncategorized",
-    'data': ['default_data.xml'],
+    "name" : "IMSAR Sales Customizations",
+    "version" : "1.0",
+    "author" : "IMSAR LLC",
+    "category": 'Uncategorized',
+    'complexity': "normal",
+    "description": """
+    Sales customizations:
+    """,
+    'website': 'http://www.imsar.com',
+    "depends" : ['base', 'imsar_accounting', 'sale'],
+    "data" : [],
+    'init_xml': [],
+    'update_xml': ['sale_view.xml'],
+    'demo_xml': [],
     'installable': True,
-    'auto_install': True,
+    'auto_install': False,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

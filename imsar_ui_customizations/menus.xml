@@ -3,10 +3,12 @@
     <data>
 
         <!-- Settings -->
+        <record id="group_hide_menu" model="res.groups">
+            <field name="name">Hide Menu</field>
+        </record>
         <record id="all_module_tree" model="ir.actions.act_window">
             <field name="name">All Modules</field>
             <field name="res_model">ir.module.module</field>
-            <field name="inherit_id" ref="base.open_module_tree"/>
         </record>
         <menuitem id="menu_all_module_tree" parent="base.menu_management" sequence="31" action="all_module_tree" />
 
@@ -23,7 +25,9 @@
         <menuitem id="account.menu_finance_payables" name="Suppliers" parent="account.menu_finance" sequence="9"/>
 
         <!-- Sales -->
-        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action" />
+        <record id="product.menu_product_pricelist_action" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[ref('group_hide_menu')])]"/>
+        </record>
 
     </data>
 </openerp>
