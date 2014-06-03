@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- Analytic Accounting for sales and purchases -->
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4,ref('sale.group_analytic_accounting'))]" />
+        </record>
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4,ref('purchase.group_analytic_accounting'))]" />
+        </record>
+
+    </data>
+</openerp>

@@ -22,7 +22,9 @@
 {
     'name': "IMSAR Accounting",
     'version': "1.0",
-    'depends': ['base', 'account_chart', 'account_accountant', 'analytic',],
+    'depends': ['base', 'web_m2x_options',
+                'imsar_default_data', 'account_chart', 'account_accountant', 'analytic',
+                ],
     'author': "Ben Olsen",
     'description': "Customized IMSAR chart of accounts",
     'category': "Uncategorized",

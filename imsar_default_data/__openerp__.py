@@ -23,7 +23,7 @@
     'name': "IMSAR Default Data",
     'version': "1.0",
     'depends': [
-        'base', 'web_m2x_options',
+        'base',
         ],
     'author': "Ben Olsen",
     'description': "Loads default data customized for IMSAR",

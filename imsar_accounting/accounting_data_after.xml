@@ -5,18 +5,18 @@
         <record id="account_chart_template_imsar" model="account.chart.template">
             <field name="account_root_id" ref="coa_basic"/>
             <field name="bank_account_view_id" ref="cash_expenditure"/>
-            <field name="property_account_receivable" ref="account_receivable"/>
-            <field name="property_account_payable" ref="account_payable"/>
-            <field name="property_account_expense_categ" ref="60100"/>
-            <field name="property_account_income_categ" ref="47900"/>
-            <field name="property_account_expense" ref="60100"/>
-            <field name="property_account_income" ref="47900"/>
+            <field name="property_account_receivable" ref="accounts_receivable"/>
+            <field name="property_account_payable" ref="accounts_payable"/>
+            <field name="property_account_expense_categ" ref="default_cogs"/>
+            <field name="property_account_income_categ" ref="default_sales_revenue"/>
+            <field name="property_account_expense" ref="default_cogs"/>
+            <field name="property_account_income" ref="default_sales_revenue"/>
             <field name="complete_tax_set">False</field>
         </record>
 
         <!-- Makes Analytic Accounting default to enabled for all users -->
         <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(6,0,[10])]" />
+            <field name="implied_ids" eval="[(4,ref('analytic.group_analytic_accounting'))]" />
         </record>
     </data>
 </openerp>

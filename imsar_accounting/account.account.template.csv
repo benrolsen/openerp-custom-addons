@@ -1,63 +1,72 @@
-"id","code","name","type","user_type:id","parent_id:id","reconcile","chart_template_id:id"
-"coa_basic",0,"Basic","view","imsar_accounting.user_type_view",,"FALSE","imsar_accounting.account_chart_template_imsar"
-"asset",1,"Assets","view","imsar_accounting.user_type_current_asset","coa_basic","FALSE","imsar_accounting.account_chart_template_imsar"
-"current_asset",100,"Current Assets","view","imsar_accounting.user_type_current_asset","asset","FALSE","imsar_accounting.account_chart_template_imsar"
-"cash_expenditure",1000,"Cash or Cash Equivalents","view","imsar_accounting.user_type_cash","current_asset","FALSE","imsar_accounting.account_chart_template_imsar"
-"receivables",1200,"Receivable","view","imsar_accounting.user_type_current_asset","current_asset","FALSE","imsar_accounting.account_chart_template_imsar"
-"account_receivable",12001,"Account Receivable","receivable","imsar_accounting.user_type_account_receivable","receivables","TRUE","imsar_accounting.account_chart_template_imsar"
-"fixed_asset",150,"Fixed Assets","view","imsar_accounting.user_type_fixed_asset","asset","FALSE","imsar_accounting.account_chart_template_imsar"
-15000,"15000","Just Equipment","other","imsar_accounting.user_type_fixed_asset","fixed_asset","FALSE","imsar_accounting.account_chart_template_imsar"
-17000,"17000","Accumulated Depreciation","other","imsar_accounting.user_type_accumulated_depreciation","fixed_asset","FALSE","imsar_accounting.account_chart_template_imsar"
-"liability_equity","2","Liabilities and Equity","view","imsar_accounting.user_type_liability","coa_basic","FALSE","imsar_accounting.account_chart_template_imsar"
-"liability","20","Liabilities","view","imsar_accounting.user_type_liability","liability_equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"current_liability","200","Current Liabilities","view","imsar_accounting.user_type_current_liability","liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"payable","2000","Payable","view","imsar_accounting.user_type_account_payable","current_liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"account_payable","20001","Account Payable","payable","imsar_accounting.user_type_account_payable","payable","TRUE","imsar_accounting.account_chart_template_imsar"
-"other_current_liability","240","Other Current Liabilities","view","imsar_accounting.user_type_other_current_liability","liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"24000","24000","Payroll Liabilities","other","imsar_accounting.user_type_other_current_liability","other_current_liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"25500","25500","Sales Tax Payable","other","imsar_accounting.user_type_other_current_liability","other_current_liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"26500","26500","Use Tax Payable","other","imsar_accounting.user_type_other_current_liability","other_current_liability","FALSE","imsar_accounting.account_chart_template_imsar"
-"equity","30","Equity","view","imsar_accounting.user_type_equity","liability_equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"30100","30100","Capital Stock","other","imsar_accounting.user_type_equity","equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"30200","30200","Dividends Paid","other","imsar_accounting.user_type_equity","equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"30000","30000","Opening Balance Equity","other","imsar_accounting.user_type_equity","equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"32000","32000","Retained Earnings","other","imsar_accounting.user_type_equity","equity","FALSE","imsar_accounting.account_chart_template_imsar"
-"expense","60","Expenses","view","imsar_accounting.user_type_expense","coa_basic","FALSE","imsar_accounting.account_chart_template_imsar"
-"60000","60000","Advertising and Promotion","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"60100","60100","Cost of Goods Sold","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"60200","60200","Automobile Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"60400","60400","Bank Service Charges","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"61000","61000","Business Licenses and Permits","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"62000_financial_services","62000","Continuing Education","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"61400","61400","Charitable Contributions","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"61700","61700","Computer and Internet Expenses","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"62400","62400","Depreciation Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"62500","62500","Dues and Subscriptions","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"62600","62600","Equipment Rental","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"insurance","633","Insurance Expense","view","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"63310","63310","General Liability Insurance","other","imsar_accounting.user_type_expense","insurance","FALSE","imsar_accounting.account_chart_template_imsar"
-"63320","63320","Health Insurance","other","imsar_accounting.user_type_expense","insurance","FALSE","imsar_accounting.account_chart_template_imsar"
-"63330","63330","Life and Disability Insurance","other","imsar_accounting.user_type_expense","insurance","FALSE","imsar_accounting.account_chart_template_imsar"
-"63350","63350","Professional Liability","other","imsar_accounting.user_type_expense","insurance","FALSE","imsar_accounting.account_chart_template_imsar"
-"63360","63360","Worker's Compensation","other","imsar_accounting.user_type_expense","insurance","FALSE","imsar_accounting.account_chart_template_imsar"
-"63400","63400","Interest Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"64300","64300","Meals and Entertainment","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"64700","64700","Miscellaneous Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"64900","64900","Office Supplies","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"66000","66000","Payroll Expenses","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"66500","66500","Postage and Delivery","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"66660_financial_services","66600","Printing and Reproduction","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"66700","66700","Professional Fees","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"67100","67100","Rent Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"67200","67200","Repairs and Maintenance","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"68000","68000","Taxes - Property","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"68100","68100","Telephone Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"68400","68400","Travel Expense","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"68600","68600","Utilities","other","imsar_accounting.user_type_expense","expense","FALSE","imsar_accounting.account_chart_template_imsar"
-"income","40","Income","view","imsar_accounting.user_type_income","coa_basic","FALSE","imsar_accounting.account_chart_template_imsar"
-"47900","47900","Sales Revenue","other","imsar_accounting.user_type_income","income","FALSE","imsar_accounting.account_chart_template_imsar"
-"other_income","70","Other Income","view","imsar_accounting.user_type_other_income","coa_basic","FALSE","imsar_accounting.account_chart_template_imsar"
-"70000_advertising","70000","Finance Charge Income","other","imsar_accounting.user_type_other_income","other_income","FALSE","imsar_accounting.account_chart_template_imsar"
-"70200","70200","Interest Income","other","imsar_accounting.user_type_other_income","other_income","FALSE","imsar_accounting.account_chart_template_imsar"
-"70500","70500","Proceeds from Sale of Assets","other","imsar_accounting.user_type_other_income","other_income","FALSE","imsar_accounting.account_chart_template_imsar"
-"70100_advertising","70100","Insurance Proceeds Received","other","imsar_accounting.user_type_other_income","other_income","FALSE","imsar_accounting.account_chart_template_imsar"
+id,code,name,type,user_type:id,parent_id:id,reconcile,chart_template_id:id
+coa_basic,0,Basic,view,imsar_accounting.user_type_view,,FALSE,imsar_accounting.account_chart_template_imsar
+asset,1,Assets,view,imsar_accounting.user_type_current_asset,coa_basic,FALSE,imsar_accounting.account_chart_template_imsar
+current_asset,100,Current Assets,view,imsar_accounting.user_type_current_asset,asset,FALSE,imsar_accounting.account_chart_template_imsar
+cash_expenditure,1000,Cash or Cash Equivalents,view,imsar_accounting.user_type_cash,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+receivables,1200,Accounts Receivable,view,imsar_accounting.user_type_current_asset,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+accounts_receivable,12001,Default Accounts Receivable,receivable,imsar_accounting.user_type_account_receivable,receivables,TRUE,imsar_accounting.account_chart_template_imsar
+prepaid_expenses,1300,Prepaid Expenses,view,imsar_accounting.user_type_current_asset,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+inventory,1400,Inventory,view,imsar_accounting.user_type_current_asset,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+short_term_notes_receivable,1500,Short Term Notes Receivable,view,imsar_accounting.user_type_current_asset,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+other_current_assets,1600,Other Current Assets,view,imsar_accounting.user_type_current_asset,current_asset,FALSE,imsar_accounting.account_chart_template_imsar
+fixed_assets,170,Fixed Assets,view,imsar_accounting.user_type_fixed_asset,asset,FALSE,imsar_accounting.account_chart_template_imsar
+17001,17001,Accumulated Depreciation,other,imsar_accounting.user_type_accumulated_depreciation,fixed_assets,FALSE,imsar_accounting.account_chart_template_imsar
+intangible_assets,180,Intangible Assets,view,imsar_accounting.user_type_fixed_asset,asset,FALSE,imsar_accounting.account_chart_template_imsar
+investments,190,Investments,view,imsar_accounting.user_type_fixed_asset,asset,FALSE,imsar_accounting.account_chart_template_imsar
+other_assets,195,Other Assets,view,imsar_accounting.user_type_fixed_asset,asset,FALSE,imsar_accounting.account_chart_template_imsar
+,,,,,,,
+liability_equity,2,Liabilities and Equity,view,imsar_accounting.user_type_liability,coa_basic,FALSE,imsar_accounting.account_chart_template_imsar
+liability,20,Liabilities,view,imsar_accounting.user_type_liability,liability_equity,FALSE,imsar_accounting.account_chart_template_imsar
+current_liability,200,Current Liabilities,view,imsar_accounting.user_type_current_liability,liability,FALSE,imsar_accounting.account_chart_template_imsar
+payable,2000,Accounts Payable,view,imsar_accounting.user_type_account_payable,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+accounts_payable,200011,Default Accounts Payable,payable,imsar_accounting.user_type_account_payable,payable,TRUE,imsar_accounting.account_chart_template_imsar
+credit_cards,20001,Credit Cards,view,imsar_accounting.user_type_other_current_liability,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+payroll_liabilities,20002,Payroll Liabilities,view,imsar_accounting.user_type_other_current_liability,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+benefit_liabilities,20003,Employee Benefit Liabilities,view,imsar_accounting.user_type_other_current_liability,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+short_term_notes_payable,20004,Short Term Notes Payable,view,imsar_accounting.user_type_other_current_liability,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+other_current_liability,20005,Other Current Liabilities,view,imsar_accounting.user_type_other_current_liability,current_liability,FALSE,imsar_accounting.account_chart_template_imsar
+long_term_liability,220,Long Term Liabilities,view,imsar_accounting.user_type_other_current_liability,liability,FALSE,imsar_accounting.account_chart_template_imsar
+,,,,,,,
+equity,30,Equity,view,imsar_accounting.user_type_equity,liability_equity,FALSE,imsar_accounting.account_chart_template_imsar
+owner_equity,300,Owners Equity,view,imsar_accounting.user_type_equity,equity,FALSE,imsar_accounting.account_chart_template_imsar
+3001,3001,Ryan Smith Equity,view,imsar_accounting.user_type_equity,owner_equity,FALSE,imsar_accounting.account_chart_template_imsar
+3002,3002,Logan Harris Equity,view,imsar_accounting.user_type_equity,owner_equity,FALSE,imsar_accounting.account_chart_template_imsar
+3003,3003,Wavetronix Equity,view,imsar_accounting.user_type_equity,owner_equity,FALSE,imsar_accounting.account_chart_template_imsar
+3004,3004,Dr. David Long Equity,view,imsar_accounting.user_type_equity,owner_equity,FALSE,imsar_accounting.account_chart_template_imsar
+3005,3005,Equity in Investments,view,imsar_accounting.user_type_equity,owner_equity,FALSE,imsar_accounting.account_chart_template_imsar
+,,,,,,,
+pnl,4and5,Income Statment,view,imsar_accounting.user_type_other_income,coa_basic,FALSE,imsar_accounting.account_chart_template_imsar
+,,,,,,,
+sales_revenue,40,Sales and Revenue,view,imsar_accounting.user_type_other_income,pnl,FALSE,imsar_accounting.account_chart_template_imsar
+services_revenue,401,Services Revenue,view,imsar_accounting.user_type_other_income,sales_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+4011,4011,Engineering Services Revenue,other,imsar_accounting.user_type_other_income,services_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+4012,4012,Commercial Services Revenue,other,imsar_accounting.user_type_other_income,services_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+4013,4013,Deployment Services Revenue,other,imsar_accounting.user_type_other_income,services_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+product_sales,402,Product Sales,view,imsar_accounting.user_type_other_income,sales_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+default_sales_revenue,4021,Default Sales Revenue,other,imsar_accounting.user_type_other_income,product_sales,FALSE,imsar_accounting.account_chart_template_imsar
+product_lease,403,Product Lease,view,imsar_accounting.user_type_other_income,sales_revenue,FALSE,imsar_accounting.account_chart_template_imsar
+,,,,,,,
+expenses,50,Expenses,view,imsar_accounting.user_type_expense,pnl,FALSE,imsar_accounting.account_chart_template_imsar
+direct_expenses,501,Direct Expenses,view,imsar_accounting.user_type_expense,expenses,FALSE,imsar_accounting.account_chart_template_imsar
+contract_expenses,5011,Contract Expenses,view,imsar_accounting.user_type_expense,direct_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+eng_service_contracts,50111,Engineering Service Contracts,view,imsar_accounting.user_type_expense,contract_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+eng_dloh_expenses,501111,Engineering DLOH Expenses,view,imsar_accounting.user_type_expense,eng_service_contracts,FALSE,imsar_accounting.account_chart_template_imsar
+commercial_retail_contracts,50112,Commercial and Retail Contracts,view,imsar_accounting.user_type_expense,contract_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+commercial_dloh_expenses,501121,Commercial DLOH Expenses,view,imsar_accounting.user_type_expense,commercial_retail_contracts,FALSE,imsar_accounting.account_chart_template_imsar
+deployment_contracts,50113,Deployment Contracts,view,imsar_accounting.user_type_expense,contract_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+deployment_dloh_expenses,501131,Deployment DLOH Expenses,view,imsar_accounting.user_type_expense,deployment_contracts,FALSE,imsar_accounting.account_chart_template_imsar
+cost_of_sales,5012,Cost of Sales,view,imsar_accounting.user_type_expense,direct_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+cogs_summary,50121,COGS Summary,view,imsar_accounting.user_type_expense,cost_of_sales,FALSE,imsar_accounting.account_chart_template_imsar
+default_cogs,501211,Cost of Goods Sold,other,imsar_accounting.user_type_expense,cogs_summary,FALSE,imsar_accounting.account_chart_template_imsar
+mfg_dloh_expense,50123,MFG DLOH Expenses,view,imsar_accounting.user_type_expense,cogs_summary,FALSE,imsar_accounting.account_chart_template_imsar
+mat_handling_expenses,50124,Materials Handling OH Expenses,view,imsar_accounting.user_type_expense,cogs_summary,FALSE,imsar_accounting.account_chart_template_imsar
+indirect_expenses,502,Indirect Expenses,view,imsar_accounting.user_type_expense,expenses,FALSE,imsar_accounting.account_chart_template_imsar
+ird,5021,IrnD,view,imsar_accounting.user_type_expense,indirect_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+gna,5022,General and Admin Expenses,view,imsar_accounting.user_type_expense,indirect_expenses,FALSE,imsar_accounting.account_chart_template_imsar
+biz_dev,50221,Business Development,view,imsar_accounting.user_type_expense,gna,FALSE,imsar_accounting.account_chart_template_imsar
+bid_expenses,502211,Bid and Proposal Expenses,view,imsar_accounting.user_type_expense,biz_dev,FALSE,imsar_accounting.account_chart_template_imsar
+direct_marketing,502212,Direct Sales and Marketing Expenses,view,imsar_accounting.user_type_expense,biz_dev,FALSE,imsar_accounting.account_chart_template_imsar
+media_expenses,502213,Media Expenses,view,imsar_accounting.user_type_expense,biz_dev,FALSE,imsar_accounting.account_chart_template_imsar
+admin_expenses,50222,Admin Expenses,view,imsar_accounting.user_type_expense,gna,FALSE,imsar_accounting.account_chart_template_imsar
+fringe_benefits,50223,Fringe Benefits Expenses,view,imsar_accounting.user_type_expense,gna,FALSE,imsar_accounting.account_chart_template_imsar
+facilities_expenses,50224,Facilities Expenses,view,imsar_accounting.user_type_expense,gna,FALSE,imsar_accounting.account_chart_template_imsar
