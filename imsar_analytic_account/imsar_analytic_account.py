@@ -35,3 +35,6 @@ class IMSAR_Analytic(osv.Model):
         'total_cost_tracking' : True,
     }
 
+    # Don't really love the full hierarchy display as the display name
+    def _get_one_full_name(self, elmt, level=6):
+        return elmt.name

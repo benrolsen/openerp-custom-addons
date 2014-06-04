@@ -2,6 +2,26 @@
 <openerp>
 <data>
 
+    <record id="imsar_analytic_tree_view" model="ir.ui.view">
+        <field name="name">imsar_analytic.view.tree</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="account.view_account_analytic_account_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </field>
+            <field name="complete_name" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="code" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="parent_id" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </field>
+        </field>
+    </record>
+
     <record id="imsar_analytic_form_view" model="ir.ui.view">
         <field name="name">imsar_analytic.view.form</field>
         <field name="model">account.analytic.account</field>
@@ -12,16 +32,6 @@
             </field>
         </field>
     </record>
-
-    <!--<record id="imsar_analytic_invoicing_view" model="ir.ui.view">-->
-        <!--<field name="name">imsar_analytic_invoicing.view.form</field>-->
-        <!--<field name="model">account.analytic.account</field>-->
-        <!--<field name="inherit_id" ref="account_analytic_analysis.account_analytic_account_form_form"/>-->
-        <!--<field name="arch" type="xml">-->
-
-        <!--</field>-->
-    <!--</record>-->
-
 
     <record id="imsar_analytic_invoicing_view2" model="ir.ui.view">
         <field name="name">imsar_analytic_invoicing2.view.form</field>
@@ -47,12 +57,12 @@
                         <td colspan="2"><field name="remaining_total" class="oe_inline" /></td>
                     </tr>
                     <tr>
-                        <th class="oe_timesheet_grey" width="160px"></th>
-                        <th class="oe_timesheet_grey" width="25px"></th>
+                        <th class="oe_timesheet_grey" width="160px" />
+                        <th class="oe_timesheet_grey" width="25px" />
                         <th class="oe_timesheet_grey" width="100px"><label string="Invoiced"/></th>
                         <th class="oe_timesheet_grey" width="100px"><label string="To Invoice"/></th>
-                        <th width="30px"></th>
-                        <th></th>
+                        <th width="30px" />
+                        <th />
                     </tr>
                     <tr>
                         <td class="oe_timesheet_grey">

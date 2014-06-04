@@ -37,7 +37,7 @@
     ],
     "data" : [],
     'init_xml': [],
-    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml', 'partner_view.xml',
+    'update_xml': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml', 'partner_view.xml', 'account_view.xml',
                    'menus.xml', 'imsar_data.xml',
                     ],
     'demo_xml': [],

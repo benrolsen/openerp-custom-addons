@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="imsar_account_tree_view_inherit" model="ir.ui.view">
+        <field name="name">imsar_account.view.tree</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_list"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//tree" position="replace">
+                <tree colors="blue:type == 'view';black:type in ('other','receivable','payable','consolidation');gray:type == 'closed'" string="Chart of accounts" toolbar="1" >
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="debit"/>
+                    <field name="credit"/>
+                    <field name="balance"/>
+                    <field name="parent_id" />
+                    <field name="type"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="company_currency_id" invisible="1"/>
+                </tree>
+            </xpath>
+
+        </field>
+    </record>
+
+</data>
+</openerp>
