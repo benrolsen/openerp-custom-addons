@@ -1,0 +1,6 @@
+id,name,description,parent_id/id,type
+expenses,Expenses,Expenses,,Analytic View
+indirect_expenses,Indirect Expenses,Indirect Expenses,expenses,Analytic View
+benefits,Benefits Expenses,Benefits Expenses,indirect_expenses,Analytic View
+benefits_employee,Employee Benefits,Employee Benefits,benefits,Analytic Account
+benefits_owner,Owner Benefits,Owner Benefits,benefits,Analytic Account
