@@ -1,0 +1,21 @@
+.txn_category
+    [data-id="account_count"]
+    {
+        width: 100px;
+    }
+    [data-id="analytic_count"]
+    {
+        width: 100px;
+    }
+    [data-field="account_count"]
+    {
+        width: 100px;
+        text-align: left;
+        font-weight:bold;
+    }
+    [data-field="analytic_count"]
+    {
+        width: 100px;
+        text-align: left;
+        font-weight:bold;
+    }

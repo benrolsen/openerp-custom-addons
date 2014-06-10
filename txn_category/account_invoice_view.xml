@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="category_view_customer_invoice" model="ir.ui.view">
+            <field name="name">category_account.invoice</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='before'>
+                    <field name="txn_category_id" on_change="onchange_category_id(txn_category_id)"/>
+                </xpath>
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='replace'>
+                    <field name="account_id" groups="account.group_account_user"
+                        domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '=', 'other'),
+                                    ('txn_category_ids','=',txn_category_id)]"
+                        on_change="onchange_account_id(product_id, parent.partner_id, parent.type, parent.fiscal_position,account_id)"
+                        options="{'create': false, 'create_edit': false}"/>
+                </xpath>
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
+                    <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
+                        domain="[('type','!=','view'), ('company_id', '=', parent.company_id),('txn_category_ids','=',txn_category_id)]"
+                        options="{'create': false, 'create_edit': false}" />
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="category_view_supplier_invoice" model="ir.ui.view">
+            <field name="name">category_account.supplier_invoice</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='before'>
+                    <field name="txn_category_id" on_change="onchange_category_id(txn_category_id)"/>
+                </xpath>
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='replace'>
+                    <field name="account_id" groups="account.group_account_user"
+                        domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '=', 'other'),
+                                    ('txn_category_ids','=',txn_category_id)]"
+                        on_change="onchange_account_id(product_id, parent.partner_id, parent.type, parent.fiscal_position,account_id)"
+                        options="{'create': false, 'create_edit': false}"/>
+                </xpath>
+                <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
+                    <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
+                        domain="[('type','!=','view'), ('company_id', '=', parent.company_id),('txn_category_ids','=',txn_category_id)]"
+                        options="{'create': false, 'create_edit': false}" />
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</openerp>
