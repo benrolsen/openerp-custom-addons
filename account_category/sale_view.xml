@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="category_sale_order_view" model="ir.ui.view">
+        <field name="name">category_sale.view.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr='//field[@name="project_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
+                <field name="category_id" on_change="onchange_category_id(category_id)" domain="[('type','=','income')]"
+                        options="{'create': false, 'create_edit': false}"/>
+                <field name="account_id" domain="[('category_ids','=',category_id)]"
+                    options="{'create': false, 'create_edit': false}"/>
+                <field name="account_analytic_id" domain="[('category_ids','=',category_id)]"
+                    options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</data>
+</openerp>

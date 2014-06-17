@@ -20,19 +20,21 @@
 ##############################################################################
 
 {
-    'name': "Transaction Category",
+    'name': "Accounting Category",
     'version': "1.0",
-    'depends': ['base', 'account', 'account_accountant', 'analytic', 'product',
+    'depends': ['base', 'account', 'account_accountant', 'analytic', 'product', 'purchase',
                 ],
     'author': "Ben Olsen",
     'description':  """
-                    Adds financial transaction categories, which limit the real and analytic accounts that
-                    a given transaction (invoice line, etc) can select. For situations when allowing any
+                    Adds financial categories, which limit the real and analytic accounts that
+                    a given transaction (invoice line, timesheet line, etc) can select. For situations when allowing any
                     transaction to be booked to any account/analytic combination isn't reasonable.
                     """,
     'category': "Uncategorized",
-    'data': ['txn_category_view.xml',
+    'data': ['account_category_view.xml',
              'account_invoice_view.xml',
+             'product_view.xml',
+             'sale_view.xml', 'purchase_view.xml',
             ],
 	'css' : [
 		"static/src/css/txn_category_style.css",

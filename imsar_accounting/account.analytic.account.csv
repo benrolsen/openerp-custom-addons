@@ -1,6 +1,53 @@
 id,name,description,parent_id/id,type
-expenses,Expenses,Expenses,,Analytic View
-indirect_expenses,Indirect Expenses,Indirect Expenses,expenses,Analytic View
-benefits,Benefits Expenses,Benefits Expenses,indirect_expenses,Analytic View
-benefits_employee,Employee Benefits,Employee Benefits,benefits,Analytic Account
-benefits_owner,Owner Benefits,Owner Benefits,benefits,Analytic Account
+aa_expenses,Expenses,Expenses,,Analytic View
+aa_direct_expenses,Direct Expenses,Direct Expenses,aa_expenses,Analytic View
+aa_contracts,Contracts,Contracts,aa_direct_expenses,Analytic View
+houdini2,Houdini II,Houdini II,aa_contracts,Contract or Project
+hawkeye2,Hawkeye II,Hawkeye II,aa_contracts,Contract or Project
+future_dod,Future DoD Contract,Future DoD Contract,aa_contracts,Contract or Project
+future_deployment,Future Deployment,Future Deployment,aa_contracts,Contract or Project
+darpa_hotspot,Darpa Hot Spots,Darpa Hot Spots,aa_contracts,Contract or Project
+fair_weather,Fair Weather,Fair Weather,aa_contracts,Contract or Project
+future_non_dod,Future Non-DoD,Future Non-DoD,aa_contracts,Contract or Project
+imsar_aviation,IMSAR Aviation,IMSAR Aviation,aa_contracts,Contract or Project
+aviant,Aviant,Aviant,aa_contracts,Contract or Project
+tagsmyth,Tagsmyth,Tagsmyth,aa_contracts,Contract or Project
+japan1,Japan,Japan,aa_contracts,Contract or Project
+future_commercial,Future Commercial Contract,Future Commercial Contract,aa_contracts,Contract or Project
+future_retail,Future Retail Contract,Future Retail Contract,aa_contracts,Contract or Project
+aa_indirect_expenses,Indirect Expenses,Indirect Expenses,aa_expenses,Analytic View
+aa_dloh,Direct Labor Overhead,Direct Labor Overhead,aa_indirect_expenses,Analytic View
+gna_labor,General Labor,General Labor,aa_dloh,Analytic Account
+benefit_admin,Benefits Administration,Benefits Administration,aa_dloh,Analytic Account
+erp_impl,ERP Implementation,ERP Implementation,aa_dloh,Analytic Account
+equip_labor,Equipment Maint & Calibration Labor,Equipment Maint & Calibration Labor,aa_dloh,Analytic Account
+govt_compliance,Govt Compliance Labor,Govt Compliance Labor,aa_dloh,Analytic Account
+it_labor,IT Labor,IT Labor,aa_dloh,Analytic Account
+leased_labor,Leased Labor,Leased Labor,aa_dloh,Analytic Account
+mgmt_labor,Management Labor,Management Labor,aa_dloh,Analytic Account
+meeting_labor,Meeting Labor,Meeting Labor,aa_dloh,Analytic Account
+packing_shipping_labor,Packing & Shipping Labor,Packing & Shipping Labor,aa_dloh,Analytic Account
+procurement_labor,Procurement Labor,Procurement Labor,aa_dloh,Analytic Account
+recruiting_labor,Recruiting,Recruiting,aa_dloh,Analytic Account
+relocation_bonus,Relocation Bonus,Relocation Bonus,aa_dloh,Analytic Account
+tech_writing_labor,Technical Writing,Technical Writing,aa_dloh,Analytic Account
+training_labor,Training,Training,aa_dloh,Analytic Account
+travel_labor,Travel Labor,Travel Labor,aa_dloh,Analytic Account
+aa_materials_overhead,Materials Overhead,Materials Overhead,aa_indirect_expenses,Analytic View
+parts_materials,Parts & Materials,Parts & Materials,aa_materials_overhead,Analytic Account
+equipment_under,Equipment under $1K,Equipment under $1K,aa_materials_overhead,Analytic Account
+equipment_lease,Equipment Lease,Equipment Lease,aa_materials_overhead,Analytic Account
+equipment_maint,Equipment Maint & Calibration Materials,Equipment Maint & Calibration Materials,aa_materials_overhead,Analytic Account
+govt_compliance_mat,Govt Compliance Materials,Govt Compliance Materials,aa_materials_overhead,Analytic Account
+it_equipment,IT Equipment,IT Equipment,aa_materials_overhead,Analytic Account
+printing_allowable,Printing – Allowable,Printing – Allowable,aa_materials_overhead,Analytic Account
+printing_unallowable,Printing – Unallowable,Printing – Unallowable,aa_materials_overhead,Analytic Account
+packing_shipping_mat,Packing & Shipping Materials,Packing & Shipping Materials,aa_materials_overhead,Analytic Account
+software,Software,Software,aa_materials_overhead,Analytic Account
+supplies,Supplies,Supplies,aa_materials_overhead,Analytic Account
+training_mat,Training & Reference Materials,Training & Reference Materials,aa_materials_overhead,Analytic Account
+uniforms_apparel,Uniforms & Apparel,Uniforms & Apparel,aa_materials_overhead,Analytic Account
+inv_writedown,Writedown Obsolete Inventory,Writedown Obsolete Inventory,,Analytic Account
+aa_benefits,Benefits Expenses,Benefits Expenses,aa_indirect_expenses,Analytic View
+aa_benefits_employee,Employee Benefits,Employee Benefits,aa_benefits,Analytic Account
+aa_benefits_owner,Owner Benefits,Owner Benefits,aa_benefits,Analytic Account

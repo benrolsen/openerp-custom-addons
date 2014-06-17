@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+        <record id="account_category.contracts" model="account.category">
+            <field name="name">Contract Expenses</field>
+            <field name="type">expense</field>
+            <field name="account_ids" eval="[(4,37),(4,38),(4,39),(4,40)]" />
+            <field name="analytic_ids" eval="[
+                (4,ref('houdini2')),
+                (4,ref('hawkeye2')),
+                (4,ref('future_dod')),
+                (4,ref('future_deployment')),
+                (4,ref('darpa_hotspot')),
+                (4,ref('future_non_dod')),
+                (4,ref('imsar_aviation')),
+                (4,ref('aviant')),
+                (4,ref('tagsmyth')),
+                (4,ref('japan1')),
+                (4,ref('future_commercial')),
+                (4,ref('future_retail')),
+                ]" />
+        </record>
+
+        <record id="account_category.dloh_labor" model="account.category">
+            <field name="name">Overhead Labor</field>
+            <field name="type">expense</field>
+            <field name="account_ids" eval="[(4,49),(4,53),(4,57),(4,65),(4,79)]" />
+            <field name="analytic_ids" eval="[
+                (4,ref('gna_labor')),
+                (4,ref('benefit_admin')),
+                (4,ref('erp_impl')),
+                (4,ref('equip_labor')),
+                (4,ref('govt_compliance')),
+                (4,ref('it_labor')),
+                (4,ref('leased_labor')),
+                (4,ref('mgmt_labor')),
+                (4,ref('meeting_labor')),
+                (4,ref('packing_shipping_labor')),
+                (4,ref('procurement_labor')),
+                (4,ref('recruiting_labor')),
+                (4,ref('relocation_bonus')),
+                (4,ref('tech_writing_labor')),
+                (4,ref('training_labor')),
+                (4,ref('travel_labor')),
+                ]" />
+        </record>
+
+        <record id="account_category.dloh_mats" model="account.category">
+            <field name="name">Overhead Materials</field>
+            <field name="type">expense</field>
+            <field name="account_ids" eval="[(4,49),(4,53),(4,57),(4,65),(4,79)]" />
+            <field name="analytic_ids" eval="[
+                (4,ref('parts_materials')),
+                (4,ref('equipment_under')),
+                (4,ref('equipment_lease')),
+                (4,ref('equipment_maint')),
+                (4,ref('govt_compliance_mat')),
+                (4,ref('it_equipment')),
+                (4,ref('printing_allowable')),
+                (4,ref('printing_unallowable')),
+                (4,ref('packing_shipping_mat')),
+                (4,ref('software')),
+                (4,ref('supplies')),
+                (4,ref('training_mat')),
+                (4,ref('uniforms_apparel')),
+                (4,ref('inv_writedown')),
+                ]" />
+        </record>
+
+    </data>
+</openerp>
