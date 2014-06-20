@@ -20,23 +20,16 @@
 ##############################################################################
 
 {
-    'name': "IMSAR Accounting",
+    'name': "IMSAR Demo Data",
     'version': "1.0",
-    'depends': ['base', 'web_m2x_options',
-                'imsar_default_data',
-                'l10n_us', 'account_chart', 'account_accountant', 'analytic',
-                ],
+    'depends': [
+        'base', 'imsar_ui_customizations', 'imsar_analytic_account', 'imsar_accounting', 'account_category',
+        ],
     'author': "Ben Olsen",
-    'description': "Customized IMSAR accounts and analytics",
+    'description': "Loads demo data customized for IMSAR",
     'category': "Uncategorized",
-    'data': ['accounting_data.xml',
-             'imsar_accounting_wizard.xml',
-             'imsar_account_type.xml',
-             'account.account.csv',
-             'account.analytic.account.csv',
-             'accounting_data_after.xml',
-            ],
+    'data': ['account_category_data.xml'],
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

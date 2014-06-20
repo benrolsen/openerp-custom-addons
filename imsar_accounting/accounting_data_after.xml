@@ -14,9 +14,5 @@
             <field name="complete_tax_set">False</field>
         </record>
 
-        <!-- Makes Analytic Accounting default to enabled for all users -->
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('analytic.group_analytic_accounting'))]" />
-        </record>
     </data>
 </openerp>

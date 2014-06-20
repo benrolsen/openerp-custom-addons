@@ -22,7 +22,7 @@
 {
     'name': "Accounting Category",
     'version': "1.0",
-    'depends': ['base', 'account', 'account_accountant', 'analytic', 'product', 'purchase',
+    'depends': ['base', 'account', 'account_accountant', 'analytic', 'product', 'purchase', 'sale',
                 ],
     'author': "Ben Olsen",
     'description':  """
