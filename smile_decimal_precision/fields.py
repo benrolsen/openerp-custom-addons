@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import fields
+from openerp.osv import fields
 
 from smile_decimal_precision import DecimalPrecision as dp
 

@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-import pooler
-import tools
+from openerp.osv import osv, fields
+from openerp import pooler
+from openerp import tools
 
 
 class DecimalPrecision(osv.osv):

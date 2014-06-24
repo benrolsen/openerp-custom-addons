@@ -1,7 +1,7 @@
 import logging
 _logger = logging.getLogger(__name__)
 
-from osv import fields, osv
+from openerp.osv import fields, osv
 
 
 class account_category(osv.Model):

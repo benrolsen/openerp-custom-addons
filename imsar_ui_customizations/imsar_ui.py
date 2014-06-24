@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from openerp.osv import fields, osv
 
 class mrp_bom_custom(osv.Model):
    _inherit = "mrp.bom"

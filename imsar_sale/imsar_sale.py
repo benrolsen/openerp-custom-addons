@@ -1,4 +1,4 @@
-from osv import fields, osv
+from openerp.osv import fields, osv
 
 class custom_sale_order(osv.Model):
    _inherit = "sale.order"
