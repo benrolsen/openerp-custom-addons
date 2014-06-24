@@ -7,9 +7,6 @@
             <field name="model">product.product</field>
             <field name="inherit_id" ref="product.product_product_tree_view"/>
             <field name="arch" type="xml">
-                <field name="standard_price" position="attributes">
-                    <attribute name="invisible">0</attribute>
-                </field>
                 <field name="default_code" position="replace">
                     <field name="default_code" string="Imsar Part #" />
                 </field>                
@@ -25,16 +22,16 @@
             </field>
         </field>
     </record>
-    <record id="imsar_procurement_locations_form" model="ir.ui.view">
-        <field name="name">imsar.product.normal.procurement.locations.inherit</field>
-        <field name="model">product.product</field>
-        <field name="inherit_id" ref="stock.view_normal_procurement_locations_form"/>
-        <field name="arch" type="xml">
-             <xpath expr="//button[@name='%(stock.action_view_change_product_quantity)d']" position="attributes">
-                 <attribute name="invisible">True</attribute>
-             </xpath>
-        </field>
-    </record>
+    <!--<record id="imsar_procurement_locations_form" model="ir.ui.view">-->
+        <!--<field name="name">imsar.product.normal.procurement.locations.inherit</field>-->
+        <!--<field name="model">product.product</field>-->
+        <!--<field name="inherit_id" ref="stock.view_normal_procurement_locations_form"/>-->
+        <!--<field name="arch" type="xml">-->
+             <!--<xpath expr="//button[@name='%(stock.action_view_change_product_quantity)d']" position="attributes">-->
+                 <!--<attribute name="invisible">True</attribute>-->
+             <!--</xpath>-->
+        <!--</field>-->
+    <!--</record>-->
 
     <record id="imsar_purchase_order_view" model="ir.ui.view">
         <field name="name">imsar_purchase.view.form</field>
@@ -47,25 +44,25 @@
         </field>
     </record>
 
-    <record id="imsar_production_form_view" model="ir.ui.view">
-        <field name="name">imsar_production.view.form</field>
-        <field name="model">mrp.production</field>
-        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
-        <field name="arch" type="xml">
-             <xpath expr="//field[@name='move_created_ids']/tree/field[@name='product_uom']" position="attributes">
-                <attribute name="invisible">True</attribute>
-             </xpath>
-             <xpath expr="//field[@name='move_created_ids']/tree/field[@name='product_qty']" position="after">
-                 <field name="prodlot_id" context="{'product_id': product_id}" groups="stock.group_production_lot"/>
-                 <button name="%(stock.track_line)d"
-                         string="Assign Serial Numbers" type="action" icon="gtk-justify-fill"/>
-             </xpath>
+    <!--<record id="imsar_production_form_view" model="ir.ui.view">-->
+        <!--<field name="name">imsar_production.view.form</field>-->
+        <!--<field name="model">mrp.production</field>-->
+        <!--<field name="inherit_id" ref="mrp.mrp_production_form_view"/>-->
+        <!--<field name="arch" type="xml">-->
+             <!--<xpath expr="//field[@name='move_created_ids']/tree/field[@name='product_uom']" position="attributes">-->
+                <!--<attribute name="invisible">True</attribute>-->
+             <!--</xpath>-->
+             <!--<xpath expr="//field[@name='move_created_ids']/tree/field[@name='product_qty']" position="after">-->
+                 <!--<field name="prodlot_id" context="{'product_id': product_id}" groups="stock.group_production_lot"/>-->
+                 <!--<button name="%(stock.track_line)d"-->
+                         <!--string="Assign Serial Numbers" type="action" icon="gtk-justify-fill"/>-->
+             <!--</xpath>-->
 
-             <xpath expr="//field[@name='move_created_ids2']/tree/field[@name='product_uom']" position="attributes">
-                 <attribute name="invisible">True</attribute>
-             </xpath>
-        </field>
-    </record>
+             <!--<xpath expr="//field[@name='move_created_ids2']/tree/field[@name='product_uom']" position="attributes">-->
+                 <!--<attribute name="invisible">True</attribute>-->
+             <!--</xpath>-->
+        <!--</field>-->
+    <!--</record>-->
 
 </data>
 </openerp>

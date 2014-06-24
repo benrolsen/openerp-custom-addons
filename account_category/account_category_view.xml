@@ -23,9 +23,6 @@
             <field name="arch" type="xml">
                 <tree string="Account Categories" version="7.0" class="txn_category">
                     <field name="name"/>
-                    <field name="type"/>
-                    <field name="account_count"/>
-                    <field name="analytic_count"/>
                 </tree>
             </field>
         </record>
@@ -41,30 +38,20 @@
                             <td colspan="4">
                                 <label for="name" string="Category Name and Type: " class="oe_inline"/>
                                 <field name="name" class="oe_inline" style="font-size: 200"/>
-                                <field name="type" class="oe_inline" on_change="onchange_type(type)"/>
                             </td>
                         </tr>
                         <tr>
                             <td width="45%%">
-                                <label for="account_ids" />
-                                <field name="account_ids" widget="many2many_list"
-                                       domain="[('type','!=','view'),('user_type.report_type','=',type)]">
+                                <label for="account_type_ids" />
+                                <field name="account_type_ids" widget="many2many_list"
+                                       domain="">
                                     <tree>
-                                        <field name="code" />
                                         <field name="name" />
                                     </tree>
                                 </field>
                             </td>
                             <td width="10%%"></td>
                             <td width="45%%">
-                                <label for="analytic_ids" />
-                                <field name="analytic_ids" widget="many2many_list"
-                                       domain="[('state','in',('draft','open')),('type','in',('normal','contract'))]">
-                                    <tree>
-                                        <field name="name" />
-                                        <field name="parent_id" />
-                                    </tree>
-                                </field>
                             </td>
                         </tr>
                     </table>

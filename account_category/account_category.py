@@ -27,25 +27,15 @@ class account_category(osv.Model):
 
     _columns = {
         'name': fields.char('Category Name', size=128, required=True),
-        'type': fields.selection([('income','Income'),('expense','Expense')], "Account Type", required=True),
-        'account_ids': fields.many2many('account.account', 'account_category_rel', 'category_id', 'account_id', 'Real Accounts'),
+        'account_type_ids': fields.many2many('account.account.type', 'account_category_rel', 'category_id', 'account_type_id', 'Account Types'),
         'analytic_ids': fields.many2many('account.analytic.account', 'analytic_category_rel', 'category_id', 'analytic_id', 'Analytic Accounts'),
-        'product_category_ids': fields.many2many('product.category', 'product_account_category_rel', 'account_cat_id', 'product_cat_id', 'Product Categories'),
-        'account_count': fields.function(_account_count, string="Number of Accounts", type='integer'),
-        'analytic_count': fields.function(_analytic_count, string="Number of Analytics", type='integer'),
-    }
-
-class product_category_account_category(osv.Model):
-    _inherit = "product.category"
-    _columns = {
-        'allowed_categories': fields.many2many('account.category', 'product_account_category_rel', 'product_cat_id', 'account_cat_id', 'Accounting Categories', ),
     }
 
 class account_account_category(osv.Model):
-    _inherit = "account.account"
+    _inherit = "account.account.type"
 
     _columns = {
-        'category_ids':  fields.many2many('account.category', 'account_category_rel', 'account_id', 'category_id', 'Account Categories'),
+        'category_ids':  fields.many2many('account.category', 'account_category_rel', 'account_type_id', 'category_id', 'Account Categories'),
     }
 
 class analytic_category(osv.Model):

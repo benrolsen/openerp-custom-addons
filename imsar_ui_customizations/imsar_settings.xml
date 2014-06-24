@@ -42,32 +42,32 @@
             <field name="implied_ids" eval="[(4,ref('stock.group_locations'))]" />
         </record>
 
-        <!-- Purchase settings -->
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('product.group_purchase_pricelist'))]" />
-        </record>
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('product.group_costing_method'))]" />
-        </record>
+        <!--&lt;!&ndash; Purchase settings &ndash;&gt;-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('product.group_purchase_pricelist'))]" />-->
+        <!--</record>-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('product.group_costing_method'))]" />-->
+        <!--</record>-->
 
-        <!-- Warehouse settings -->
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('stock.group_production_lot'))]" />
-        </record>
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('stock.group_tracking_lot'))]" />
-        </record>
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('stock.group_inventory_valuation'))]" />
-        </record>
+        <!--&lt;!&ndash; Warehouse settings &ndash;&gt;-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('stock.group_production_lot'))]" />-->
+        <!--</record>-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('stock.group_tracking_lot'))]" />-->
+        <!--</record>-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('stock.group_inventory_valuation'))]" />-->
+        <!--</record>-->
 
-        <!-- Manufacturing settings -->
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('mrp.group_mrp_routings'))]" />
-        </record>
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4,ref('product.group_mrp_properties'))]" />
-        </record>
+        <!--&lt;!&ndash; Manufacturing settings &ndash;&gt;-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('mrp.group_mrp_routings'))]" />-->
+        <!--</record>-->
+        <!--<record id="base.group_user" model="res.groups">-->
+            <!--<field name="implied_ids" eval="[(4,ref('product.group_mrp_properties'))]" />-->
+        <!--</record>-->
 
         <!-- Projects settings -->
         <record id="base.group_user" model="res.groups">

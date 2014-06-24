@@ -22,7 +22,7 @@
 {
     'name': "IMSAR Accounting",
     'version': "1.0",
-    'depends': ['base', 'web_m2x_options',
+    'depends': ['base',
                 'imsar_default_data',
                 'l10n_us', 'account_chart', 'account_accountant', 'analytic',
                 ],
