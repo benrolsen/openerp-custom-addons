@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="account_routing_line_search" model="ir.ui.view">
+            <field name="name">account.routing.search</field>
+            <field name="model">account.routing</field>
+            <field name="arch" type="xml">
+                <search string="Account Routing">
+                    <field name="name"/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Contains real account" icon="terp-folder-green" domain="[]" context="{'group_by':'account_ids'}"/>
+                        <filter string="Contains analytic account" icon="terp-folder-green" domain="[]" context="{'group_by':'analytic_ids'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="account_routing_line_form" model="ir.ui.view">
+            <field name="name">account.routing.line.form</field>
+            <field name="model">account.routing.line</field>
+            <field name="arch" type="xml">
+                <form string="Account Routing lines">
+                    <group>
+                        <field name="account_type_id" domain="[('allow_routing','=','true')]" />
+                        <field name="account_id" domain="[('user_type','=',account_type_id),('type','not in',['view','closed'])]" />
+                        <field name="subrouting_ids" domain="">
+                            <tree editable="bottom">
+                                <field name="account_analytic_id" />
+                                <field name="account_id" domain="[('user_type','=',parent.account_type_id),('type','not in',['view','closed'])]" />
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="account_routing_tree" model="ir.ui.view">
+            <field name="name">account.routing.tree</field>
+            <field name="model">account.routing</field>
+            <field name="arch" type="xml">
+                <tree string="Account Routing">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+        <record id="account_routing_form" model="ir.ui.view">
+            <field name="name">account.routing.form</field>
+            <field name="model">account.routing</field>
+            <field name="arch" type="xml">
+                <form string="Account Routing">
+
+                    <table>
+                        <tr>
+                            <td colspan="4">
+                                <label for="name" string="Category Name: " class="oe_inline"/>
+                                <field name="name" class="oe_inline" style="font-size: 200"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="75%%">
+                                <label for="routing_lines" />
+                                <field name="routing_lines" domain="">
+                                    <tree>
+                                        <field name="account_type_id" />
+                                        <field name="account_id"/>
+                                        <field name="subrouting_ids" />
+                                    </tree>
+                                </field>
+                            </td>
+                        </tr>
+                    </table>
+
+                </form>
+            </field>
+        </record>
+
+        <record id="account_routing_view_form" model="ir.actions.act_window">
+            <field name="name">Accounting Routing</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.routing</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="account_routing_form"/>
+            <field name="search_view_id" ref="account_routing_line_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create new accounting category.
+              </p><p>
+                Description here.
+              </p>
+            </field>
+        </record>
+        <record id="action_account_routing_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="account_routing_view_form"/>
+        </record>
+        <record id="action_account_routing_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_routing_form"/>
+            <field name="act_window_id" ref="account_routing_view_form"/>
+        </record>
+
+        <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
+
+
+
+
+    </data>
+</openerp>

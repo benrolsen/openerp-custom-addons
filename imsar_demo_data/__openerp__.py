@@ -23,13 +23,13 @@
     'name': "IMSAR Demo Data",
     'version': "1.0",
     'depends': [
-        'base', 'imsar_ui_customizations', 'imsar_analytic_account', 'imsar_accounting', 'account_category',
+        'base', 'imsar_ui_customizations', 'imsar_analytic_account', 'imsar_accounting', 'account_routing',
         ],
     'author': "Ben Olsen",
     'description': "Loads demo data customized for IMSAR",
     'category': "Uncategorized",
-    'data': ['account_category_data.xml'],
+    'data': ['account_routing_data.xml'],
     'installable': True,
-    'auto_install': True,
+    'auto_install': False,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

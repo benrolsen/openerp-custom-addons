@@ -9,10 +9,8 @@
         <field name="arch" type="xml">
 
             <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
-                <field name="category_id" on_change="onchange_category_id(category_id)" domain="[('type','=','expense')]"
+                <field name="category_id" on_change="onchange_category_id(category_id)"
                         options="{'create': false, 'create_edit': false}"/>
-                <field name="account_id" domain="[('category_ids','=',category_id)]"
-                    options="{'create': false, 'create_edit': false}"/>
             </xpath>
             <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='replace'>
                 <field name="account_analytic_id" domain="[('category_ids','=',category_id)]"

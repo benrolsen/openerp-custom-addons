@@ -1,50 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
+    <data noupdate="0">
+
+        <function model="account.account" name="_clean_default_accounting"/>
+
+        <!-- Unnecessary Views -->
+        <!--<delete id="account.account_type_income_view1" model="account.account.type" />-->
+        <delete id="account.account_type_expense_view1" model="account.account.type" />
+        <delete id="account.account_type_asset_view1" model="account.account.type" />
+        <delete id="account.account_type_liability_view1" model="account.account.type" />
+        <delete id="account.account_type_income_view1" model="account.account.type" />
+
+        <!-- Unused base account stuff -->
+        <delete id="account.data_account_type_receivable" model="account.account.type" />
+        <delete id="account.data_account_type_payable" model="account.account.type" />
+        <delete id="account.data_account_type_income" model="account.account.type" />
+        <delete id="account.data_account_type_expense" model="account.account.type" />
 
         <!-- Asset -->
-        <record id="l10n_us.user_type_current_asset" model="account.account.type">
-            <field name="name">Current Asset</field>
-            <field name="code">current-asset</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_cash" model="account.account.type">
-            <field name="name">Cash Equivalent</field>
-            <field name="code">cash-equivalent</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>        
         <record id="l10n_us.user_type_account_receivable" model="account.account.type">
             <field name="name">Account Receivable</field>
             <field name="code">account-rec</field>
             <field name="report_type">asset</field>
             <field name="close_method">unreconciled</field>
         </record>        
-        <record id="l10n_us.user_type_other_current_asset" model="account.account.type">
-            <field name="name">Other Current Asset</field>
-            <field name="code">other-current-asset</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_fixed_asset" model="account.account.type">
-            <field name="name">Fixed Asset</field>
-            <field name="code">fixed-asset</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_accumulated_depreciation" model="account.account.type">
-            <field name="name">Accumulated Depreciation</field>
-            <field name="code">acc-depreciation</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>        
-        <record id="l10n_us.user_type_other_asset" model="account.account.type">
-            <field name="name">Other Asset</field>
-            <field name="code">other-asset</field>
-            <field name="report_type">asset</field>
-            <field name="close_method">balance</field>
-        </record>
+        <delete id="l10n_us.user_type_current_asset" model="account.account.type" />
+        <delete id="l10n_us.user_type_cash" model="account.account.type" />
+        <delete id="l10n_us.user_type_other_current_asset" model="account.account.type" />
+        <delete id="l10n_us.user_type_fixed_asset" model="account.account.type" />
+        <delete id="l10n_us.user_type_accumulated_depreciation" model="account.account.type" />
+        <delete id="l10n_us.user_type_other_asset" model="account.account.type" />
 
         <!-- liability -->
         <record id="l10n_us.user_type_account_payable" model="account.account.type">
@@ -59,69 +44,101 @@
             <field name="report_type">liability</field>
             <field name="close_method">balance</field>
         </record>
-        <record id="l10n_us.user_type_current_liability" model="account.account.type">
-            <field name="name">Current Liability</field>
-            <field name="code">current-liability</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_other_current_liability" model="account.account.type">
-            <field name="name">Other Current Liability</field>
-            <field name="code">other-current-liability</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_long_term_liability" model="account.account.type">
-            <field name="name">Long Term Liability</field>
-            <field name="code">long-term-liability</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
-        <record id="l10n_us.user_type_liability" model="account.account.type">
-            <field name="name">Liability (Legacy)</field>
-            <field name="code">liability-legacy</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
+        <delete id="l10n_us.user_type_liability" model="account.account.type" />
+        <delete id="l10n_us.user_type_current_liability" model="account.account.type" />
+        <delete id="l10n_us.user_type_other_current_liability" model="account.account.type" />
+        <delete id="l10n_us.user_type_long_term_liability" model="account.account.type" />
+
         <!-- Equity -->
-        <record id="l10n_us.user_type_equity" model="account.account.type">
-            <field name="name">Equity (Legacy)</field>
-            <field name="code">equity-legacy</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
+        <delete id="l10n_us.user_type_equity" model="account.account.type" />
 
         <!-- Income -->
-        <record id="l10n_us.user_type_income" model="account.account.type">
-            <field name="name">Income (Legacy)</field>
-            <field name="code">income-legacy</field>
-            <field name="report_type">income</field>
-            <field name="close_method">none</field>
-        </record>
-        <record id="l10n_us.user_type_other_income" model="account.account.type">
-            <field name="name">Other Income</field>
-            <field name="code">other-income</field>
+        <delete id="l10n_us.user_type_income" model="account.account.type" />
+        <delete id="l10n_us.user_type_other_income" model="account.account.type" />
+
+        <record id="user_type_eng_revenue" model="account.account.type">
+            <field name="name">Engineering Services Revenue</field>
+            <field name="code">eng-revenue</field>
             <field name="report_type">income</field>
             <field name="close_method">none</field>
         </record>
 
-        <!-- Expense -->  
-        <record id="l10n_us.user_type_expense" model="account.account.type">
-            <field name="name">Expense</field>
-            <field name="code">expense</field>
-            <field name="report_type">expense</field>
+        <record id="user_type_product_sales" model="account.account.type">
+            <field name="name">Product Sales Revenue</field>
+            <field name="code">product-revenue</field>
+            <field name="report_type">income</field>
             <field name="close_method">none</field>
         </record>
+
+        <record id="user_type_parts_sales" model="account.account.type">
+            <field name="name">Parts Sales Revenue</field>
+            <field name="code">parts-revenue</field>
+            <field name="report_type">income</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_product_leases" model="account.account.type">
+            <field name="name">Product Leases Revenue</field>
+            <field name="code">leases-revenue</field>
+            <field name="report_type">income</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <!-- Expense -->
+        <delete id="l10n_us.user_type_expense" model="account.account.type" />
+
         <record id="l10n_us.user_type_other_expense" model="account.account.type">
             <field name="name">Other Expense</field>
             <field name="code">other-expense</field>
             <field name="report_type">expense</field>
             <field name="close_method">none</field>
         </record>
-        
+
         <record id="l10n_us.user_type_cogs" model="account.account.type">
             <field name="name">Cost of Goods Sold</field>
             <field name="code">cogs</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_labor_expense" model="account.account.type">
+            <field name="name">Labor Expense</field>
+            <field name="code">labor-expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_material_expense" model="account.account.type">
+            <field name="name">Material Expense</field>
+            <field name="code">material-expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_travel_expense" model="account.account.type">
+            <field name="name">Travel Expense</field>
+            <field name="code">travel-expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_subcontractor_expense" model="account.account.type">
+            <field name="name">Subcontractor Expense</field>
+            <field name="code">Subcontractor-expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_equipment_expense" model="account.account.type">
+            <field name="name">Equipment and Software Expense</field>
+            <field name="code">equipment-expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+
+        <record id="user_type_fees_expense" model="account.account.type">
+            <field name="name">Fees Expense</field>
+            <field name="code">fees-expense</field>
             <field name="report_type">expense</field>
             <field name="close_method">none</field>
         </record>
