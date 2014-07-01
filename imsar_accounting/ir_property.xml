@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+        <record id="imsar_account_receivable" model="ir.property">
+            <field name="name">property_account_receivable</field>
+            <field name="fields_id" eval="ref('account.field_res_partner_property_account_receivable')" />
+            <field name="company_id" eval="ref('base.main_company')"/>
+            <field name="value_reference" eval="'account.account,'+str(ref('imsar_accounting.accounts_receivable'))" />
+        </record>
+        <record id="imsar_account_payable" model="ir.property">
+            <field name="name">property_account_payable</field>
+            <field name="fields_id" eval="ref('account.field_res_partner_property_account_payable')" />
+            <field name="company_id" eval="ref('base.main_company')"/>
+            <field name="value_reference" eval="'account.account,'+str(ref('imsar_accounting.accounts_payable'))" />
+        </record>
+
+        <record id="imsar_expense_categ" model="ir.property">
+            <field name="name">property_account_expense_categ</field>
+            <field name="fields_id" eval="ref('account.field_product_category_property_account_expense_categ')" />
+            <field name="company_id" eval="ref('base.main_company')"/>
+            <field name="value_reference" eval="'account.account,'+str(ref('imsar_accounting.517100'))" />
+        </record>
+        <record id="imsar_income_categ" model="ir.property">
+            <field name="name">property_account_income_categ</field>
+            <field name="fields_id" eval="ref('account.field_product_category_property_account_income_categ')" />
+            <field name="company_id" eval="ref('base.main_company')"/>
+            <field name="value_reference" eval="'account.account,'+str(ref('imsar_accounting.412010'))" />
+        </record>
+
+
+    </data>
+</openerp>

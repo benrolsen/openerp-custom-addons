@@ -23,12 +23,20 @@
     'name': "IMSAR Demo Data",
     'version': "1.0",
     'depends': [
-        'base', 'imsar_ui_customizations', 'imsar_analytic_account', 'imsar_accounting', 'account_routing',
+        'base', 'imsar_auth_ldap', 'imsar_accounting', 'account_routing',
+        'imsar_sale', 'imsar_analytic_account', 'imsar_ui_customizations',
         ],
     'author': "Ben Olsen",
     'description': "Loads demo data customized for IMSAR",
     'category': "Uncategorized",
-    'data': ['account_routing_data.xml'],
+    'data': [
+        'ldap_data.xml',
+        'res.partner.csv',
+#        'account_routing_data.xml',
+        'account.routing.csv',
+        'account.routing.line.csv',
+        'account.routing.subrouting.csv',
+        ],
     'installable': True,
     'auto_install': False,
 }

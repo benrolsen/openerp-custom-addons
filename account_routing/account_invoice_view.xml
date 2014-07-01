@@ -1,56 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
+<data>
 
-        <record id="category_view_customer_invoice" model="ir.ui.view">
-            <field name="name">category_account.invoice</field>
-            <field name="model">account.invoice</field>
-            <field name="inherit_id" ref="account.invoice_form"/>
-            <field name="arch" type="xml">
+    <record id="category_view_customer_invoice" model="ir.ui.view">
+        <field name="name">category_account.invoice</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_form"/>
+        <field name="arch" type="xml">
 
-                <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
-                    <field name="category_id" on_change="onchange_category_id(category_id)" />
-                </xpath>
-                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='replace'>
-                    <field name="account_id" groups="account.group_account_user"
-                           domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '!=', 'view'),('category_ids','=',category_id)]"
-                           on_change="onchange_account_id(product_id, parent.partner_id, parent.type, parent.fiscal_position,account_id)"
-                           options="{'create': false, 'create_edit': false}" />
-                </xpath>
-                <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
-                    <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
-                        domain="[('type','!=','view'), ('company_id', '=', parent.company_id),('category_ids','=',category_id)]"
+            <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
+                <field name="routing_id" on_change="onchange_routing_id()"
                         options="{'create': false, 'create_edit': false}" />
-                </xpath>
+                <field name="account_type_id" on_change="onchange_account_type_id(routing_id, account_type_id)"
+                        options="{'create': false, 'create_edit': false}"
+                        domain="[('routing_filter','=',routing_id)]"/>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
+                <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
+                    domain="[('routing_line_filter','=',(routing_id,account_type_id))]"
+                    on_change="onchange_analytic_id(routing_id, account_type_id, account_analytic_id)"
+                    options="{'create': false, 'create_edit': false}" />
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
 
-            </field>
-        </record>
+        </field>
+    </record>
 
-        <record id="category_view_customer_supplier_invoice" model="ir.ui.view">
-            <field name="name">category_account.invoice.supplier.form</field>
-            <field name="model">account.invoice</field>
-            <field name="inherit_id" ref="account.invoice_supplier_form"/>
-            <field name="arch" type="xml">
+    <record id="category_view_customer_supplier_invoice" model="ir.ui.view">
+        <field name="name">category_account.invoice.supplier.form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+        <field name="arch" type="xml">
 
-                <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
-                    <field name="category_id" on_change="onchange_category_id(category_id)" domain="[('type','=','expense')]" />
-                </xpath>
-                <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='replace'>
-                    <field name="account_id" groups="account.group_account_user"
-                        domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '=', 'other'),
-                                    ('category_ids','=',category_id)]"
-                        on_change="onchange_account_id(product_id, parent.partner_id, parent.type, parent.fiscal_position,account_id)"
-                        options="{'create': false, 'create_edit': false}"/>
-                </xpath>
-                <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
-                    <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
-                        domain="[('type','!=','view'), ('company_id', '=', parent.company_id),('category_ids','=',category_id)]"
+            <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
+                <field name="routing_id" on_change="onchange_routing_id()"
                         options="{'create': false, 'create_edit': false}" />
-                </xpath>
+                <field name="account_type_id" on_change="onchange_account_type_id(routing_id, account_type_id)"
+                        options="{'create': false, 'create_edit': false}"
+                        domain="[('routing_filter','=',routing_id)]"/>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
+                <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
+                    domain="[('routing_line_filter','=',(routing_id,account_type_id))]"
+                    on_change="onchange_analytic_id(routing_id, account_type_id, account_analytic_id)"
+                    options="{'create': false, 'create_edit': false}" />
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
 
+        </field>
+    </record>
 
-            </field>
-        </record>
-
-    </data>
+</data>
 </openerp>

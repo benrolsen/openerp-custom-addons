@@ -14,7 +14,6 @@ fixed_assets,170,Fixed Assets,view,l10n_us.user_type_view,asset,FALSE
 intangible_assets,180,Intangible Assets,view,l10n_us.user_type_view,asset,FALSE
 investments,190,Investments,view,l10n_us.user_type_view,asset,FALSE
 other_assets,195,Other Assets,view,l10n_us.user_type_view,asset,FALSE
-,,,,,,
 liability_equity,2,Liabilities and Equity,view,l10n_us.user_type_view,coa_basic,FALSE
 liability,20,Liabilities,view,l10n_us.user_type_view,liability_equity,FALSE
 current_liability,200,Current Liabilities,view,l10n_us.user_type_view,liability,FALSE
@@ -26,7 +25,6 @@ benefit_liabilities,20003,Employee Benefit Liabilities,view,l10n_us.user_type_vi
 short_term_notes_payable,20004,Short Term Notes Payable,view,l10n_us.user_type_view,current_liability,FALSE
 other_current_liability,20005,Other Current Liabilities,view,l10n_us.user_type_view,current_liability,FALSE
 long_term_liability,220,Long Term Liabilities,view,l10n_us.user_type_view,liability,FALSE
-,,,,,,
 equity,30,Equity,view,l10n_us.user_type_view,liability_equity,FALSE
 owner_equity,300,Owners Equity,view,l10n_us.user_type_view,equity,FALSE
 3001,3001,Ryan Smith Equity,view,l10n_us.user_type_view,owner_equity,FALSE
@@ -34,9 +32,7 @@ owner_equity,300,Owners Equity,view,l10n_us.user_type_view,equity,FALSE
 3003,3003,Wavetronix Equity,view,l10n_us.user_type_view,owner_equity,FALSE
 3004,3004,Dr. David Long Equity,view,l10n_us.user_type_view,owner_equity,FALSE
 3005,3005,Equity in Investments,view,l10n_us.user_type_view,owner_equity,FALSE
-,,,,,,
 pnl,4and5,Income Statment,view,l10n_us.user_type_view,coa_basic,FALSE
-,,,,,,
 sales_revenue,40,Sales and Revenue,view,l10n_us.user_type_view,pnl,FALSE
 services_revenue,401,Services Revenue,view,l10n_us.user_type_view,sales_revenue,FALSE
 411010,411010,DoD Engineering Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
@@ -46,22 +42,51 @@ services_revenue,401,Services Revenue,view,l10n_us.user_type_view,sales_revenue,
 product_sales,402,Product Sales,view,l10n_us.user_type_view,sales_revenue,FALSE
 default_sales_revenue,4021,Default Sales Revenue,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
 product_lease,403,Product Lease,view,l10n_us.user_type_view,sales_revenue,FALSE
-,,,,,,
+416010,416010,Product Lease Revenue,other,imsar_accounting.user_type_product_leases,sales_revenue,FALSE
 expenses,50,Expenses,view,l10n_us.user_type_view,pnl,FALSE
 direct_expenses,501,Direct Expenses,view,l10n_us.user_type_view,expenses,FALSE
 contract_expenses,5011,Contract Expenses,view,l10n_us.user_type_view,direct_expenses,FALSE
 eng_service_contracts,50111,Engineering Service Contracts,view,l10n_us.user_type_view,contract_expenses,FALSE
+511010,511010,DOD Contract Labor,other,imsar_accounting.user_type_labor_expense,eng_service_contracts,FALSE
+511020,511020,DOD Contract Materials,other,imsar_accounting.user_type_material_expense,eng_service_contracts,FALSE
+511030,511030,DOD Contract Travel,other,imsar_accounting.user_type_travel_expense,eng_service_contracts,FALSE
+511040,511040,DOD Contract Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,eng_service_contracts,FALSE
+511050,511050,DOD Contract Other,other,l10n_us.user_type_other_expense,eng_service_contracts,FALSE
+512010,512010,Non-DOD Contract Labor,other,imsar_accounting.user_type_labor_expense,eng_service_contracts,FALSE
+512020,512020,Non-DOD Contract Materials,other,imsar_accounting.user_type_material_expense,eng_service_contracts,FALSE
+512030,512030,Non-DOD Contract Travel,other,imsar_accounting.user_type_travel_expense,eng_service_contracts,FALSE
+512040,512040,Non-DOD Contract Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,eng_service_contracts,FALSE
+512050,512050,Non-DOD Other Expenses,other,l10n_us.user_type_other_expense,eng_service_contracts,FALSE
+513010,513010,International Contract Labor,other,imsar_accounting.user_type_labor_expense,eng_service_contracts,FALSE
+513020,513020,International Contract Materials,other,imsar_accounting.user_type_material_expense,eng_service_contracts,FALSE
+513030,513030,International Contract Travel,other,imsar_accounting.user_type_travel_expense,eng_service_contracts,FALSE
+513040,513040,International Contract Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,eng_service_contracts,FALSE
+513050,513050,International Contract Other Expenses,other,l10n_us.user_type_other_expense,eng_service_contracts,FALSE
 eng_dloh_expenses,501111,Engineering DLOH Expenses,view,l10n_us.user_type_view,eng_service_contracts,FALSE
 517100,517100,Engineering DLOH Labor,other,imsar_accounting.user_type_labor_expense,eng_dloh_expenses,FALSE
 517200,517200,Engineering DLOH Materials,other,imsar_accounting.user_type_material_expense,eng_dloh_expenses,FALSE
+517300,517300,Engineering DLOH Travel,other,imsar_accounting.user_type_travel_expense,eng_dloh_expenses,FALSE
+517400,517400,Engineering DLOH Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,eng_dloh_expenses,FALSE
+517500,517500,Engineering DLOH Other,other,l10n_us.user_type_other_expense,eng_dloh_expenses,FALSE
 commercial_retail_contracts,50112,Commercial and Retail Contracts,view,l10n_us.user_type_view,contract_expenses,FALSE
 commercial_dloh_expenses,501121,Commercial DLOH Expenses,view,l10n_us.user_type_view,commercial_retail_contracts,FALSE
 557100,557100,Commercial DLOH Labor,other,imsar_accounting.user_type_labor_expense,commercial_dloh_expenses,FALSE
 557200,557200,Commercial DLOH Materials,other,imsar_accounting.user_type_material_expense,commercial_dloh_expenses,FALSE
+557300,557300,Commercial DLOH Travel,other,imsar_accounting.user_type_travel_expense,commercial_dloh_expenses,FALSE
+557400,557400,Commercial DLOH Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,commercial_dloh_expenses,FALSE
+557500,557500,Commercial DLOH Other,other,l10n_us.user_type_other_expense,commercial_dloh_expenses,FALSE
 deployment_contracts,50113,Deployment Contracts,view,l10n_us.user_type_view,contract_expenses,FALSE
+571100,571100,Deployment Contract Labor,other,imsar_accounting.user_type_labor_expense,deployment_contracts,FALSE
+571200,571200,Deployment Contract Materials,other,imsar_accounting.user_type_material_expense,deployment_contracts,FALSE
+571300,571300,Deployment Contract Travel,other,imsar_accounting.user_type_travel_expense,deployment_contracts,FALSE
+571400,571400,Deployment Contract Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,deployment_contracts,FALSE
+571500,571500,Deployment Contract Other,other,l10n_us.user_type_other_expense,deployment_contracts,FALSE
 deployment_dloh_expenses,501131,Deployment DLOH Expenses,view,l10n_us.user_type_view,deployment_contracts,FALSE
 577100,577100,Deployment DLOH Labor,other,imsar_accounting.user_type_labor_expense,deployment_dloh_expenses,FALSE
 577200,577200,Deployment DLOH Materials,other,imsar_accounting.user_type_material_expense,deployment_dloh_expenses,FALSE
+577300,577300,Deployment DLOH Travel,other,imsar_accounting.user_type_travel_expense,commercial_dloh_expenses,FALSE
+577400,577400,Deployment DLOH Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,commercial_dloh_expenses,FALSE
+577500,577500,Deployment DLOH Other,other,l10n_us.user_type_other_expense,commercial_dloh_expenses,FALSE
 cost_of_sales,5012,Cost of Sales,view,l10n_us.user_type_view,direct_expenses,FALSE
 cogs_view,50121,Cost of Goods Sold,view,l10n_us.user_type_view,cost_of_sales,FALSE
 default_cogs,601010,Default COGS,other,l10n_us.user_type_other_expense,cogs_view,FALSE
@@ -70,9 +95,17 @@ default_cogs,601010,Default COGS,other,l10n_us.user_type_other_expense,cogs_view
 mfg_dloh_expense,50123,MFG DLOH Expenses,view,l10n_us.user_type_view,cost_of_sales,FALSE
 677100,677100,MFG DLOH Labor,other,imsar_accounting.user_type_labor_expense,mfg_dloh_expense,FALSE
 677200,677200,MFG DLOH Materials,other,imsar_accounting.user_type_material_expense,mfg_dloh_expense,FALSE
+677300,677300,MFG DLOH Travel,other,imsar_accounting.user_type_travel_expense,mfg_dloh_expense,FALSE
+677400,677400,MFG DLOH Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,mfg_dloh_expense,FALSE
+677500,677500,MFG DLOH Other,other,l10n_us.user_type_other_expense,mfg_dloh_expense,FALSE
 mat_handling_oh,50124,Materials Handling OH,view,l10n_us.user_type_view,cost_of_sales,FALSE
 indirect_expenses,502,Indirect Expenses,view,l10n_us.user_type_view,expenses,FALSE
 ird,5021,IrnD,view,l10n_us.user_type_view,indirect_expenses,FALSE
+711100,711100,IR&D Labor,other,imsar_accounting.user_type_labor_expense,ird,FALSE
+711200,711200,IR&D Materials,other,imsar_accounting.user_type_material_expense,ird,FALSE
+711300,711300,IR&D Travel,other,imsar_accounting.user_type_travel_expense,ird,FALSE
+711400,711400,IR&D Subcontractors,other,imsar_accounting.user_type_subcontractor_expense,ird,FALSE
+711500,711500,IR&D Other,other,l10n_us.user_type_other_expense,ird,FALSE
 gna,5022,General and Admin Expenses,view,l10n_us.user_type_view,indirect_expenses,FALSE
 biz_dev,50221,Business Development,view,l10n_us.user_type_view,gna,FALSE
 bid_expenses,502211,Bid and Proposal Expenses,view,l10n_us.user_type_view,biz_dev,FALSE

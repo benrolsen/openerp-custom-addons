@@ -1,0 +1,4 @@
+"id","name","type","code"
+"account.analytic_journal_sale","Sales","Sale","SAL"
+"account.exp","Purchases","Purchase","PUR"
+"hr_timesheet.analytic_journal","Timesheet Journal","General","TS"

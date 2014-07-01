@@ -41,10 +41,90 @@
         <record id="revenue_routing" model="account.routing">
             <field name="name">Revenue</field>
         </record>
-        <record id="revenue_routing_line" model="account.routing.line">
+        <record id="eng_revenue_routing_line" model="account.routing.line">
             <field name="routing_id" eval="ref('revenue_routing')" />
             <field name="account_type_id" eval="ref('imsar_accounting.user_type_eng_revenue')" />
             <field name="account_id" eval="ref('imsar_accounting.411010')" />
+        </record>
+        <record id="prod_revenue_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('revenue_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_product_sales')" />
+            <field name="account_id" eval="ref('imsar_accounting.default_sales_revenue')" />
+        </record>
+        <record id="prod_lease_revenue_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('revenue_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_product_leases')" />
+            <field name="account_id" eval="ref('imsar_accounting.416010')" />
+        </record>
+
+        <record id="contract_routing" model="account.routing">
+            <field name="name">Contract Expenses</field>
+        </record>
+        <!-- Contract Expenses types and default routing -->
+        <record id="contract_labor_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_labor_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.517100')" />
+        </record>
+        <record id="contract_material_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_material_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.517200')" />
+        </record>
+        <record id="contract_travel_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_travel_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.517300')" />
+        </record>
+        <record id="contract_subs_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_subcontractor_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.517400')" />
+        </record>
+        <!-- Contract Expenses analytic routing - Houdini2 -->
+        <record id="houdini2_labor_subrouting_line" model="account.routing.subrouting">
+            <field name="routing_line_id" eval="ref('contract_labor_routing_line')" />
+            <field name="account_analytic_id" eval="ref('contract_labor_routing_line')" />
+            <field name="account_id" eval="ref('imsar_accounting.511010')" />
+        </record>
+        <record id="houdini2_materials_subrouting_line" model="account.routing.subrouting">
+            <field name="routing_line_id" eval="ref('contract_material_routing_line')" />
+            <field name="account_analytic_id" eval="ref('imsar_accounting.houdini2')" />
+            <field name="account_id" eval="ref('imsar_accounting.511020')" />
+        </record>
+        <record id="houdini2_travel_subrouting_line" model="account.routing.subrouting">
+            <field name="routing_line_id" eval="ref('contract_travel_routing_line')" />
+            <field name="account_analytic_id" eval="ref('imsar_accounting.houdini2')" />
+            <field name="account_id" eval="ref('imsar_accounting.511030')" />
+        </record>
+        <record id="houdini2_subs_subrouting_line" model="account.routing.subrouting">
+            <field name="routing_line_id" eval="ref('contract_subs_routing_line')" />
+            <field name="account_analytic_id" eval="ref('imsar_accounting.houdini2')" />
+            <field name="account_id" eval="ref('imsar_accounting.511040')" />
+        </record>
+
+        <record id="eng_dloh_routing" model="account.routing">
+            <field name="name">Engineering Overhead</field>
+        </record>
+        <record id="contract_labor_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_labor_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.511010')" />
+        </record>
+        <record id="contract_material_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_material_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.511020')" />
+        </record>
+        <record id="contract_travel_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_travel_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.511030')" />
+        </record>
+        <record id="contract_subs_routing_line" model="account.routing.line">
+            <field name="routing_id" eval="ref('contract_routing')" />
+            <field name="account_type_id" eval="ref('imsar_accounting.user_type_subcontractor_expense')" />
+            <field name="account_id" eval="ref('imsar_accounting.511040')" />
         </record>
 
 

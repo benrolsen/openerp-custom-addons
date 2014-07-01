@@ -11,8 +11,31 @@
             <xpath expr='//field[@name="project_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>
             </xpath>
+            <xpath expr='//field[@name="order_line"]/form/group/group' position='inside'>
+                <label for="routing_id" />
+                <div name="routing_id" >
+                    <field name="routing_id" on_change="onchange_routing_id()"
+                            options="{'create': false, 'create_edit': false}" />
+                </div>
+                <label for="account_type_id" />
+                <div name="account_type_id" >
+                    <field name="account_type_id" on_change="onchange_account_type_id()"
+                            options="{'create': false, 'create_edit': false}"
+                            domain="[('routing_filter','=',routing_id)]"/>
+                </div>
+                <label for="account_analytic_id" />
+                <div name="account_analytic_id" >
+                    <field name="account_analytic_id" options="{'create': false, 'create_edit': false}"
+                            domain="[('routing_line_filter','=',(routing_id,account_type_id))]"/>
+                </div>
+            </xpath>
             <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
-                <field name="category_id" on_change="onchange_category_id(category_id)" options="{'create': false, 'create_edit': false}"/>
+                <field name="routing_id" />
+                <field name="account_type_id" />
+                <field name="account_analytic_id" />
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="product_uom"]' position='attributes'>
+                    <attribute name="invisible">True</attribute>
             </xpath>
 
         </field>

@@ -1,0 +1,3 @@
+id,name,code,company_id/id,type,analytic_journal_id/id
+sale_journal,Sale Journal,SALE,base.main_company,Sale,account.analytic_journal_sale
+purchase_journal,Purchase Journal,PRCH,base.main_company,Purchase,account.exp

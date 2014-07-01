@@ -33,8 +33,9 @@
     'category': "Uncategorized",
     'data': ['account_routing_view.xml',
              'account_type_view.xml',
-            # 'account_invoice_view.xml',
-            # 'sale_view.xml', 'purchase_view.xml',
+             'account_invoice_view.xml',
+             'sale_view.xml',
+             'purchase_view.xml',
             ],
 	'css' : [
 		"static/src/css/txn_category_style.css",

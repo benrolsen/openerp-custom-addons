@@ -30,10 +30,7 @@
     """,
     'website': 'http://www.imsar.com',
     "depends" : ['base', 'imsar_accounting', 'sale'],
-    "data" : [],
-    'init_xml': [],
-    'update_xml': ['sale_view.xml'],
-    'demo_xml': [],
+    'data': ['sale_view.xml'],
     'installable': True,
     'auto_install': False,
 }
