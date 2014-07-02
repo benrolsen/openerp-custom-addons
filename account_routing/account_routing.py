@@ -41,8 +41,17 @@ class account_routing_line(osv.Model):
         res = list()
         line_list = self.browse(cr, uid, routing_line_id)
         line = line_list and line_list[0]
-        for analytic in line.subrouting_ids:
-            res.append(analytic.account_analytic_id.id)
+        for subroute in line.subrouting_ids:
+            if subroute.account_analytic_id.type != 'view':
+                res.append(subroute.account_analytic_id.id)
+
+            id = subroute.account_analytic_id.id
+            analytic_rec = subroute.account_analytic_id
+            child_ids = analytic_rec.child_ids
+            complete_child_ids = analytic_rec.child_complete_ids
+            for child in complete_child_ids:
+                if child.type != 'view':
+                    res.append(child.id)
         return res
 
 
@@ -105,6 +114,24 @@ class account_analytic_account_routing(osv.Model):
         'routing_line_filter': fields.function(_dummy_func, method=True, fnct_search=_search_routing_line_ids, type='one2many')
     }
 
+    def _search_for_subroute_account(self, cr, uid, *args, **kwargs):
+        routing_line_id = kwargs.get('routing_line_id')
+        account_analytic_id = kwargs.get('account_analytic_id')
+        account_id = None
+        subrouting_obj = self.pool.get('account.routing.subrouting')
+        subroute_id = subrouting_obj.search(cr, uid, [('routing_line_id','=',routing_line_id),('account_analytic_id','=',account_analytic_id)])
+        while not subroute_id:
+            analytic = self.browse(cr, uid, account_analytic_id)
+            if not analytic.parent_id:
+                break
+            account_analytic_id = analytic.parent_id.id
+            subroute_id = subrouting_obj.search(cr, uid, [('routing_line_id','=',routing_line_id),('account_analytic_id','=',account_analytic_id)])
+        if subroute_id:
+            subroute = self.pool['account.routing.subrouting'].browse(cr, uid, subroute_id)[0]
+            account_id = subroute.account_id.id
+        return account_id
+
+
 
 class account_invoice_line(osv.Model):
     _inherit = "account.invoice.line"
@@ -125,13 +152,13 @@ class account_invoice_line(osv.Model):
         default_account_id = routing_line.account_id
         return {'value':{'account_analytic_id': '', 'account_id': default_account_id.id},}
 
-    def onchange_analytic_id(self, cr, uid, ids, routing_id, account_type_id, analytic_id):
-        if not routing_id or not account_type_id or not analytic_id:
+    def onchange_analytic_id(self, cr, uid, ids, routing_id, account_type_id, account_analytic_id):
+        if not routing_id or not account_type_id or not account_analytic_id:
             return {}
-        routing_line_id = self.pool['account.routing.line'].search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
-        subroute_id = self.pool['account.routing.subrouting'].search(cr, uid, [('routing_line_id','=',routing_line_id),('account_analytic_id','=',analytic_id)])[0]
-        subroute = self.pool['account.routing.subrouting'].browse(cr, uid, subroute_id)
-        return {'value':{'account_id': subroute.account_id.id}}
+        routing_line_id = self.pool.get('account.routing.line').search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
+        analytic = self.pool.get('account.analytic.account').browse(cr, uid, account_analytic_id)
+        account_id = analytic._search_for_subroute_account(cr, uid, routing_line_id=routing_line_id, account_analytic_id=account_analytic_id)
+        return {'value':{'account_id': account_id}}
 
     def product_id_change(self, cr, uid, ids, product, uom_id, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, currency_id=False, context=None, company_id=None):
         res = super(account_invoice_line, self).product_id_change(cr, uid, ids, product, uom_id, qty, name, type, partner_id, fposition_id, price_unit, currency_id, context, company_id)
@@ -161,9 +188,8 @@ class sale_order_line(osv.Model):
 
         routing_line_id = self.pool['account.routing.line'].search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
         if account_analytic_id:
-            subroute_id = self.pool['account.routing.subrouting'].search(cr, uid, [('routing_line_id','=',routing_line_id),('account_analytic_id','=',account_analytic_id)])[0]
-            subroute = self.pool['account.routing.subrouting'].browse(cr, uid, subroute_id)
-            account_id = subroute.account_id.id
+            analytic = self.pool.get('account.analytic.account').browse(cr, uid, account_analytic_id)
+            account_id = analytic._search_for_subroute_account(cr, uid, routing_line_id=routing_line_id, account_analytic_id=account_analytic_id)
         else:
             routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
             account_id = routing_line.account_id.id
@@ -175,6 +201,7 @@ class sale_order_line(osv.Model):
 
         return res
 
+
 class purchase_order(osv.Model):
     _inherit = "purchase.order"
 
@@ -185,9 +212,8 @@ class purchase_order(osv.Model):
 
         routing_line_id = self.pool['account.routing.line'].search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
         if account_analytic_id:
-            subroute_id = self.pool['account.routing.subrouting'].search(cr, uid, [('routing_line_id','=',routing_line_id),('account_analytic_id','=',account_analytic_id)])[0]
-            subroute = self.pool['account.routing.subrouting'].browse(cr, uid, subroute_id)
-            account_id = subroute.account_id.id
+            analytic = self.pool.get('account.analytic.account').browse(cr, uid, account_analytic_id)
+            account_id = analytic._search_for_subroute_account(cr, uid, routing_line_id=routing_line_id, account_analytic_id=account_analytic_id)
         else:
             routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
             account_id = routing_line.account_id.id

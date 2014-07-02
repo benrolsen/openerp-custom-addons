@@ -22,7 +22,7 @@
                     options="{'create': false, 'create_edit': false}" />
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
-                <attribute name="invisible">True</attribute>
+                <attribute name="readonly">True</attribute>
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>
@@ -51,7 +51,7 @@
                     options="{'create': false, 'create_edit': false}" />
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
-                <attribute name="invisible">True</attribute>
+                <attribute name="readonly">True</attribute>
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>
