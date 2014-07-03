@@ -37,5 +37,28 @@
             <field name="allow_routing">True</field>
         </record>
 
+        <!-- Set timesheet routing for these routings (must be done after everything else is loaded) -->
+        <record id="contract_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('contract_labor_routing_line')" />
+        </record>
+        <record id="irad_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('irad_labor_routing_line')" />
+        </record>
+        <record id="eng_dloh_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('eng_dloh_labor_routing_line')" />
+        </record>
+        <record id="commercial_dloh_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('comm_dloh_labor_routing_line')" />
+        </record>
+        <record id="deployment_dloh_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('depl_dloh_labor_routing_line')" />
+        </record>
+        <record id="mfg_dloh_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('mfg_dloh_labor_routing_line')" />
+        </record>
+        <record id="gna_expenses_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('gna_labor_routing_line')" />
+        </record>
+
     </data>
 </openerp>

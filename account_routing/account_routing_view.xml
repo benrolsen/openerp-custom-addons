@@ -41,6 +41,8 @@
             <field name="arch" type="xml">
                 <tree string="Account Routing">
                     <field name="name" />
+                    <field name="timesheet_routing_line" />
+                    <field name="routing_lines" />
                 </tree>
             </field>
         </record>

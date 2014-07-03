@@ -37,11 +37,18 @@ sales_revenue,40,Sales and Revenue,view,l10n_us.user_type_view,pnl,FALSE
 services_revenue,401,Services Revenue,view,l10n_us.user_type_view,sales_revenue,FALSE
 411010,411010,DoD Engineering Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
 412010,412010,Non-DoD Engineering Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
+412020,412020,International Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
 412110,412110,Commercial Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
+412120,412120,Intercompany Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
 412210,412210,Deployment Services Revenue,other,imsar_accounting.user_type_eng_revenue,services_revenue,FALSE
 product_sales,402,Product Sales,view,l10n_us.user_type_view,sales_revenue,FALSE
+413010,413010,DOD Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
+413020,413020,Non-DOD Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
+413030,413030,International Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
+413040,413040,Commercial Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
+413050,413050,Intercomany Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
+413060,413060,Deployment Product Sales,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
 default_sales_revenue,4021,Default Sales Revenue,other,imsar_accounting.user_type_product_sales,product_sales,FALSE
-product_lease,403,Product Lease,view,l10n_us.user_type_view,sales_revenue,FALSE
 416010,416010,Product Lease Revenue,other,imsar_accounting.user_type_product_leases,sales_revenue,FALSE
 expenses,50,Expenses,view,l10n_us.user_type_view,pnl,FALSE
 direct_expenses,501,Direct Expenses,view,l10n_us.user_type_view,expenses,FALSE
