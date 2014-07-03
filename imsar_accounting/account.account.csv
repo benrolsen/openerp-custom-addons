@@ -117,6 +117,9 @@ admin_expenses,50222,Admin Expenses,view,l10n_us.user_type_view,gna,FALSE
 admin_labor,810000,Admin Labor,view,l10n_us.user_type_view,admin_expenses,FALSE
 8210100,8210100,Admin Labor – Allowable,other,imsar_accounting.user_type_labor_expense,admin_labor,FALSE
 8210200,8210200,Admin Labor – Unallowable,other,imsar_accounting.user_type_labor_expense,admin_labor,FALSE
+8212700,8212700,Admin Equipment,other,imsar_accounting.user_type_equipment_expense,admin_expenses,FALSE
+8213100,8213100,Admin Travel,other,imsar_accounting.user_type_travel_expense,admin_expenses,FALSE
+8219100,8219100,Admin Other,other,l10n_us.user_type_other_expense,admin_expenses,FALSE
 fringe_benefits,50223,Fringe Benefits Expenses,view,l10n_us.user_type_view,gna,FALSE
 502231,502231,Health Insurance,other,l10n_us.user_type_other_expense,fringe_benefits,FALSE
 502232,502232,HSA Contribution,other,l10n_us.user_type_other_expense,fringe_benefits,FALSE

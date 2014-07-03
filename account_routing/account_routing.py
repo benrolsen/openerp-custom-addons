@@ -9,8 +9,13 @@ class account_routing(osv.Model):
     _description = 'Account Routing'
 
     _columns = {
-        'name': fields.char('Accounting Category', size=128, required=True),
+        'name': fields.char('Routing Category', size=128, required=True),
         'routing_lines': fields.one2many('account.routing.line', 'routing_id', 'Account Type Routes', ondelete='cascade'),
+        'timesheet_routing_line': fields.many2one('account.routing.line', 'Timesheet Routing Type'),
+    }
+
+    _defaults = {
+        'timesheet_routing_line': None,
     }
 
     def _get_account_types(self, cr, uid, routing_ids, *args, **kwargs):
@@ -36,6 +41,14 @@ class account_routing_line(osv.Model):
     _sql_constraints = [
         ('routing_account_type_uniq', 'unique (routing_id,account_type_id)', 'Only one account type allowed per account routing!')
     ]
+
+    def name_get(self, cr, uid, ids, context=None):
+        result = super(account_routing_line, self).name_get(cr, uid, ids, context)
+        name_list = []
+        for line in result:
+            routing_line = self.browse(cr, uid, line[0])
+            name_list.append((line[0], routing_line.account_type_id.name))
+        return name_list
 
     def _get_analytic_ids(self, cr, uid, routing_line_id, *args, **kwargs):
         res = list()
@@ -238,3 +251,20 @@ class purchase_order_line(osv.Model):
 
     def onchange_account_type_id(self, cr, uid, ids):
         return {'value':{'account_analytic_id': ''},}
+
+
+class hr_timesheet_line_routing(osv.Model):
+    _inherit = "hr.analytic.timesheet"
+
+    _columns = {
+        'routing_id': fields.many2one('account.routing', 'Category', required=True,),
+        'account_type_id': fields.many2one('account.account.type', 'Type', required=True,),
+    }
+
+    def onchange_routing_id(self, cr, uid, ids, routing_id):
+        route = self.pool.get('account.routing').browse(cr, uid, routing_id)
+        return {'value':{'account_type_id': route.timesheet_routing_line.account_type_id.id, 'account_id': ''},}
+
+    def onchange_account_type_id(self, cr, uid, ids):
+        return {'value':{'account_id': ''},}
+

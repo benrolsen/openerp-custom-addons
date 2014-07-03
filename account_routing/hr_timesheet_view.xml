@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="imsar_hr_timesheet_sheet_view" model="ir.ui.view">
+        <field name="name">imsar.hr.timesheet.sheet.form</field>
+        <field name="model">hr_timesheet_sheet.sheet</field>
+        <field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//sheet/notebook//field[@name='account_id']" position="before">
+                    <field name="routing_id" on_change="onchange_routing_id(routing_id)"
+                            options="{'create': false, 'create_edit': false}" domain="[('timesheet_routing_line','!=',None)]" />
+                    <field name="account_type_id" on_change="onchange_account_type_id()"
+                            options="{'create': false, 'create_edit': false}"
+                            domain="[('routing_filter','=',routing_id)]" invisible="True"/>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='account_id']" position="replace">
+                <field name="account_id" on_change="on_change_account_id(account_id, user_id)" context="{'default_use_timesheets': 1}"
+                        domain="[('routing_line_filter','=',(routing_id,account_type_id)), ('state', '!=', 'close'),('use_timesheets','=',1)]" />
+            </xpath>
+        </field>
+    </record>
+
+</data>
+</openerp>

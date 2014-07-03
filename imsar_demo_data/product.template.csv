@@ -1,0 +1,2 @@
+id,name,description,type,uom_po_id/id,uom_id/id,hr_expense_ok,purchase_ok,sale_ok,rental,cost_method,standard_price,list_price,categ_id/id
+widget,Widget,,Stockable Product,product.product_uom_unit,product.product_uom_unit,False,True,True,False,Standard Price,5,10,product.product_category_all

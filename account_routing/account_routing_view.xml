@@ -53,8 +53,15 @@
                     <table>
                         <tr>
                             <td colspan="4">
-                                <label for="name" string="Category Name: " class="oe_inline"/>
-                                <field name="name" class="oe_inline" style="font-size: 200"/>
+                                <label for="name" string="Routing Category: " class="oe_inline"/>
+                                <field name="name" class="oe_inline"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4">
+                                <label for="timesheet_routing_line" class="oe_inline"/>
+                                <field name="timesheet_routing_line" class="oe_inline"
+                                        domain="[('routing_id','=',id)]" />
                             </td>
                         </tr>
                         <tr>
