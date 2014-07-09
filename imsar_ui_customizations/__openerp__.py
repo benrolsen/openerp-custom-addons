@@ -34,7 +34,7 @@
                  "purchase", "sale",
                  'product', 'account', 'stock',
                  'mrp', 'mrp_operations',
-                 'project', 'hr_timesheet_sheet',
+                 'hr_timesheet_sheet',
     ],
     'data': ['product_view.xml', 'invoice_view.xml', 'mrp_view.xml', 'partner_view.xml', 'account_view.xml',
                    'purchase_view.xml', 'hr_timesheet_view.xml',

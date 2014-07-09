@@ -35,6 +35,7 @@
     'data': ['account_routing_view.xml',
              'account_type_view.xml',
              'account_invoice_view.xml',
+             'security/ir.model.access.csv',
              'sale_view.xml',
              'purchase_view.xml',
              'hr_timesheet_view.xml',

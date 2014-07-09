@@ -16,6 +16,11 @@
             </xpath>
             <xpath expr="//sheet/notebook/page[1]" position="replace">
             </xpath>
+            <xpath expr="//sheet/notebook/page[2]" position="after">
+                <page string="Summary">
+                    <widget type="weekly_timesheet" attrs="{'readonly': True}" />
+                </page>
+            </xpath>
             <xpath expr="//sheet/notebook//field[@name='to_invoice']" position="attributes">
                 <attribute name="invisible">True</attribute>
             </xpath>

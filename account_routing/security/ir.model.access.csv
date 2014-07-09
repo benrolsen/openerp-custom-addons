@@ -1,0 +1,4 @@
+id,name,model_id/id,perm_read,active
+subrouting_perms,account_routing_subrouting all,account_routing.model_account_routing_subrouting,True,True
+routing_line_perms,account_routing_line all,account_routing.model_account_routing_line,True,True
+routing_perms,account_routing all,account_routing.model_account_routing,True,True
