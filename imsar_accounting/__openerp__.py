@@ -22,7 +22,7 @@
 {
     'name': "IMSAR Accounting",
     'version': "1.0",
-    'depends': ['hr_timesheet_sheet','account_accountant', 'analytic', 'l10n_us', ],
+    'depends': ['account_accountant', 'analytic', 'l10n_us', 'hr_timesheet_sheet',],
     'author': "Ben Olsen",
     'description': "Customized IMSAR accounts and analytics",
     'category': "Uncategorized",

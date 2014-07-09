@@ -18,9 +18,10 @@ class account_routing(osv.Model):
         'timesheet_routing_line': None,
     }
 
-    def _get_account_types(self, cr, uid, routing_ids, *args, **kwargs):
+    def _get_account_types(self, cr, uid, *args, **kwargs):
+        routing_id = kwargs['routing_id']
         res = list()
-        route_list = self.browse(cr, uid, routing_ids)
+        route_list = self.browse(cr, uid, routing_id)
         route = route_list and route_list[0]
         for routing_line in route.routing_lines:
             res.append(routing_line.account_type_id.id)
@@ -50,7 +51,8 @@ class account_routing_line(osv.Model):
             name_list.append((line[0], routing_line.account_type_id.name))
         return name_list
 
-    def _get_analytic_ids(self, cr, uid, routing_line_id, *args, **kwargs):
+    def _get_analytic_ids(self, cr, uid, *args, **kwargs):
+        routing_line_id = kwargs['routing_line_id']
         res = list()
         line_list = self.browse(cr, uid, routing_line_id)
         line = line_list and line_list[0]
@@ -93,7 +95,7 @@ class account_account_type_routing(osv.Model):
         id_list = list()
         if routing_id:
             route = self.pool.get('account.routing').browse(cr, uid, routing_id)
-            id_list = route._get_account_types(cr, uid, routing_id)
+            id_list = route._get_account_types(cr, uid, routing_id=routing_id)
         res = [('id','in',id_list)]
         return res
 
@@ -119,7 +121,7 @@ class account_analytic_account_routing(osv.Model):
         if routing_id and account_type_id:
             routing_line_id = self.pool.get('account.routing.line').search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
             routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
-            id_list = routing_line._get_analytic_ids(cr, uid, routing_id)
+            id_list = routing_line._get_analytic_ids(cr, uid, routing_line_id=routing_line_id)
         res = [('id','in',id_list)]
         return res
 

@@ -23,7 +23,7 @@
     'name': "IMSAR Demo Data",
     'version': "1.0",
     'depends': [
-        'base', 'imsar_auth_ldap', 'imsar_accounting', 'account_routing',
+        'base', 'imsar_accounting', 'imsar_auth_ldap', 'account_routing',
         'imsar_sale', 'imsar_analytic_account', 'imsar_ui_customizations',
         ],
     'author': "Ben Olsen",
