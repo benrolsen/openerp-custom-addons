@@ -29,7 +29,7 @@
     Interface customizations:
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base',
+    "depends" : ['base', 'web_m2x_options',
                  'imsar_default_data', 'imsar_accounting', 'imsar_sale',
                  "purchase", "sale",
                  'product', 'account', 'stock',

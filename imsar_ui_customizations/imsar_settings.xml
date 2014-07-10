@@ -76,6 +76,12 @@
 
         <!-- Human Resources settings -->
 
+        <!-- General settings -->
+        <record id="dropdown_limit" model="ir.config_parameter">
+            <field name="key">web_m2x_options.limit</field>
+            <field name="value">20</field>
+        </record>
+
 
     </data>
 </openerp>

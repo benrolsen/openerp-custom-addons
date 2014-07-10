@@ -1,2 +1,3 @@
-These are all the custom addons for IMSAR's OpenERP implementation. They should exist
-in the "custom-addons" folder of an OpenERP base directory.
+These are all the custom addons for IMSAR's OpenERP implementation.
+This directory should be added to the openerp-server.conf file
+in the "addons-path" directive.
