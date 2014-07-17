@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="imsar_hr_timesheet_change_explanation" model="ir.ui.view">
+        <field name="name">imsar.hr.timesheet.sheet.change.form</field>
+        <field name="model">hr.analytic.timesheet</field>
+        <field name="arch" type="xml">
+            <form string="Compose Email">
+                <field name="change_explanation" />
+            </form>
+        </field>
+    </record>
+
+    <record id="imsar_hr_timesheet_sheet_view" model="ir.ui.view">
+        <field name="name">imsar.hr.timesheet.sheet.form</field>
+        <field name="model">hr_timesheet_sheet.sheet</field>
+        <field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="/form" position="attributes">
+                <attribute name="create">false</attribute>
+                <attribute name="delete">false</attribute>
+            </xpath>
+            <xpath expr="//field[@name='employee_id']" position="attributes">
+                <attribute name="readonly">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" readonly="True" invisible="False" string="Week Number"/>
+            </xpath>
+            <xpath expr="//field[@name='company_id']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook/page[1]" position="replace">
+            </xpath>
+            <xpath expr="//sheet/notebook/page[2]" position="after">
+                <page string="Summary">
+                    <widget type="weekly_timesheet" attrs="{'readonly': True}" />
+                </page>
+            </xpath>
+
+            <!-- Timesheet line items -->
+            <xpath expr="//sheet/notebook//field[@name='date']" position="before">
+                <!--<button name="unlock_button" type="object" icon="fa-pencil-square-o" class="oe_inline oe_stat_button" />-->
+                <field name="id" string="ID" />
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='date']" position="attributes">
+                 <attribute name="on_change">onchange_date(date, parent.date_from, parent.date_to)</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='unit_amount']" position="after">
+                 <field name="location" />
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='unit_amount']" position="after">
+                 <field name="change_explanation" invisible="True"/>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='to_invoice']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='journal_id']" position="attributes">
+                <attribute name="invisible">False</attribute>
+            </xpath>
+            <!--<xpath expr="//sheet/notebook//field[@name='user_id']" position="attributes">-->
+                <!--<attribute name="invisible">False</attribute>-->
+            <!--</xpath>-->
+
+        </field>
+    </record>
+
+    <record id="imsar_hr_timesheet_line_tree" model="ir.ui.view">
+        <field name="name">imsar.hr.analytic.timesheet.tree</field>
+        <field name="model">hr.analytic.timesheet</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="readonly">True</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="imsar_hr_timesheet_line_form" model="ir.ui.view">
+        <field name="name">imsar.hr.analytic.timesheet.form</field>
+        <field name="model">hr.analytic.timesheet</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="readonly">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- New forms for viewing previous timesheets -->
+    <record id="past_timesheet_form" model="ir.ui.view">
+        <field name="name">hr_timesheet_sheet.sheet.form</field>
+        <field name="model">hr_timesheet_sheet.sheet</field>
+        <field name="arch" type="xml">
+            <form string="Timesheet Summary" create="false" edit="false" delete="false">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="False"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="employee_id" class="oe_edit_only"/>
+                        <h1><field name="employee_id" readonly="True"  class="oe_inline"/></h1>
+                        <field name="user_id" invisible="1" readonly="True" />
+                    </div>
+                    <group>
+                        <group>
+                            <label for="date_from" string="Timesheet Period"/>
+                            <div><field name="date_from" class="oe_inline" readonly="True" /> to <field name="date_to" class="oe_inline" readonly="True" /></div>
+                            <field name="name" string="Week Number" readonly="True" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Summary">
+                            <widget type="weekly_timesheet" attrs="{'readonly': True}" />
+                        </page>
+                        <page string="Details" invisible="True">
+                            <field context="{'employee_id': employee_id, 'user_id':user_id, 'timesheet_date_from': date_from, 'timesheet_date_to': date_to}" name="timesheet_ids" nolabel="1">
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="past_timesheets_view_form" model="ir.actions.act_window">
+        <field name="name">Previous Timesheets</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">hr_timesheet_sheet.sheet</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" eval="past_timesheet_form"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Add a new timesheet from My Current Timesheet
+          </p>
+        </field>
+    </record>
+    <record id="action_past_timesheets_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="act_window_id" ref="past_timesheets_view_form"/>
+    </record>
+    <record id="action_past_timesheets_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="past_timesheet_form"/>
+        <field name="act_window_id" ref="past_timesheets_view_form"/>
+    </record>
+
+    <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="hr_attendance.menu_hr_time_tracking" sequence="20" />
+
+    <record id="hr_timesheet_sheet_company" model="ir.ui.view">
+        <field name="name">res.company.sheet</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_company"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='timesheets_grp']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</data>
+</openerp>

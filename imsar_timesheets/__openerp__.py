@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2013 IMSAR
+#    IMSAR LLC
+#    Author: IMSAR LLC
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -17,28 +17,23 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-##############################################################################
+############################################################################################################################################################
 
 {
-    'name': "IMSAR Demo Data",
-    'version': "1.0",
-    'depends': [
-        'base', 'imsar_accounting', 'imsar_auth_ldap', 'account_routing', 'imsar_timesheets',
-        'imsar_sale', 'imsar_analytic_account', 'imsar_ui_customizations',
-        ],
-    'author': "Ben Olsen",
-    'description': "Loads demo data customized for IMSAR",
-    'category': "Uncategorized",
-    'data': [
-        'ldap_data.xml',
-        'res.partner.csv',
-        'product.template.csv',
-        'account.routing.csv',
-        'account.routing.line.csv',
-        'account.routing.subrouting.csv',
-        'account_routing_settings.xml',
-        ],
+    "name" : "IMSAR Timesheet Customizations",
+    "version" : "1.0",
+    "author" : "IMSAR LLC",
+    "category": 'Uncategorized',
+    'complexity': "normal",
+    "description": """
+    Timesheet customizations, attempting to be compliant with DCAA
+    """,
+    'website': 'http://www.imsar.com',
+    "depends" : ['account_routing','hr_timesheet','hr_timesheet_sheet',
+    ],
+    'data': ['hr_timesheet_view.xml',],
     'installable': True,
     'auto_install': False,
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

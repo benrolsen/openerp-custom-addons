@@ -32,6 +32,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="customer" eval="False"/>
             <field name="email">admin@imsar.com</field>
+            <field name="tz">America/Denver</field>
         </record>
 
         <record id="base.user_root" model="res.users">
@@ -39,7 +40,11 @@
             <field name="in_group_6">True</field>
         </record>
 
-
+        <!-- default timezone -->
+        <record id="user_default_timezone" model="ir.config_parameter">
+            <field name="key">user.default_tz</field>
+            <field name="value">America/Denver</field>
+        </record>
 
     </data>
 </openerp>

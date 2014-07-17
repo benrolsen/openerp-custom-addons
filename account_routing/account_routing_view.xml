@@ -96,7 +96,8 @@
               <p class="oe_view_nocontent_create">
                 Click to create new accounting category.
               </p><p>
-                Description here.
+                Accounting categories provide more fine-grained control of sale and purchase order lines and which
+                general account those incomes/expenses route to.
               </p>
             </field>
         </record>

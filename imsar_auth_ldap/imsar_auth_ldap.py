@@ -61,6 +61,12 @@ class IMSARLDAP(osv.Model):
 
     def get_or_create_user(self, cr, uid, conf, login, ldap_entry, context=None):
         user_id = super(IMSARLDAP, self).get_or_create_user(cr, uid, conf, login, ldap_entry, context=None)
+        user = self.pool.get('res.users').browse(cr, uid, user_id)
+        default_tz_res = self.pool.get('ir.config_parameter').search(cr, uid, [('key','=','user.default_tz')])
+        default_tz_id = default_tz_res and default_tz_res[0]
+        if default_tz_id and not user.tz:
+            default_tz = self.pool.get('ir.config_parameter').browse(cr, uid, default_tz_id).value
+            user.write({'tz': default_tz})
         if conf['create_employee']:
             self.get_or_create_employee(cr, uid, conf, login, ldap_entry, user_id)
         return user_id
