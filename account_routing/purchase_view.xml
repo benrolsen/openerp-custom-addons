@@ -9,10 +9,8 @@
         <field name="arch" type="xml">
 
             <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
-                <field name="routing_id" on_change="onchange_routing_id()"
-                        options="{'create': false, 'create_edit': false}" />
-                <field name="account_type_id" on_change="onchange_account_type_id()"
-                        options="{'create': false, 'create_edit': false}"
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" />
+                <field name="account_type_id" options="{'create': false, 'create_edit': false}"
                         domain="[('routing_filter','=',routing_id)]"/>
             </xpath>
             <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='replace'>

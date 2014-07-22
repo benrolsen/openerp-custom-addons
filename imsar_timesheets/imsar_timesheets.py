@@ -2,7 +2,9 @@ from datetime import datetime, date, timedelta
 import pytz
 
 from openerp import api
+from openerp import fields as new_fields
 from openerp.osv import fields, osv
+from openerp.exceptions import Warning
 from openerp.tools.translate import _
 
 
@@ -41,118 +43,156 @@ class imsar_hr_timesheet(osv.Model):
     _inherit = 'hr.analytic.timesheet'
     _keys_to_log = ['date','routing_id','account_id','name','unit_amount','location']
     _default_tz = 'America/Denver'
+    state = new_fields.Char(compute='_check_state')
+    logging_required = new_fields.Boolean(compute='_check_state')
 
-    def _invalid_date(self, cr, uid, ids, vals):
-        line = self.browse(cr, uid, ids)[0]
-        user = self.pool.get('res.users').browse(cr, uid, uid)
-
-        old_date_str = line['date']
-        old_date = datetime.strptime(old_date_str, '%Y-%m-%d')
-        old_deadline = old_date + timedelta(days=1, hours=11)
-        # use the edited date if it changed, otherwise use the line's date
-        new_date_str = vals.get('date') or line['date']
-        new_date = datetime.strptime(new_date_str, '%Y-%m-%d')
-        new_deadline = new_date + timedelta(days=1, hours=11)
-
+    @api.one
+    @api.depends('date', 'previous_date')
+    def _check_state(self):
         # use a timezone, but then strip out tz info for the comparison
+        user = self.env.user
         if user.tz:
             now = datetime.now(pytz.timezone(user.tz))
         else:
-            default_tz_res = self.pool.get('ir.config_parameter').search(cr, uid, [('key','=','user.default_tz')])
+            default_tz_res = self.env['ir.config_parameter'].search([('key','=','user.default_tz')])
             default_tz_id = default_tz_res and default_tz_res[0]
             if default_tz_id:
-                default_tz = self.pool.get('ir.config_parameter').browse(cr, uid, default_tz_id).value
+                default_tz = self.env['ir.config_parameter'].browse(default_tz_id).value
                 now = datetime.now(pytz.timezone(default_tz))
             else:
                 now = datetime.now(pytz.timezone(self._default_tz))
         now = now.replace(tzinfo=None)
-        # log changes if old/new date is past the deadline or in the future
-        if not (old_date < now < old_deadline) or not (new_date < now < new_deadline):
-            return True, line
+
+        # if editing an existing record and the old date not within open window, require logging regardless
+        self.logging_required = False
+        if self.previous_date:
+            prev_date = datetime.strptime(self.previous_date, '%Y-%m-%d')
+            prev_deadline = prev_date + timedelta(days=1, hours=11)
+            if not (prev_date < now < prev_deadline):
+                self.logging_required = True
+
+        # see if the selected date is within the open window
+        check_date = datetime.strptime(self.date, '%Y-%m-%d')
+        if check_date > now:
+            self.state = 'future'
+            self.logging_required = True
         else:
-            return False, line
-
-    def _date_check(self, cr, uid, ids, vals, new_record=False):
-        invalid_date, line = self._invalid_date(cr, uid, ids, vals)
-        if invalid_date:
-            body = ''
-            for key in list(set(self._keys_to_log) & set(vals.keys())):
-                val = vals.get(key)
-                key_str = line._all_columns[key].column.string
-                if isinstance(line[key], osv.Model):
-                    oldval = line[key].name
-                    newval = line[key].browse(val).name
-                else:
-                    oldval = line[key]
-                    newval = val
-                body += ('<strong>%s</strong> from <strong>%s</strong> to <strong>%s</strong><br>' % (key_str, oldval, newval))
-            if new_record:
-                subject = "New record, Line ID: %s" % line.id
+            deadline = check_date + timedelta(days=1, hours=11)
+            if (check_date < now < deadline):
+                self.state = 'open'
             else:
-                subject = 'Changes made to Line ID: %s' % line.id
-            line.sheet_id.message_post(subject=subject, body=body,)
+                self.state = 'past'
+                self.logging_required = True
 
-    def write(self, cr, uid, ids, vals, context=None):
-        self._date_check(cr, uid, ids, vals)
-        return super(imsar_hr_timesheet, self).write(cr, uid, ids, vals, context)
+    @api.multi
+    def _log_changes(self, vals, new_record=False):
+        # log any changes that are outside the valid time window
+        body = "<strong>Change explanation:</strong> {}<br>".format(vals['change_explanation_log'])
+        if new_record:
+            record = vals.get('id')
+            subject = "New record, Line ID: %s" % record.id
+            line_str = "<strong>{0}</strong> set to {2}<br>"
+            sheet = record.sheet_id
+        else:
+            subject = 'Changes made to Line ID: %s' % self.id
+            line_str = "<strong>{0}</strong> from {1} to {2}<br>"
+            sheet = self.sheet_id
+        for key in list(set(self._keys_to_log) & set(vals.keys())):
+            val = vals.get(key)
+            key_str = self._all_columns[key].column.string
+            if isinstance(self[key], osv.Model):
+                oldval = self[key].name
+                newval = self[key].browse(val).name
+            else:
+                oldval = self[key]
+                newval = val
+            body += (line_str.format(key_str, oldval, newval))
+        sheet.message_post(subject=subject, body=body,)
 
-    def create(self, cr, uid, vals, context=None):
-        id = super(imsar_hr_timesheet, self).create(cr, uid, vals, context)
-        self._date_check(cr, uid, [id], vals, new_record=True)
-        return id
+    @api.multi
+    def write(self, vals):
+        vals['previous_date'] = vals.get('date') or self.date
+        if self.logging_required:
+            vals['change_explanation_log'] = vals.get('change_explanation')
+            vals['change_explanation'] = ''
+            self._log_changes(vals)
+        return super(imsar_hr_timesheet, self).write(vals)
 
-    def unlink(self, cr, uid, ids, context=None):
-        print(ids)
-        for id in ids:
-            invalid_date, line = self._invalid_date(cr, uid, [id], {},)
-            if invalid_date:
-                subject = 'Deleted Line ID: %s' % line.id
-                body = ''
-                for key in self._keys_to_log:
-                    key_str = line._all_columns[key].column.string
-                    if isinstance(line[key], osv.Model):
-                        oldval = line[key].name
-                    else:
-                        oldval = line[key]
-                    body += 'Removed %s: %s' % (key_str, oldval)
+    @api.model
+    def create(self, vals):
+        vals['previous_date'] = vals['date']
+        vals['change_explanation_log'] = vals['change_explanation']
+        vals['change_explanation'] = ''
+        vals['id'] = super(imsar_hr_timesheet, self).create(vals)
+        if vals['id'].logging_required:
+            self._log_changes(vals, new_record=True)
+        return vals.get('id')
 
-                line.sheet_id.message_post(subject=subject, body=body,)
-        return super(imsar_hr_timesheet, self).unlink(cr, uid, ids, context)
+    @api.multi
+    def unlink(self):
+        if self.amount > 0.0 or self.unit_amount > 0.0:
+            raise Warning(_('You cannot delete a timesheet entry with more than 0 hours. Please edit the entry to 0 hours first.'))
+        if self.logging_required:
+            subject = 'Deleted Line ID: %s' % self.id
+            body = ''
+            for key in self._keys_to_log:
+                key_str = self._all_columns[key].column.string
+                if isinstance(self[key], osv.Model):
+                    oldval = self[key].name
+                else:
+                    oldval = self[key]
+                body += 'Removed <strong>%s</strong>: <strong>%s</strong><br>' % (key_str, oldval)
 
-    def onchange_date(self, cr, uid, ids, date_str, date_from_str, date_to_str, *args, **kwargs):
-        if not date_str:
-            return {}
-        date = datetime.strptime(date_str, '%Y-%m-%d')
-        from_date = datetime.strptime(date_from_str, '%Y-%m-%d')
-        to_date = datetime.strptime(date_to_str, '%Y-%m-%d')
+            self.sheet_id.message_post(subject=subject, body=body,)
+        return super(imsar_hr_timesheet, self).unlink()
+
+    @api.onchange('date')
+    def onchange_date(self):
+        date = datetime.strptime(self.date, '%Y-%m-%d')
+        from_date = datetime.strptime(self.sheet_id.date_from, '%Y-%m-%d')
+        to_date = datetime.strptime(self.sheet_id.date_to, '%Y-%m-%d')
         if from_date > date:
-            return {'value':{'date': date_from_str, },}
+            self.date = self.sheet_id.date_from
         if to_date < date:
-            return {'value':{'date': date_to_str, },}
-        return {'value':{'date': date_str, },}
+            self.date = self.sheet_id.date_to
+        self._check_state()
+        if self.state == 'future':
+            if not (self.account_id and self.account_id.timesheets_future):
+                self.routing_id = ''
 
-    # @api.multi
-    # def unlock_button(self):
-    #     env = self.env
-    #     popup_form = self.env.ref('imsar_timesheets.imsar_hr_timesheet_change_explanation', False)
-    #     return {
-    #         'name': 'Change Explanation',
-    #         'type': 'ir.actions.act_window',
-    #         'view_type': 'form',
-    #         'view_mode': 'form',
-    #         'res_model': 'hr.analytic.timesheet',
-    #         'views': [(popup_form.id, 'form')],
-    #         'view_id': popup_form.id,
-    #         'target': 'new',
-    #         'context': {},
-    #     }
+
 
     _columns = {
         'location': fields.selection([('office','Office'),('home','Home')], 'Work Location', required=True,
                                      help="Location the hours were worked",),
-        'change_explanation': fields.char('Change Explanation')
+        'change_explanation': fields.char('Change Explanation'),
+        'previous_date': fields.date('Previous Date', invisible=True),
     }
 
     _defaults = {
         'location': 'office',
+        'state': 'open',
+    }
+
+class account_analytic_account_routing(osv.Model):
+    _inherit = "account.analytic.account"
+
+    def _dummy_func(self, cr, uid, ids):
+        return ''
+
+    def _filter_future_accounts(self, cr, uid, obj, name, args, context=None):
+        state = args[0][2]
+        if state == 'future':
+            valid_accounts = self.pool.get('account.analytic.account').search(cr, uid, [('state', '!=', 'close'),('timesheets_future','=',True)])
+        else:
+            valid_accounts = self.pool.get('account.analytic.account').search(cr, uid, [('state', '!=', 'close'),])
+        return [('id','in',valid_accounts)]
+
+    _columns = {
+        'timesheets_future': fields.boolean('Allow Future Times', help="Check this field if this analytic account is allowed to have timesheet posting in the future"),
+        'timesheets_future_filter': fields.function(_dummy_func, method=True, fnct_search=_filter_future_accounts, type='char')
+    }
+
+    _defaults = {
+        'timesheets_future': False,
     }

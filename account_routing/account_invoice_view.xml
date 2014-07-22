@@ -9,16 +9,13 @@
         <field name="arch" type="xml">
 
             <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
-                <field name="routing_id" on_change="onchange_routing_id()"
-                        options="{'create': false, 'create_edit': false}" />
-                <field name="account_type_id" on_change="onchange_account_type_id(routing_id, account_type_id)"
-                        options="{'create': false, 'create_edit': false}"
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" />
+                <field name="account_type_id" options="{'create': false, 'create_edit': false}"
                         domain="[('routing_filter','=',routing_id)]"/>
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
                 <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
                     domain="[('routing_line_filter','=',(routing_id,account_type_id))]"
-                    on_change="onchange_analytic_id(routing_id, account_type_id, account_analytic_id)"
                     options="{'create': false, 'create_edit': false}" />
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
@@ -38,16 +35,13 @@
         <field name="arch" type="xml">
 
             <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
-                <field name="routing_id" on_change="onchange_routing_id()"
-                        options="{'create': false, 'create_edit': false}" />
-                <field name="account_type_id" on_change="onchange_account_type_id(routing_id, account_type_id)"
-                        options="{'create': false, 'create_edit': false}"
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" />
+                <field name="account_type_id" options="{'create': false, 'create_edit': false}"
                         domain="[('routing_filter','=',routing_id)]"/>
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='replace'>
                 <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
                     domain="[('routing_line_filter','=',(routing_id,account_type_id))]"
-                    on_change="onchange_analytic_id(routing_id, account_type_id, account_analytic_id)"
                     options="{'create': false, 'create_edit': false}" />
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>

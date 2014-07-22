@@ -38,15 +38,49 @@
                     <widget type="weekly_timesheet" attrs="{'readonly': True}" />
                 </page>
             </xpath>
+            <xpath expr="//sheet/notebook//field[@name='timesheet_ids']//tree" position="attributes">
+                <attribute name="editable"></attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='timesheet_ids']//form" position="replace">
+                <form string="Timesheet Activities">
+                    <group>
+                        <group>
+                            <field name="previous_date" invisible="True" />
+                            <field name="date" />
+                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"/>
+                            <field name="name" />
+                            <field name="state" invisible="True"/>
+                            <field name="logging_required" invisible="True"/>
+                            <field name="amount" invisible="True" />
+                            <field name="product_id" invisible="True" domain="[('type','=','service')]"/>
+                            <field name="product_uom_id" invisible="True" />
+                            <field name="general_account_id" invisible="True" />
+                            <field name="user_id" required="1" invisible="True" />
+                        </group>
+                        <group>
+                            <field name="routing_id" options="{'create': false, 'create_edit': false}" domain="[('timesheet_routing_line','!=',None)]" />
+                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" domain="[('routing_filter','=',routing_id)]" invisible="True"/>
+                            <field name="account_id" domain="[('routing_line_filter','in',(routing_id,account_type_id)),
+                                        ('timesheets_future_filter','in',state),
+                                        ('state', '!=', 'close'),('use_timesheets','=',1)]"
+                                    options="{'create': false, 'create_edit': false}" />
+                            <field name="location" options="{'create': false, 'create_edit': false}"/>
+                            <field name="journal_id" options="{'create': false, 'create_edit': false}" invisible="True"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="change_explanation" attrs="{'required':[('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
+                    </group>
+                </form>
+            </xpath>
 
-            <!-- Timesheet line items -->
+            <!-- Timesheet tree line-items -->
             <xpath expr="//sheet/notebook//field[@name='date']" position="before">
-                <!--<button name="unlock_button" type="object" icon="fa-pencil-square-o" class="oe_inline oe_stat_button" />-->
                 <field name="id" string="ID" />
             </xpath>
-            <xpath expr="//sheet/notebook//field[@name='date']" position="attributes">
-                 <attribute name="on_change">onchange_date(date, parent.date_from, parent.date_to)</attribute>
-            </xpath>
+            <!--<xpath expr="//sheet/notebook//field[@name='date']" position="attributes">-->
+                 <!--<attribute name="on_change">onchange_date(date, parent.date_from, parent.date_to)</attribute>-->
+            <!--</xpath>-->
             <xpath expr="//sheet/notebook//field[@name='unit_amount']" position="after">
                  <field name="location" />
             </xpath>
@@ -57,7 +91,7 @@
                 <attribute name="invisible">True</attribute>
             </xpath>
             <xpath expr="//sheet/notebook//field[@name='journal_id']" position="attributes">
-                <attribute name="invisible">False</attribute>
+                <attribute name="invisible">True</attribute>
             </xpath>
             <!--<xpath expr="//sheet/notebook//field[@name='user_id']" position="attributes">-->
                 <!--<attribute name="invisible">False</attribute>-->
@@ -158,6 +192,20 @@
         <field name="arch" type="xml">
             <xpath expr="//group[@name='timesheets_grp']" position="attributes">
                 <attribute name="invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- Add checkbox for future timesheet entries -->
+    <record id="account_analytic_account_future_timesheet_form" model="ir.ui.view">
+        <field name="name">account.analytic.account.invoice.form</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//div[@name="project"]' position='inside'>
+                <field name="timesheets_future" attrs="{'invisible':[('use_timesheets','=',False)]}" />
+                <label for="timesheets_future" attrs="{'invisible':[('use_timesheets','=',False)]}"/>
             </xpath>
         </field>
     </record>

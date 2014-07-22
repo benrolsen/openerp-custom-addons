@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="imsar_accounting.pto" model="account.analytic.account">
+            <field name="timesheets_future">True</field>
+        </record>
+        <record id="imsar_accounting.holiday" model="account.analytic.account">
+            <field name="timesheets_future">True</field>
+        </record>
+
+    </data>
+</openerp>

@@ -27,7 +27,7 @@
                 ],
     'author': "Ben Olsen",
     'description':  """
-                    Adds financial categories, which limit the real and analytic accounts that
+                    Adds financial routing, which limit the real and analytic accounts that
                     a given transaction (invoice line, timesheet line, etc) can select. For situations when allowing any
                     transaction to be booked to any account/analytic combination isn't reasonable.
                     """,

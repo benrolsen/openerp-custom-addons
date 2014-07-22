@@ -73,3 +73,8 @@ vehicle_repair,Vehicle Repair & Maintenance,Vehicle Repair & Maintenance,misc_ov
 aa_benefits,Benefits Expenses,Benefits Expenses,aa_indirect_expenses,Analytic View,False
 aa_benefits_employee,Employee Benefits,Employee Benefits,aa_benefits,Analytic Account,False
 aa_benefits_owner,Owner Benefits,Owner Benefits,aa_benefits,Analytic Account,False
+aa_unallowable,Unallowable Expenses,Unallowable Expenses,aa_indirect_expenses,Analytic View,False
+pto,PTO (Eligible Employees),PTO (Exempt Employee),aa_unallowable,Analytic Account,True
+idle_time,Idle Time,Idle Time,aa_unallowable,Analytic Account,True
+holiday,Holiday (Eligible Employees),Holiday (Eligible Employees),aa_unallowable,Analytic Account,True
+general_unallowable,General Unallowable,General Unallowable,aa_unallowable,Analytic Account,True
