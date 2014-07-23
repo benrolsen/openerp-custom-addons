@@ -22,6 +22,16 @@
                 <attribute name="create">false</attribute>
                 <attribute name="delete">false</attribute>
             </xpath>
+
+            <xpath expr="/form/header" position="replace">
+                <header>
+                    <button name="button_confirm" states="draft" string="Submit to Manager" type="object" class="oe_highlight"/>
+                    <button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight"/>
+                    <button name="action_set_to_draft" states="done" string="Set to Draft" type="object" />
+                    <button name="cancel" states="confirm" string="Refuse" type="workflow" groups="base.group_hr_user" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                </header>
+            </xpath>
             <xpath expr="//field[@name='employee_id']" position="attributes">
                 <attribute name="readonly">True</attribute>
             </xpath>
@@ -209,6 +219,7 @@
             </xpath>
         </field>
     </record>
+
 
 </data>
 </openerp>

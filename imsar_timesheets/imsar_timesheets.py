@@ -1,11 +1,11 @@
 from datetime import datetime, date, timedelta
 import pytz
 
-from openerp import api
+from openerp import models, api, _
+
 from openerp import fields as new_fields
 from openerp.osv import fields, osv
 from openerp.exceptions import Warning
-from openerp.tools.translate import _
 
 
 class imsar_hr_timesheet_current_open(osv.osv_memory):
@@ -15,29 +15,126 @@ class imsar_hr_timesheet_current_open(osv.osv_memory):
         if context is None:
             context = {}
         today = date.today()
+        ts_name = 'Week %d' % today.isocalendar()[1]
         ts = self.pool.get('hr_timesheet_sheet.sheet')
 
         user_ids = self.pool.get('hr.employee').search(cr, uid, [('user_id','=',uid)], context=context)
         if not len(user_ids):
             raise osv.except_osv(_('Error!'), _('Please create an employee and associate it with this user.'))
-        ids = ts.search(cr, uid, [('user_id','=',uid),('state','in',('draft','new')),('date_from','<=',today.strftime('%Y-%m-%d')), ('date_to','>=',today.strftime('%Y-%m-%d'))], context=context)
+        ids = ts.search(cr, uid, [('user_id','=',uid),('name','=',ts_name)], context=context)
 
         if len(ids) < 1:
             values = dict()
-            values['name'] = 'Week %d' % today.isocalendar()[1]
+            values['name'] = ts_name
             values['date_from'] = today - timedelta(days=today.isoweekday()-1)
             values['date_to'] = values['date_from'] + timedelta(days=6)
             values['state'] = 'draft'
-            self.pool.get('hr_timesheet_sheet.sheet').create(cr, uid, values, context)
+            ids = [self.pool.get('hr_timesheet_sheet.sheet').create(cr, uid, values, context)]
 
-        return super(imsar_hr_timesheet_current_open, self).open_timesheet(cr, uid, ids, context)
+        view = {
+            'domain': "[('user_id', '=', uid)]",
+            'name': _('Open Timesheet'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr_timesheet_sheet.sheet',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+        }
+        return view
 
 
-# class hr_timesheet_sheet(osv.Model):
-#     _inherit = 'hr_timesheet_sheet.sheet'
-#
-#     def onchange_line(self, cr, uid, ids, thing, *args, **kwargs):
-#         print(thing, args, kwargs)
+class hr_timesheet_sheet(models.Model):
+    _inherit = 'hr_timesheet_sheet.sheet'
+
+    move_id = new_fields.Many2one('account.move', string='Journal Entry',
+        readonly=True, index=True, ondelete='restrict', copy=False,
+        help="Link to the automatically generated Journal Items.")
+
+    @api.one
+    def name_get(self):
+        return (self.id, self.name)
+
+    @api.multi
+    def _make_move_lines(self):
+        ts_move_lines = list()
+        name = self.employee_id.name + ' - ' + self.name
+
+        # prepare move lines per timesheet entry
+        total_amount = 0.0
+        for line in self.timesheet_ids:
+            # if this line already has a move line associated, skip it
+            if(line.line_id.move_id):
+                continue
+            ts_move_lines.append({
+                'type': 'dest',
+                'name': line.name,
+                'price': line.amount,
+                'account_id': line.general_account_id.id,
+                'date_maturity': self.date_to,
+                'quantity': line.unit_amount,
+                'product_id': line.product_id.id,
+                'product_uom_id': line.product_uom_id.id,
+                'analytic_lines': [(4, line.line_id.id),],
+                'ref': name,
+            })
+            total_amount += line.amount
+
+        # Get the expense account for the balancing move line
+        prod = self.employee_id.product_id
+        if prod.property_account_expense:
+            ts_account_id = prod.property_account_expense.id
+        elif prod.product_tmpl_id.property_account_expense:
+            ts_account_id = prod.product_tmpl_id.property_account_expense.id
+        elif prod.product_tmpl_id.categ_id.property_account_expense_categ:
+            ts_account_id = prod.product_tmpl_id.categ_id.property_account_expense_categ.id
+        else:
+            ts_account_id = self.env['ir.property'].get('property_account_expense_categ', 'product.category').id
+            # acc_id = property_obj.get(cr, uid, 'property_account_expense_categ', 'product.category', context=context).id
+
+        if abs(total_amount) > 0.0:
+            # add one move line to balance journal entry
+            ts_move_lines.append({
+                'type': 'dest',
+                'name': name,
+                'price': -total_amount,
+                'account_id': ts_account_id,
+                'date_maturity': self.date_to,
+                'ref': name,
+            })
+
+        if ts_move_lines:
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # borrow line_get_convert() to format the lines
+            lines = [(0, 0, self.env['account.invoice'].line_get_convert(l, self.employee_id.user_id.company_id.partner_id.id, now)) for l in ts_move_lines]
+            return lines
+        else:
+            return []
+
+    @api.multi
+    def button_done(self):
+        lines = self._make_move_lines()
+        if lines:
+            name = self.employee_id.name + ' - ' + self.name
+            if not self.employee_id.user_id.company_id.general_journal_id:
+                raise Warning(_('You must set a timesheet journal in the Settings->HR Settings before you can approve timesheets.'))
+
+            move_vals = {
+                'ref': name,
+                'line_id': lines,
+                'journal_id': self.employee_id.user_id.company_id.general_journal_id.id,
+                'date': date.today(),
+                'narration': '',
+                'company_id': self.employee_id.user_id.company_id.id,
+            }
+
+            move = self.env['account.move'].with_context(self._context).create(move_vals)
+            # mark this move on this timesheet, post the journal entry, go to 'done' workflow
+            self.move_id = move.id
+            move.post()
+        self.signal_workflow('done')
+        return True
+
 
 class imsar_hr_timesheet(osv.Model):
     _inherit = 'hr.analytic.timesheet'

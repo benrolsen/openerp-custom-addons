@@ -31,7 +31,7 @@
     'website': 'http://www.imsar.com',
     "depends" : ['account_routing','hr_timesheet','hr_timesheet_sheet',
     ],
-    'data': ['hr_timesheet_view.xml',],
+    'data': ['hr_timesheet_view.xml','security/ir.model.access.csv','res_config_view.xml'],
     'installable': True,
     'auto_install': False,
 }

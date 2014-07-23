@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- Set default timesheet journal -->
+        <record id="imsar_hr_timesheet_journal" model="hr.config.settings">
+            <field name="general_journal_id" eval="ref('imsar.accounting.timesheet_journal')" />
+        </record>
+        <record id="imsar_hr_timesheet_journal_company" model="res.company">
+            <field name="general_journal_id" eval="ref('imsar.accounting.timesheet_journal')" />
+        </record>
+
+    </data>
+</openerp>

@@ -118,7 +118,11 @@ class account_analytic_account_routing(osv.Model):
         routing_line = self.env['account.routing.line'].browse(routing_line_id)
         subrouting_obj = self.env['account.routing.subrouting']
 
-        analytic = self.id
+        # because multi and onchange pass "self" in as different things
+        if isinstance(self.id, int):
+            analytic = self
+        else:
+            analytic = self.id
         subroute = False
         while not subroute:
             subroute = subrouting_obj.search([('routing_line_id','=',routing_line_id),('account_analytic_id','=',analytic.id)])

@@ -37,6 +37,7 @@
         'account.routing.line.csv',
         'account.routing.subrouting.csv',
         'account_routing_settings.xml',
+        'config_settings.xml',
         ],
     'installable': True,
     'auto_install': False,
