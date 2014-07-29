@@ -59,6 +59,9 @@
         <record id="gna_expenses_routing" model="account.routing">
             <field name="timesheet_routing_line" eval="ref('gna_labor_routing_line')" />
         </record>
+        <record id="fringe_routing" model="account.routing">
+            <field name="timesheet_routing_line" eval="ref('fringe_labor_routing_line')" />
+        </record>
 
     </data>
 </openerp>

@@ -9,4 +9,4 @@ mfg_dloh_routing,Manufacturing Overhead
 mfg_expenses_routing,Manufacturing Expenses
 sales_expenses_routing,Sales & Marketing Expenses
 gna_expenses_routing,General & Admin Expenses
-unallowable_routing,Unallowable
+fringe_routing,Fringe

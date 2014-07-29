@@ -2,16 +2,11 @@
 <openerp>
 <data>
 
-    <record id="imsar_hr_timesheet_change_explanation" model="ir.ui.view">
-        <field name="name">imsar.hr.timesheet.sheet.change.form</field>
-        <field name="model">hr.analytic.timesheet</field>
-        <field name="arch" type="xml">
-            <form string="Compose Email">
-                <field name="change_explanation" />
-            </form>
-        </field>
-    </record>
+    <!-- Reorder menu items -->
+    <menuitem id="hr.menu_hr_main" parent="hr.menu_hr_root" name="Human Resources" sequence="21"/>
 
+
+    <!-- Form for timesheet additions -->
     <record id="imsar_hr_timesheet_sheet_view" model="ir.ui.view">
         <field name="name">imsar.hr.timesheet.sheet.form</field>
         <field name="model">hr_timesheet_sheet.sheet</field>
@@ -25,11 +20,11 @@
 
             <xpath expr="/form/header" position="replace">
                 <header>
-                    <button name="button_confirm" states="draft" string="Submit to Manager" type="object" class="oe_highlight"/>
-                    <button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight"/>
-                    <button name="action_set_to_draft" states="done" string="Set to Draft" type="object" />
-                    <button name="cancel" states="confirm" string="Refuse" type="workflow" groups="base.group_hr_user" />
-                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                    <button name="button_confirm" states="draft" string="Submit to Manager" type="object" class="oe_highlight oe_right"/>
+                    <button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight oe_right"/>
+                    <!--<button name="action_set_to_draft" states="done" string="Set to Draft" type="object" />-->
+                    <button name="cancel" states="confirm" string="Refuse" type="workflow" groups="base.group_hr_user" class="oe_right"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
                 </header>
             </xpath>
             <xpath expr="//field[@name='employee_id']" position="attributes">
@@ -62,19 +57,23 @@
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
                             <field name="amount" invisible="True" />
+                            <field name="premium_amount" invisible="True" />
                             <field name="product_id" invisible="True" domain="[('type','=','service')]"/>
                             <field name="product_uom_id" invisible="True" />
                             <field name="general_account_id" invisible="True" />
                             <field name="user_id" required="1" invisible="True" />
                         </group>
                         <group>
-                            <field name="routing_id" options="{'create': false, 'create_edit': false}" domain="[('timesheet_routing_line','!=',None)]" />
-                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" domain="[('routing_filter','=',routing_id)]" invisible="True"/>
-                            <field name="account_id" domain="[('routing_line_filter','in',(routing_id,account_type_id)),
+                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                   domain="[('timesheet_routing_line','!=',None)]" />
+                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                   domain="[('routing_filter','=',routing_id)]" invisible="True"/>
+                            <field name="account_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                   domain="[('routing_line_filter','in',(routing_id,account_type_id)),
                                         ('timesheets_future_filter','in',state),
-                                        ('state', '!=', 'close'),('use_timesheets','=',1)]"
-                                    options="{'create': false, 'create_edit': false}" />
+                                        ('state', '!=', 'close'),('use_timesheets','=',1)]"/>
                             <field name="location" options="{'create': false, 'create_edit': false}"/>
+                            <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"/>
                             <field name="journal_id" options="{'create': false, 'create_edit': false}" invisible="True"/>
                         </group>
                     </group>
@@ -83,33 +82,51 @@
                     </group>
                 </form>
             </xpath>
-
+            <xpath expr="//sheet/notebook" position="after">
+                <group>
+                    <field name="employee_flsa_status" invisible="True" />
+                    <field name="subtotal_line" attrs="{'invisible':[('employee_flsa_status','=','exempt')]}"/>
+                </group>
+            </xpath>
             <!-- Timesheet tree line-items -->
             <xpath expr="//sheet/notebook//field[@name='date']" position="before">
                 <field name="id" string="ID" />
             </xpath>
-            <!--<xpath expr="//sheet/notebook//field[@name='date']" position="attributes">-->
-                 <!--<attribute name="on_change">onchange_date(date, parent.date_from, parent.date_to)</attribute>-->
-            <!--</xpath>-->
             <xpath expr="//sheet/notebook//field[@name='unit_amount']" position="after">
-                 <field name="location" />
-            </xpath>
-            <xpath expr="//sheet/notebook//field[@name='unit_amount']" position="after">
-                 <field name="change_explanation" invisible="True"/>
+                 <field name="worktype" string="Work Type" />
             </xpath>
             <xpath expr="//sheet/notebook//field[@name='to_invoice']" position="attributes">
                 <attribute name="invisible">True</attribute>
             </xpath>
-            <xpath expr="//sheet/notebook//field[@name='journal_id']" position="attributes">
-                <attribute name="invisible">True</attribute>
-            </xpath>
+            <!--<xpath expr="//sheet/notebook//field[@name='journal_id']" position="attributes">-->
+                <!--<attribute name="invisible">True</attribute>-->
+            <!--</xpath>-->
             <!--<xpath expr="//sheet/notebook//field[@name='user_id']" position="attributes">-->
                 <!--<attribute name="invisible">False</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//sheet/notebook" position="inside">-->
+                <!--<button name="button_confirm" states="draft" string="Submit to Manager" type="object" class="oe_highlight"/>-->
             <!--</xpath>-->
 
         </field>
     </record>
 
+    <!-- Timesheets to Validate -->
+    <record id="hr_timesheet_sheet_tree_simplified" model="ir.ui.view">
+        <field name="name">hr.timesheet.sheet.tree</field>
+        <field name="model">hr_timesheet_sheet.sheet</field>
+        <field name="inherit_id" ref="hr_timesheet_sheet.hr_timesheet_sheet_tree_simplified"/>
+        <field eval="10" name="priority"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="create">false</attribute>
+                <attribute name="edit">false</attribute>
+                <attribute name="delete">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Make user_id readonly everywhere -->
     <record id="imsar_hr_timesheet_line_tree" model="ir.ui.view">
         <field name="name">imsar.hr.analytic.timesheet.tree</field>
         <field name="model">hr.analytic.timesheet</field>
@@ -132,6 +149,20 @@
     </record>
 
     <!-- New forms for viewing previous timesheets -->
+    <record id="past_timesheet_tree" model="ir.ui.view">
+        <field name="name">hr_timesheet_sheet.sheet.tree</field>
+        <field name="model">hr_timesheet_sheet.sheet</field>
+        <field name="arch" type="xml">
+            <tree string="Past Timesheets" create="false" edit="false" delete="false">
+                <field name="employee_id" />
+                <field name="name" string="Week #"/>
+                <field name="date_from" />
+                <field name="date_to" />
+                <field name="total_timesheet" string="Total Time"/>
+                <field name="state" />
+            </tree>
+        </field>
+    </record>
     <record id="past_timesheet_form" model="ir.ui.view">
         <field name="name">hr_timesheet_sheet.sheet.form</field>
         <field name="model">hr_timesheet_sheet.sheet</field>
@@ -184,6 +215,7 @@
     <record id="action_past_timesheets_tree" model="ir.actions.act_window.view">
         <field name="sequence" eval="1"/>
         <field name="view_mode">tree</field>
+        <field name="view_id" ref="past_timesheet_tree"/>
         <field name="act_window_id" ref="past_timesheets_view_form"/>
     </record>
     <record id="action_past_timesheets_form" model="ir.actions.act_window.view">
@@ -206,7 +238,6 @@
         </field>
     </record>
 
-
     <!-- Add checkbox for future timesheet entries -->
     <record id="account_analytic_account_future_timesheet_form" model="ir.ui.view">
         <field name="name">account.analytic.account.invoice.form</field>
@@ -217,9 +248,26 @@
                 <field name="timesheets_future" attrs="{'invisible':[('use_timesheets','=',False)]}" />
                 <label for="timesheets_future" attrs="{'invisible':[('use_timesheets','=',False)]}"/>
             </xpath>
+            <xpath expr='//div[@name="project"]' position='after'>
+                <div attrs="{'invisible':[('use_timesheets','=',False)]}">
+                    <label for="overtime_account" string="Overtime Premium Routing Account (leave blank if none)"/>
+                    <field name="overtime_account" widget="selection" options="{'create': false, 'create_edit': false}" />
+                </div>
+            </xpath>
         </field>
     </record>
 
+    <!--Employee form view, add flsa_status -->
+    <record id="imsar_view_employee_form" model="ir.ui.view">
+        <field name="name">imsar.hr.employee.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_employee_extd_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//field[@name="journal_id"]' position='after'>
+                <field name="flsa_status" />
+            </xpath>
+        </field>
+    </record>
 
 </data>
 </openerp>

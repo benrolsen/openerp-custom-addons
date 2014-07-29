@@ -10,7 +10,20 @@
                     <div>
                         <label for="general_journal_id" attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)]}"/>
                         <field name="general_journal_id" class="oe_inline" options="{'create': false, 'create_edit': false}"
-                               attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)],'required': [('module_hr_timesheet_sheet','=',True)]}"/>
+                               attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)],'required': [('module_hr_timesheet_sheet','=',True)]}"
+                                widget="selection"/>
+                    </div>
+                    <div>
+                        <label for="regular_worktype_id" attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)]}"/>
+                        <field name="regular_worktype_id" class="oe_inline" options="{'create': false, 'create_edit': false}"
+                               attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)],'required': [('module_hr_timesheet_sheet','=',True)]}"
+                                widget="selection"/>
+                    </div>
+                    <div>
+                        <label for="overtime_worktype_id" attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)]}"/>
+                        <field name="overtime_worktype_id" class="oe_inline" options="{'create': false, 'create_edit': false}"
+                               attrs="{'invisible': [('module_hr_timesheet_sheet','=',False)],'required': [('module_hr_timesheet_sheet','=',True)]}"
+                                widget="selection"/>
                     </div>
                 </xpath>
             </field>

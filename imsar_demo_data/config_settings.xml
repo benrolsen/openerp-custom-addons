@@ -3,12 +3,29 @@
     <data noupdate="1">
 
         <!-- Set default timesheet journal -->
-        <record id="imsar_hr_timesheet_journal" model="hr.config.settings">
-            <field name="general_journal_id" eval="ref('imsar.accounting.timesheet_journal')" />
+        <record id="imsar_config_hr_timesheet_journal" model="hr.config.settings">
+            <field name="general_journal_id" eval="ref('imsar_accounting.timesheet_journal')" />
         </record>
-        <record id="imsar_hr_timesheet_journal_company" model="res.company">
-            <field name="general_journal_id" eval="ref('imsar.accounting.timesheet_journal')" />
+        <record id="base.main_company" model="res.company">
+            <field name="general_journal_id" eval="ref('imsar_accounting.timesheet_journal')" />
         </record>
+
+        <!-- Set default regular worktype -->
+        <record id="imsar_config_hr_regular_worktype" model="hr.config.settings">
+            <field name="regular_worktype_id" eval="ref('worktype_regular')" />
+        </record>
+        <record id="base.main_company" model="res.company">
+            <field name="regular_worktype_id" eval="ref('worktype_regular')" />
+        </record>
+
+        <!-- Set default overtime worktype -->
+        <record id="imsar_config_hr_overtime_worktype" model="hr.config.settings">
+            <field name="overtime_worktype_id" eval="ref('worktype_ovetime')" />
+        </record>
+        <record id="base.main_company" model="res.company">
+            <field name="overtime_worktype_id" eval="ref('worktype_ovetime')" />
+        </record>
+
 
     </data>
 </openerp>

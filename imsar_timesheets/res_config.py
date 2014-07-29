@@ -26,12 +26,16 @@ class hr_timesheet_settings(osv.osv_memory):
 
     _columns = {
         'general_journal_id': fields.many2one('account.journal', 'Timesheet Journal'),
+        'regular_worktype_id': fields.many2one('hr.timesheet.worktype', string="Regular Work Type"),
+        'overtime_worktype_id': fields.many2one('hr.timesheet.worktype', string="Overtime Work Type"),
     }
 
     def get_default_timesheet(self, cr, uid, fields, context=None):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         res = super(hr_timesheet_settings,self).get_default_timesheet(cr, uid, fields, context)
         res['general_journal_id'] = user.company_id.general_journal_id.id
+        res['regular_worktype_id'] = user.company_id.regular_worktype_id.id
+        res['overtime_worktype_id'] = user.company_id.overtime_worktype_id.id
         return res
 
     def set_default_timesheet(self, cr, uid, ids, context=None):
@@ -40,11 +44,15 @@ class hr_timesheet_settings(osv.osv_memory):
         res = super(hr_timesheet_settings,self).set_default_timesheet(cr, uid, ids, context)
         user.company_id.write({
             'general_journal_id': config.general_journal_id.id,
+            'regular_worktype_id': config.regular_worktype_id.id,
+            'overtime_worktype_id': config.overtime_worktype_id.id,
         })
 
 class res_company(osv.osv):
     _inherit = 'res.company'
     _columns = {
         'general_journal_id': fields.many2one('account.journal', 'Timesheet Journal'),
+        'regular_worktype_id': fields.many2one('hr.timesheet.worktype', string="Regular Work Type"),
+        'overtime_worktype_id': fields.many2one('hr.timesheet.worktype', string="Overtime Work Type"),
     }
 
