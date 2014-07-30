@@ -1,4 +1,4 @@
 id,name,code,company_id/id,type,analytic_journal_id/id
 sale_journal,Sale Journal,SALE,base.main_company,Sale,account.analytic_journal_sale
 purchase_journal,Purchase Journal,PRCH,base.main_company,Purchase,account.exp
-timesheet_journal,Timesheet Journal,TIME,base.main_company,General,hr_timesheet.analytic_journal
+timekeeping_journal,Timekeeping Journal,TIME,base.main_company,General,analytic_journal_timekeeping

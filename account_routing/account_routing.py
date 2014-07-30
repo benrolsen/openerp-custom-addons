@@ -254,40 +254,40 @@ class purchase_order_line(osv.Model):
         self.account_analytic_id = ''
 
 
-class hr_timesheet_line_routing(osv.Model):
-    _inherit = "hr.analytic.timesheet"
-
-    _columns = {
-        'routing_id': fields.many2one('account.routing', 'Category', required=True,),
-        'account_type_id': fields.many2one('account.account.type', 'Type', required=True,),
-    }
-
-    @api.onchange('routing_id')
-    def onchange_routing_id(self):
-        route = self.pool.get('account.routing').browse(self._cr, self._uid, self.routing_id.id)
-        self.account_type_id = route.timesheet_routing_line.account_type_id.id
-        self.general_account_id = route.timesheet_routing_line.account_id.id
-        self.account_id = ''
-
-    @api.onchange('account_type_id')
-    def onchange_account_type_id(self):
-        self.account_analytic_id = ''
-
-    @api.onchange('account_id')
-    def onchange_account_type_id(self):
-        self.journal_id = self.sheet_id.employee_id.journal_id
-        if self.routing_id and self.account_id:
-            route = self.pool.get('account.routing').browse(self._cr, self._uid, self.routing_id.id)
-            analytic = self.pool.get('account.analytic.account').browse(self._cr, self._uid, self.account_id)
-            account_id = analytic._search_for_subroute_account(routing_line_id=route.timesheet_routing_line.id)
-            self.general_account_id = account_id
-
-    @api.onchange('unit_amount')
-    def onchange_unit_amount(self):
-        res = self.pool.get('hr.analytic.timesheet').on_change_unit_amount(self._cr, self._uid, None, self.product_id.id, self.unit_amount, False, self.product_uom_id.id, self.journal_id.id, context=self._context)
-        if 'amount' in res['value']:
-            self.amount = res['value']['amount']
-        if self.unit_amount == 0.0:
-            self.amount = 0.0
-
-
+# class hr_timesheet_line_routing(osv.Model):
+#     _inherit = "hr.analytic.timesheet"
+#
+#     _columns = {
+#         'routing_id': fields.many2one('account.routing', 'Category', required=True,),
+#         'account_type_id': fields.many2one('account.account.type', 'Type', required=True,),
+#     }
+#
+#     @api.onchange('routing_id')
+#     def onchange_routing_id(self):
+#         route = self.pool.get('account.routing').browse(self._cr, self._uid, self.routing_id.id)
+#         self.account_type_id = route.timesheet_routing_line.account_type_id.id
+#         self.general_account_id = route.timesheet_routing_line.account_id.id
+#         self.account_id = ''
+#
+#     @api.onchange('account_type_id')
+#     def onchange_account_type_id(self):
+#         self.account_analytic_id = ''
+#
+#     @api.onchange('account_id')
+#     def onchange_account_type_id(self):
+#         self.journal_id = self.sheet_id.employee_id.journal_id
+#         if self.routing_id and self.account_id:
+#             route = self.pool.get('account.routing').browse(self._cr, self._uid, self.routing_id.id)
+#             analytic = self.pool.get('account.analytic.account').browse(self._cr, self._uid, self.account_id)
+#             account_id = analytic._search_for_subroute_account(routing_line_id=route.timesheet_routing_line.id)
+#             self.general_account_id = account_id
+#
+#     @api.onchange('unit_amount')
+#     def onchange_unit_amount(self):
+#         res = self.pool.get('hr.analytic.timesheet').on_change_unit_amount(self._cr, self._uid, None, self.product_id.id, self.unit_amount, False, self.product_uom_id.id, self.journal_id.id, context=self._context)
+#         if 'amount' in res['value']:
+#             self.amount = res['value']['amount']
+#         if self.unit_amount == 0.0:
+#             self.amount = 0.0
+#
+#

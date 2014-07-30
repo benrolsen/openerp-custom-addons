@@ -27,7 +27,7 @@
     'complexity': "normal",
     "description": """Analytic Account customizations.""",
     'website': 'http://www.imsar.com',
-    "depends" : ['base', "account", "analytic", "account_analytic_analysis", "analytic_contract_hr_expense"],
+    "depends" : ['base', "account", "analytic",],
     "data" : ['analytic_view.xml'],
     'installable': True,
     'auto_install': False,
