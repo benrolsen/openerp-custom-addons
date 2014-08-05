@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="property_rule_timekeeping_sheet" model="ir.rule">
+            <field name="name">Timekeeping Sheet View</field>
+            <field name="model_id" ref="model_hr_timekeeping_sheet"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4,ref('base.group_user'))]"/>
+        </record>
+
+        <record id="property_rule_timekeeping_line" model="ir.rule">
+            <field name="name">Timekeeping Line View</field>
+            <field name="model_id" ref="model_hr_timekeeping_line"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4,ref('base.group_user'))]"/>
+        </record>
+
+    </data>
+</openerp>

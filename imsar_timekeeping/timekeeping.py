@@ -1,0 +1,512 @@
+from datetime import datetime, date, timedelta
+from collections import defaultdict
+import pytz
+import json
+
+from openerp import models, fields, api, _
+from openerp.exceptions import Warning
+import openerp.addons.decimal_precision as dp
+
+# helper function since sheets are primarily based off week number
+def week_start_date(year, week):
+    if not year:
+        year = date.today().year
+    if not week:
+        week = date.today().isocalendar()[1]
+    d = date(year, 1, 1)
+    delta_days = d.isoweekday() - 1
+    delta_weeks = week
+    if year == d.isocalendar()[0]:
+        delta_weeks -= 1
+    delta = timedelta(days=-delta_days, weeks=delta_weeks)
+    return d + delta
+
+# helper function to get now in the correct timezone
+def get_now_tz(user, config):
+    _default_tz = 'America/Denver'
+    if user.tz:
+        now = datetime.now(pytz.timezone(user.tz))
+    else:
+        default_tz_res = config.search([('key','=','user.default_tz')])
+        default_tz_id = default_tz_res and default_tz_res[0]
+        if default_tz_id:
+            default_tz = config.browse(default_tz_id).value
+            now = datetime.now(pytz.timezone(default_tz))
+        else:
+            now = datetime.now(pytz.timezone(_default_tz))
+    # use a timezone, but then strip out tz info for the comparison
+    return now.replace(tzinfo=None)
+
+
+class hr_timekeeping_sheet(models.Model):
+    _name = 'hr.timekeeping.sheet'
+    _inherit = ['mail.thread']
+    _description = 'Timekeeping Sheet'
+    _order = 'year,week_number desc'
+
+    name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
+    type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
+    year = fields.Integer(string="Year")
+    week_number = fields.Integer(string="Week Number")
+    date_from = fields.Date(compute='_computed_fields', readonly=True)
+    date_to = fields.Date(compute='_computed_fields', readonly=True)
+    state = fields.Selection([('draft','Open'),('confirm','Waiting Approval'),('done','Approved')],
+                             'Status', select=True, required=True, readonly=True,)
+    uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
+    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
+    employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
+    employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
+    line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
+    subtotal_line = fields.Char(string="Subtotals: ", compute='_compute_subtotals')
+    subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
+    total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
+    move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
+
+    @api.one
+    @api.depends('line_ids')
+    def _compute_subtotals(self):
+        totals = defaultdict(float)
+        worktype_names = dict()
+        total_time = 0.0
+        for line in self.line_ids:
+            worktype = self.env['hr.timekeeping.worktype'].browse(line.worktype.id)
+            worktype_names[line.worktype.id] = worktype.name
+            if line.analytic_account_id not in worktype.nonexempt_limit_ignore_ids:
+                totals[line.worktype.id] += line.unit_amount
+            total_time += line.unit_amount
+        self.subtotal_line = ", ".join(["%s: %s" % (worktype_names[key], val) for key, val in totals.items()])
+        self.subtotal_json = json.dumps(totals)
+        self.total_time = total_time
+
+    @api.one
+    @api.constrains('line_ids')
+    def _check_subtotals(self):
+        # don't constrain addendum worksheets
+        if self.type != 'regular':
+            return
+        subtotals = json.loads(self.subtotal_json)
+        regular_worktype_id = str(self.employee_id.user_id.company_id.regular_worktype_id.id)
+        overtime_worktype_id = str(self.employee_id.user_id.company_id.overtime_worktype_id.id)
+        regular = subtotals.get(regular_worktype_id, 0.0)
+        overtime = subtotals.get(overtime_worktype_id, 0.0)
+        if self.employee_flsa_status != 'exempt':
+            if regular > 40.0:
+                raise Warning(_("You cannot log more than 40 hours of regular time."))
+            if overtime > 0.0 and regular < 40.0:
+                raise Warning(_("You cannot log overtime without having 40 hours of regular time first."))
+        else:
+            if overtime > 0.0:
+                raise Warning(_("Exempt employees are not eligible for overtime."))
+
+    @api.one
+    @api.depends('week_number', 'year', 'user_id')
+    def _computed_fields(self):
+        self.name = "Week {} of {}".format(self.week_number, self.year)
+        self.date_from = week_start_date(self.year, self.week_number)
+        self.date_to = week_start_date(self.year, self.week_number) + timedelta(days=6)
+        self.uid_is_user_id = (self.user_id.id == self._uid)
+
+    @api.multi
+    def button_confirm(self):
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submitted for approval"
+        body = "{} submitted timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
+        self.message_post(subject=subject, body=body,)
+        self.signal_workflow('confirm')
+        return True
+
+    @api.multi
+    def button_cancel(self):
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submission rejected"
+        body = "{} rejected timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
+        self.message_post(subject=subject, body=body,)
+        self.signal_workflow('cancel')
+        return True
+
+    @api.multi
+    def button_set_to_draft(self):
+        self.write({'state': 'draft'})
+        self.create_workflow()
+        return True
+
+    @api.multi
+    def button_addendum(self):
+        ctx = {'regular_timesheet_id': self.id}
+        ctx.update(self._context)
+        # make sure to get v7 version of ir.actions.server with self.pool.get
+        action_server_obj = self.pool.get('ir.actions.server')
+        action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_addendum_open').id
+        return action_server_obj.run(self._cr, self._uid, action_id, context=ctx)
+
+    @api.multi
+    def _make_move_lines(self):
+        ts_move_lines = list()
+        name = self.employee_id.name + ' - ' + self.name
+        partner_id = self.employee_id.user_id.company_id.partner_id.id
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # prepare move lines per timesheet entry
+        total_amount = 0.0
+        for line in self.line_ids:
+            # if this line already has a move line associated, skip it
+            if(line.move_line_ids):
+                continue
+            temp_line = {
+                'type': 'dest',
+                'quantity': line.unit_amount,
+                'account_analytic_id': line.analytic_account_id.id,
+                'date_maturity': date.today(),
+                'ref': name,
+            }
+            # make a move line for the base amount
+            temp_line.update({
+                'name': line.name,
+                'price': line.amount,
+                'account_id': line.account_id.id,
+            })
+            # adding values post conversion takes an extra step
+            converted_line = self.env['account.invoice'].line_get_convert(temp_line, partner_id, now)
+            converted_line.update({'timekeeping_line': line.id})
+            ts_move_lines.append((0, 0, converted_line))
+            total_amount += line.amount
+
+            # add another line for the premium addition, if any
+            if line.premium_amount != 0.0:
+                # some contracts don't allow overtime premiums to be charged to them, so deal with that here
+                overtime_worktype_id = self.user_id.company_id.overtime_worktype_id.id
+                contract_overtime_routing = line.analytic_account_id.overtime_account
+                if contract_overtime_routing and (line.worktype.id == overtime_worktype_id):
+                    final_account_id = contract_overtime_routing.id
+                else:
+                    final_account_id = line.account_id.id
+                temp_line.update({
+                    'name': line.name + ' - ' + line.worktype.name + ' premium',
+                    'price': line.premium_amount,
+                    'account_id': final_account_id,
+                })
+                converted_line = self.env['account.invoice'].line_get_convert(temp_line, partner_id, now)
+                converted_line.update({'timekeeping_line': line.id})
+                ts_move_lines.append((0, 0, converted_line))
+                total_amount += line.premium_amount
+
+        # Get the liability account for the balancing move line
+        expense_account = self.user_id.company_id.wage_account_id.id
+
+        if total_amount != 0.0:
+            # add one move line to balance journal entry
+            balance_line = {
+                'type': 'dest',
+                'name': name,
+                'price': -total_amount,
+                'account_id': expense_account,
+                'date_maturity': date.today(),
+                'ref': name,
+            }
+            converted_line = self.env['account.invoice'].line_get_convert(balance_line, partner_id, now)
+            ts_move_lines.append((0, 0, converted_line))
+
+        if ts_move_lines:
+            return ts_move_lines
+        else:
+            return []
+
+    @api.multi
+    def button_done(self):
+        lines = self._make_move_lines()
+        if lines:
+            name = self.employee_id.name + ' - ' + self.name
+            if not self.employee_id.user_id.company_id.general_journal_id:
+                raise Warning(_('You must set a timesheet journal in the Settings->HR Settings before you can approve timesheets.'))
+
+            move_vals = {
+                'ref': name,
+                'line_id': lines,
+                'journal_id': self.employee_id.user_id.company_id.general_journal_id.id,
+                'date': date.today(),
+                'narration': '',
+                'company_id': self.employee_id.user_id.company_id.id,
+            }
+
+            move = self.env['account.move'].with_context(self._context).create(move_vals)
+            # mark this move on this timesheet, post the journal entry, go to 'done' workflow
+            self.move_id = move.id
+            move.post()
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submission approved"
+        body = "{} approved timesheet on {}".format(self.env.user.name, now.strftime('%c'))
+        self.message_post(subject=subject, body=body,)
+        self.signal_workflow('done')
+        return True
+
+
+class hr_timekeeping_line(models.Model):
+    _name = 'hr.timekeeping.line'
+    _keys_to_log = ['date','routing_id','account_id','name','unit_amount','location']
+    _description = 'Timekeeping Sheet Line'
+    _order = 'date desc'
+
+    # model columns
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
+    name = fields.Char('Description', required=True)
+    unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
+    amount = fields.Float('Amount', required=True, digits_compute=dp.get_precision('Account'))
+    premium_amount = fields.Float(string='Premium Amount', required=True, help='The additional amount based on work type, like overtime', digits_compute=dp.get_precision('Account'))
+    date = fields.Date(string='Date', required=True)
+    previous_date = fields.Date(string='Previous Date', invisible=True)
+    day_name = fields.Char(compute='_day_name', string='Day')
+    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
+    account_type_id = fields.Many2one('account.account.type', 'Type', required=True,)
+    account_id = fields.Many2one('account.account', 'General Account', required=True, ondelete='restrict', select=True,)
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, ondelete='restrict', select=True,)
+    location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, help="Location the hours were worked",)
+    change_explanation = fields.Char(string='Change Explanation')
+    state = fields.Char(compute='_check_state') # 'past','open','future'
+    logging_required = fields.Boolean(compute='_check_state')
+    worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, )
+    move_line_ids = fields.One2many('account.move.line', 'timekeeping_line', string='Journal Line Item', readonly=True, ondelete='restrict',)
+
+    @api.one
+    @api.depends('date')
+    def _day_name(self):
+        self.day_name = fields.Date.from_string(self.date).strftime('%A')
+
+    @api.one
+    @api.depends('date', 'previous_date')
+    def _check_state(self):
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+
+        # if editing an existing record and the old date not within open window, require logging regardless
+        self.logging_required = False
+        if self.previous_date:
+            prev_date = datetime.strptime(self.previous_date, '%Y-%m-%d')
+            prev_deadline = prev_date + timedelta(days=1, hours=11)
+            if not (prev_date < now < prev_deadline):
+                self.logging_required = True
+
+        # see if the selected date is within the open window
+        check_date = datetime.strptime(self.date, '%Y-%m-%d')
+        if check_date > now:
+            self.state = 'future'
+            self.logging_required = True
+        else:
+            deadline = check_date + timedelta(days=1, hours=11)
+            if (check_date < now < deadline):
+                self.state = 'open'
+            else:
+                self.state = 'past'
+                self.logging_required = True
+
+    @api.multi
+    def _log_changes(self, vals, new_record=False):
+        # log any changes that are outside the valid time window
+        body = "<strong>Change explanation:</strong> {}<br>".format(vals['change_explanation_log'])
+        if new_record:
+            record = vals.get('id')
+            subject = "New record, Line ID: %s" % record.id
+            line_str = "<strong>{0}</strong> set to {2}<br>"
+            sheet = record.sheet_id
+        else:
+            subject = 'Changes made to Line ID: %s' % self.id
+            line_str = "<strong>{0}</strong> from {1} to {2}<br>"
+            sheet = self.sheet_id
+        for key in list(set(self._keys_to_log) & set(vals.keys())):
+            val = vals.get(key)
+            key_str = self._all_columns[key].column.string
+            if isinstance(self[key], models.Model):
+                oldval = self[key].name
+                newval = self[key].browse(val).name
+            else:
+                oldval = self[key]
+                newval = val
+            body += (line_str.format(key_str, oldval, newval))
+        sheet.message_post(subject=subject, body=body,)
+
+    @api.multi
+    def write(self, vals):
+        vals['previous_date'] = vals.get('date') or self.date
+        if self.logging_required:
+            vals['change_explanation_log'] = vals.get('change_explanation')
+            vals['change_explanation'] = ''
+            self._log_changes(vals)
+        return super(hr_timekeeping_line, self).write(vals)
+
+    @api.model
+    def create(self, vals):
+        vals['previous_date'] = vals['date']
+        vals['change_explanation_log'] = vals['change_explanation']
+        vals['change_explanation'] = ''
+        vals['id'] = super(hr_timekeeping_line, self).create(vals)
+        if vals['id'].logging_required:
+            self._log_changes(vals, new_record=True)
+        return vals.get('id')
+
+    @api.multi
+    def unlink(self):
+        if self.amount > 0.0 or self.unit_amount > 0.0:
+            raise Warning(_('You cannot delete a timesheet entry with more than 0 hours. Please edit the entry to 0 hours first.'))
+        if self.logging_required:
+            subject = 'Deleted Line ID: %s' % self.id
+            body = ''
+            for key in self._keys_to_log:
+                key_str = self._all_columns[key].column.string
+                if isinstance(self[key], models.Model):
+                    oldval = self[key].name
+                else:
+                    oldval = self[key]
+                body += 'Removed <strong>%s</strong>: <strong>%s</strong><br>' % (key_str, oldval)
+
+            self.sheet_id.message_post(subject=subject, body=body,)
+        return super(hr_timekeeping_line, self).unlink()
+
+    @api.onchange('unit_amount')
+    def onchange_unit_amount(self):
+        self.amount = self.sheet_id.employee_id.wage_rate * self.unit_amount
+
+    @api.onchange('amount','worktype')
+    def onchange_premium(self):
+        if self.worktype:
+            self.premium_amount = self.amount * self.worktype.premium_rate
+        else:
+            self.premium_amount = 0.0
+
+    @api.onchange('date')
+    def onchange_date(self):
+        date = datetime.strptime(self.date, '%Y-%m-%d')
+        from_date = datetime.strptime(self.sheet_id.date_from, '%Y-%m-%d')
+        to_date = datetime.strptime(self.sheet_id.date_to, '%Y-%m-%d')
+        if from_date > date:
+            self.date = self.sheet_id.date_from
+        if to_date < date:
+            self.date = self.sheet_id.date_to
+        self._check_state()
+        if self.state == 'future':
+            future_analytics = self.env.user.company_id.future_analytic_ids
+            if not (self.analytic_account_id and self.analytic_account_id in future_analytics.ids):
+                self.routing_id = ''
+
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        route = self.env['account.routing'].browse(self.routing_id.id)
+        self.account_type_id = route.timesheet_routing_line.account_type_id.id
+        self.account_id = route.timesheet_routing_line.account_id.id
+        self.analytic_account_id = ''
+
+    @api.onchange('analytic_account_id')
+    def onchange_account_type_id(self):
+        if self.routing_id and self.account_id:
+            route = self.env['account.routing'].browse(self.routing_id.id)
+            analytic = self.env['account.analytic.account'].browse(self.analytic_account_id.id)
+            self.account_id = analytic._search_for_subroute_account(routing_line_id=route.timesheet_routing_line.id)
+
+    @api.model
+    def _get_default_worktype(self):
+        return self.env.user.company_id.regular_worktype_id.id
+
+    _defaults = {
+        'date': fields.Date.today(),
+        'location': 'office',
+        'state': 'open',
+        'worktype': _get_default_worktype,
+        'premium_amount': 0.0,
+    }
+
+
+class employee(models.Model):
+    _inherit = 'hr.employee'
+    flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
+    wage_rate = fields.Float('Hourly Wage Rate', required=True,)
+
+    _defaults = {
+        'flsa_status': 'exempt',
+        'wage_rate': 0.0,
+    }
+
+
+# new model to deal with premium pay rates (overtime, danger, etc)
+class hr_timesheet_worktype(models.Model):
+    _name = 'hr.timekeeping.worktype'
+
+    name = fields.Char('Name', required=True)
+    active = fields.Boolean('Active')
+    premium_rate = fields.Float('Additional Premium Rate', required=True,
+                        help="The additional multiplier to be added on top of the base pay. For example, overtime would be 0.5, for a 50% premium.")
+    nonexempt_limit = fields.Integer('Non-exempt Limit (Hours)',
+                        help="Weekly limit of hours for this type for non-exempt employees. Enter 0 or leave blank for no limit.")
+    nonexempt_limit_ignore_ids = fields.Many2many('account.analytic.account','premium_analytic_rel','limit_id','account_analytic_id','Ignore Analytic Accounts',
+                        help="Enter any analytic accounts this limit should ignore when counting hours worked (like PTO).",
+                        domain="[('state','!=','closed'),('use_timesheets','=',1)]")
+
+    _defaults = {
+        'active': True,
+        'premium_rate': 0.0,
+    }
+
+
+# set up m2m to record when a user has reviewed an analytic's description
+class res_users(models.Model):
+    _inherit = "res.users"
+
+    analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
+    auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
+
+
+class account_analytic_account(models.Model):
+    _inherit = "account.analytic.account"
+
+    overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
+    timesheets_future_filter = fields.Char(store=False, compute='_dummy_func', search='_filter_future_accounts')
+    user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
+    user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
+    require_review = fields.Boolean(string="Require user review before timesheet use", default=False)
+    dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
+    limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
+    auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
+
+    @api.one
+    def _dummy_func(self):
+        return ''
+
+    def _filter_future_accounts(self, operator, value):
+        if value == 'future':
+            valid_accounts = self.env.user.company_id.future_analytic_ids
+        else:
+            valid_accounts = self.env['account.analytic.account'].search([('state', '!=', 'close'),])
+        return [('id','in',valid_accounts.ids)]
+
+    @api.one
+    @api.depends('user_review_ids')
+    def _user_has_reviewed(self):
+        if self.env.user and self.user_review_ids and (self.env.user in self.user_review_ids):
+            self.user_has_reviewed = True
+        else:
+            self.user_has_reviewed = False
+
+    def _search_user_has_reviewed(self, operator, value):
+        if value == False:
+            reviewed_ids = self.search([('user_review_ids','not in',self._uid)])
+        elif value == True:
+            reviewed_ids = self.search([('user_review_ids','in',self._uid)])
+        else:
+            reviewed_ids = self.search([])
+        # this is actually part of auth users, not reviewed users, but I didn't want to make yet another
+        # field and search just for one line, and auth_users always applies in this case
+        auth_ids = reviewed_ids.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
+        intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
+        return [('id','in', list(intersection))]
+
+    @api.multi
+    def action_button_sign(self):
+        # this would take you back to the tree view, but the header breadcrumbs get ridiculous
+        # resource = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.analytic_review_view',raise_if_not_found=True)
+        # res = self.pool.get('ir.actions.act_window.view').read(self._cr, self._uid, [resource], context=self._context)[0]
+        # this is a useful way to reload the page that I didn't end up needing
+        # res = { 'type': 'ir.actions.client', 'tag': 'reload' }
+        self.sudo().write({'user_review_ids': [(4,self.env.user.id)]})
+        return True
+
+class account_move_line(models.Model):
+    _inherit = "account.move.line"
+
+    timekeeping_line = fields.Many2one('hr.timekeeping.line', 'Timekeeping Line', ondelete='restrict')

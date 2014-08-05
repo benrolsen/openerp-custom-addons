@@ -20,7 +20,7 @@
 ############################################################################################################################################################
 
 {
-    "name" : "IMSAR Timesheet Customizations",
+    "name" : "IMSAR DCAA Timekeeping",
     "version" : "1.0",
     "author" : "IMSAR LLC",
     "category": 'Uncategorized',
@@ -29,17 +29,20 @@
     Timesheet customizations, attempting to be compliant with DCAA
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['account_routing','hr_timesheet','hr_timesheet_sheet',
+    "depends" : ['account_routing','imsar_accounting',
     ],
     'data': [
-            'hr_timesheet_view.xml',
-            'hr_timesheet_worktype_view.xml',
-            'security/ir.model.access.csv',
-            'security/hr_timesheet_security.xml',
             'res_config_view.xml',
+            'analytic_view.xml',
+            'security/hr_timekeeping_security.xml',
+            'security/hr_timekeeping_access.xml',
+            'timekeeping_workflow.xml',
+            'timekeeping_worktype_view.xml',
+            'timekeeping_view.xml',
+            'timekeeping_review_view.xml',
+            'views/hr_timekeeping_sheet.xml',
             ],
-    'installable': False,
+    'qweb': ['static/src/xml/timesheet.xml',],
+    'installable': True,
     'auto_install': False,
 }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

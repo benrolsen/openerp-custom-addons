@@ -2,12 +2,20 @@
 <openerp>
     <data noupdate="1">
 
-        <!-- Set default timesheet journal -->
-        <record id="imsar_config_hr_timesheet_journal" model="hr.config.settings">
-            <field name="general_journal_id" eval="ref('imsar_accounting.timesheet_journal')" />
+        <!-- Set default wage liability account -->
+        <record id="imsar_config_hr_timesheet_wage_account" model="hr.config.settings">
+            <field name="wage_account_id" ref="imsar_accounting.payroll_liabilities" />
         </record>
         <record id="base.main_company" model="res.company">
-            <field name="general_journal_id" eval="ref('imsar_accounting.timesheet_journal')" />
+            <field name="wage_account_id" ref="imsar_accounting.payroll_liabilities" />
+        </record>
+
+        <!-- Set default timesheet journal -->
+        <record id="imsar_config_hr_timesheet_journal" model="hr.config.settings">
+            <field name="general_journal_id" ref="imsar_accounting.timekeeping_journal" />
+        </record>
+        <record id="base.main_company" model="res.company">
+            <field name="general_journal_id" ref="imsar_accounting.timekeeping_journal" />
         </record>
 
         <!-- Set default regular worktype -->

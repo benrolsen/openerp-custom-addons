@@ -20,7 +20,7 @@ current_liability,200,Current Liabilities,view,l10n_us.user_type_view,liability,
 payable,2000,Accounts Payable,view,l10n_us.user_type_view,current_liability,FALSE
 accounts_payable,200011,Default Accounts Payable,payable,l10n_us.user_type_account_payable,payable,TRUE
 credit_cards,20001,Credit Cards,view,l10n_us.user_type_view,current_liability,FALSE
-payroll_liabilities,20002,Payroll Liabilities,view,l10n_us.user_type_view,current_liability,FALSE
+payroll_liabilities,20002,Payroll Liabilities,other,data_account_type_liability,current_liability,FALSE
 benefit_liabilities,20003,Employee Benefit Liabilities,view,l10n_us.user_type_view,current_liability,FALSE
 short_term_notes_payable,20004,Short Term Notes Payable,view,l10n_us.user_type_view,current_liability,FALSE
 other_current_liability,20005,Other Current Liabilities,view,l10n_us.user_type_view,current_liability,FALSE

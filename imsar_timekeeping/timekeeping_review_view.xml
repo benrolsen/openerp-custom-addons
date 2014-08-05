@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Analytic accounts to review -->
+        <record id="analytic_review_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.review.tree</field>
+            <field name="model">account.analytic.account</field>
+            <field name="arch" type="xml">
+                <tree string="Analytics to review" create="false" edit="false" delete="false">
+                    <field name="name" />
+                    <field name="type" />
+                    <!--<field name="user_review_ids" />-->
+                    <field name="user_has_reviewed" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form to record user has reviewed description -->
+        <record id="analytic_review_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.review.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Description" create="false" edit="false" delete="false">
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="user_has_reviewed" invisible="True"/>
+                    </group>
+                    <group attrs="{'invisible':[('user_has_reviewed','=',True)]}">
+                        <label for="button_sign" string="I have read and understand the scope of this task"/>
+                        <button name="action_button_sign" string="Sign" type="object" class="oe_inline"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="analytic_review_view" model="ir.actions.act_window">
+            <field name="name">Analytics List (Tasks)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="analytic_review_form"/>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('require_review','=',True)]</field>
+        </record>
+        <record id="action_analytic_review_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="analytic_review_tree"/>
+            <field name="act_window_id" ref="analytic_review_view"/>
+        </record>
+
+        <menuitem id="menu_analytic_review_view" action="analytic_review_view" parent="menu_hr_timekeeping" sequence="30" />
+
+
+    </data>
+</openerp>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_analytic_type_user,account.account.type.user,account.model_account_account_type,base.group_user,1,0,0,0
+access_timekeeping_worktype_user,hr.timekeeping.worktype,model_hr_timekeeping_worktype,base.group_user,1,0,0,0
+access_timekeeping_sheet_user,hr.timekeeping.sheet,model_hr_timekeeping_sheet,base.group_user,1,0,0,0

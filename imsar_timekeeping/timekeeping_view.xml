@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="hr_timekeeping_sheet_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.sheet.form</field>
+            <field name="model">hr.timekeeping.sheet</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet" create="false" delete="false">
+                <header>
+                    <button name="button_confirm" string="Submit to Manager" type="object" class="oe_highlight oe_right"
+                            attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
+                    <button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight oe_right"/>
+                    <button name="button_cancel" states="confirm" string="Reject" type="object" groups="base.group_hr_user" class="oe_right"/>
+                    <!--<button name="button_set_to_draft" string="Set to Draft" type="object" groups="base.group_hr_user" class="oe_right"-->
+                            <!--attrs="{'invisible':['|',('state','!=','done'),('move_id','=',None)]}"/>-->
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="employee_id" class="oe_inline" readonly="True"/></h1>
+                        <field name="uid_is_user_id" invisible="True"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <label for="date_from" string="Timesheet Period"/>
+                            <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
+                        </group>
+                        <group>
+                            <field name="employee_flsa_status"/>
+                            <field name="type"/>
+                            <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
+                        </group>
+                    </group>
+                    <group attrs="{'invisible':['|',('state','!=','done'),('type','!=','regular')]}">
+                        <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
+                    </group>
+                    <notebook>
+                        <page string="Details">
+                            <!--<field context="{'employee_id': employee_id, 'user_id':user_id, 'timesheet_date_from': date_from, 'timesheet_date_to': date_to}" name="line_ids" nolabel="1">-->
+                            <field name="line_ids" nolabel="1" attrs="{'readonly':[('uid_is_user_id','!=',True)]}">
+                                <tree string="Timesheet Activities">
+                                    <field name="date"/>
+                                    <field name="day_name"/>
+                                    <field name="routing_id"/>
+                                    <field name="analytic_account_id"/>
+                                    <field name="name"/>
+                                    <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
+                                    <field name="worktype"/>
+                                </tree>
+                                <form string="Timesheet Activities">
+                                    <group>
+                                        <group>
+                                            <field name="date"/>
+                                            <field name="name"/>
+                                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"/>
+                                            <field name="state" invisible="True"/>
+                                            <field name="logging_required" invisible="True"/>
+                                            <field name="amount" invisible="True" />
+                                            <field name="premium_amount" invisible="True" />
+                                            <field name="account_id" invisible="True" />
+                                        </group>
+                                        <group>
+                                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                                   domain="[('timesheet_routing_line','!=',None)]" />
+                                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                                   domain="[('routing_filter','=',routing_id)]" invisible="True"/>
+                                            <field name="analytic_account_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                                   domain="[('routing_line_filter','in',(routing_id,account_type_id)),
+                                                            ('timesheets_future_filter','in',state),
+                                                            ('user_has_reviewed','=',True)]"/>
+                                            <field name="location" options="{'create': false, 'create_edit': false}"/>
+                                            <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="change_explanation" attrs="{'required':[('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <!--<page string="Summary">-->
+                            <!--<widget type="weekly_timesheet" attrs="{'readonly': True}">-->
+                            <!--</widget>-->
+                        <!--</page>-->
+                    </notebook>
+                    <group>
+                        <field name="subtotal_line" attrs="{'invisible':[('employee_flsa_status','=','exempt')]}"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids" widget="mail_thread"/>
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                </div>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- search filters -->
+        <record id="view_hr_timekeeping_sheet_filter" model="ir.ui.view">
+            <field name="name">hr.timekeeping.sheet.filter</field>
+            <field name="model">hr.timekeeping.sheet</field>
+            <field name="arch" type="xml">
+                <search string="Search Timesheet">
+                    <field name="week_number"/>
+                    <filter name="draft" string="In Draft" domain="[('state','=','draft')]"/>
+                    <filter name="to_approve" string="To Approve" domain="[('state','=','confirm')]"/>
+                    <filter name="my_user_id" string="My Timesheets" domain="[('user_id','=',uid)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Employees" icon="terp-personal" domain="[]" context="{'group_by':'employee_id'}"/>
+                        <filter string="Week Number" icon="terp-personal" domain="[]" context="{'group_by':'week_number'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Menus and stuff -->
+        <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user,base.group_hr_user,base.group_hr_manager"/>
+        <menuitem id="hr.menu_hr_main" name="Human Resources" parent="hr.menu_hr_root" sequence="10"/>
+
+        <!-- default filter of to approve -->
+        <record id="act_hr_timekeeping_to_approve" model="ir.actions.act_window">
+            <field name="name">Timesheets to Validate</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="view_type">form</field>
+            <field name="view_id" eval="False"/>
+            <field name="context">{'search_default_to_approve':1}</field>
+            <field name="search_view_id" ref="view_hr_timekeeping_sheet_filter"/>
+        </record>
+
+        <menuitem id="menu_act_hr_timekeeping_to_approve" action="act_hr_timekeeping_to_approve" parent="menu_hr_timekeeping" sequence="2" groups="base.group_hr_user"/>
+
+        <!-- My Current Timesheet -->
+        <record id="action_hr_timekeeping_current_open" model="ir.actions.server">
+            <field name="sequence" eval="5"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_hr_timekeeping_current_open"/>
+            <field name="code">action = pool.get('hr.timekeeping.current.open').open_timesheet(cr, uid, None, context)</field>
+            <field name="condition">True</field>
+            <field name="name">My Current Timesheet</field>
+        </record>
+        <menuitem id="menu_act_hr_timekeeping_my_current" action="action_hr_timekeeping_current_open" parent="menu_hr_timekeeping" sequence="1"/>
+
+        <!-- Addendum Timesheet -->
+        <record id="action_hr_timekeeping_addendum_open" model="ir.actions.server">
+            <field name="sequence" eval="5"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_hr_timekeeping_addendum_open"/>
+            <field name="code">action = pool.get('hr.timekeeping.addendum.open').open_addendum(cr, uid, context)</field>
+            <field name="condition">True</field>
+            <field name="name">Timesheet Addendum</field>
+        </record>
+
+        <!-- Previous timesheets -->
+        <record id="past_timesheet_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.sheet.tree</field>
+            <field name="model">hr.timekeeping.sheet</field>
+            <field name="arch" type="xml">
+                <tree string="Past Timesheets" create="false" edit="false" delete="false">
+                    <field name="employee_id" />
+                    <field name="name" />
+                    <field name="total_time"/>
+                    <field name="type" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="past_timesheets_view_form" model="ir.actions.act_window">
+            <field name="name">Previous Timesheets</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
+            <field name="context">{'search_default_my_user_id':1}</field>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Add a new timesheet from My Current Timesheet
+              </p>
+            </field>
+        </record>
+        <record id="action_past_timesheets_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="past_timesheet_tree"/>
+            <field name="act_window_id" ref="past_timesheets_view_form"/>
+        </record>
+
+        <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" sequence="20" />
+
+        <!--Employee form view, add new fields -->
+        <record id="imsar_view_employee_form" model="ir.ui.view">
+            <field name="name">imsar.hr.employee.form</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//field[@name="active"]' position='after'>
+                    <field name="flsa_status" />
+                    <field name="wage_rate" />
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Add override account routing for overtime premiums on contracts, and allowable/unallowable -->
+    <record id="account_analytic_account_overtime_override_form" model="ir.ui.view">
+        <field name="name">account.analytic.account.overtime.form</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//div[@name="project"]' position='after'>
+                <div>
+                    <field name="require_review" class="oe_inline"/>
+                    <label for="require_review" class="oe_inline"/>
+                </div>
+                <div>
+                    <field name="dcaa_allowable" class="oe_inline"/>
+                    <label for="dcaa_allowable" class="oe_inline"/>
+                </div>
+                <div attrs="{'invisible':[('type','!=','contract')]}">
+                    <label for="overtime_account" class="oe_inline" string="Overtime Premium Routing Account (leave blank if none)"/>
+                    <field name="overtime_account" widget="selection" class="oe_inline"/>
+                </div>
+            </xpath>
+            <xpath expr='//group[@name="main"]' position='after'>
+                <separator string="Description" name="description"/>
+                <field name="description" attrs="{'required':[('require_review','=',True)]}"/>
+            </xpath>
+            <xpath expr='//notebook/page/group[@name="contract"]' position='before'>
+                <group name="authorization" string="Authorization">
+                    <field name="limit_to_auth"/>
+                    <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                </group>
+
+            </xpath>
+            <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
+            <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
+
+        </field>
+    </record>
+
+    </data>
+</openerp>

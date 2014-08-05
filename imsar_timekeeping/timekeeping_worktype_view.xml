@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="hr_timekeeping_worktype_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.worktype.tree</field>
+            <field name="model">hr.timekeeping.worktype</field>
+            <field name="arch" type="xml">
+                <tree string="Timekeeping Work types">
+                    <field name="name" />
+                    <field name="active" />
+                    <field name="premium_rate" />
+                    <field name="nonexempt_limit" />
+                    <field name="nonexempt_limit_ignore_ids" widget='many2many_tags' string="Limit Ignores These:"
+                            options="{'create': false, 'create_edit': false}"/>
+                </tree>
+            </field>
+        </record>
+        <record id="hr_timekeeping_worktype_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.worktype.form</field>
+            <field name="model">hr.timekeeping.worktype</field>
+            <field name="arch" type="xml">
+                <form string="Timekeeping Work types">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" />
+                                <field name="active" />
+                                <field name="premium_rate" />
+                                <field name="nonexempt_limit" />
+                            </group>
+                            <group>
+                                <field name="nonexempt_limit_ignore_ids" string="Limit Ignores These:">
+                                    <tree>
+                                        <field name="name" string="Analytic Account" />
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="hr_timekeeping_worktype_view" model="ir.actions.act_window">
+            <field name="name">Timekeeping Work Types</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.worktype</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" eval="hr_timekeeping_worktype_tree"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create timekeeping worktypes and premium multipliers.
+              </p><p>
+                Worktypes can add premium multipliers, which are additions to base pay, such as overtime for non-exempt employees or
+                danger pay in war zones.
+              </p>
+            </field>
+        </record>
+        <record id="action_hr_timekeeping_worktype_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="hr_timekeeping_worktype_view"/>
+        </record>
+        <record id="action_hr_timekeeping_worktype_form" model="ir.actions.act_window.view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hr_timekeeping_worktype_form"/>
+            <field name="act_window_id" ref="hr_timekeeping_worktype_view"/>
+        </record>
+
+        <menuitem id="menu_hr_timekeeping_worktype" action="hr_timekeeping_worktype_view" parent="hr.menu_hr_configuration" sequence="50" />
+
+    </data>
+</openerp>

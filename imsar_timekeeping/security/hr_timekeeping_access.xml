@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- HR Employee access rights -->
+        <record id="access_account_analytic_type_user" model="ir.model.access">
+            <field name="name">account.account.type.user</field>
+            <field name="model_id" ref="account.model_account_account_type"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <record id="access_timekeeping_sheet_user" model="ir.model.access">
+            <field name="name">hr.timekeeping.sheet.user</field>
+            <field name="model_id" ref="model_hr_timekeeping_sheet"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+        </record>
+
+        <record id="access_timekeeping_line_user" model="ir.model.access">
+            <field name="name">hr.timekeeping.line.user</field>
+            <field name="model_id" ref="model_hr_timekeeping_line"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+        <record id="access_timekeeping_worktype_user" model="ir.model.access">
+            <field name="name">hr.timekeeping.worktype.user</field>
+            <field name="model_id" ref="model_hr_timekeeping_worktype"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <!-- HR Officer access rights (inherits all HR Employee rights) -->
+        <record id="access_timekeeping_sheet_officer" model="ir.model.access">
+            <field name="name">hr.timekeeping.sheet.officer</field>
+            <field name="model_id" ref="model_hr_timekeeping_sheet"/>
+            <field name="group_id" ref="base.group_hr_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+        </record>
+
+        <!-- HR Manager access rights (inherits all HR Officer rights) -->
+        <record id="access_timekeeping_sheet_manager" model="ir.model.access">
+            <field name="name">hr.timekeeping.sheet.manager</field>
+            <field name="model_id" ref="model_hr_timekeeping_sheet"/>
+            <field name="group_id" ref="base.group_hr_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+        <record id="access_timekeeping_worktype_manager" model="ir.model.access">
+            <field name="name">hr.timekeeping.worktype.manager</field>
+            <field name="model_id" ref="model_hr_timekeeping_worktype"/>
+            <field name="group_id" ref="base.group_hr_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+    </data>
+</openerp>

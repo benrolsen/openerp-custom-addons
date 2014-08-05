@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="imsar_hr_timehseet_config_settings" model="ir.ui.view">
+            <field name="name">hr settings for imsar timesheets</field>
+            <field name="model">hr.config.settings</field>
+            <field name="inherit_id" ref="hr.view_human_resources_configuration"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='timesheet_grp']" position="attributes">
+                    <attribute name="invisible">True</attribute>
+                </xpath>
+                <xpath expr="//group[@name='contract_grp']" position="attributes">
+                    <attribute name="invisible">True</attribute>
+                </xpath>
+
+                <xpath expr="//group[@name='timesheet_grp']" position="after">
+                    <group name="timekeeping_grp">
+                        <label for="id" string="Timekeeping"/>
+                        <div>
+                            <div>
+                                <label for="wage_account_id"/>
+                                <field name="wage_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"
+                                        domain="[('type','!=','view')]"/>
+                            </div>
+                            <div>
+                                <label for="general_journal_id"/>
+                                <field name="general_journal_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
+                            </div>
+                            <div>
+                                <label for="regular_worktype_id"/>
+                                <field name="regular_worktype_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
+                            </div>
+                            <div>
+                                <label for="overtime_worktype_id"/>
+                                <field name="overtime_worktype_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
+                            </div>
+                            <div>
+                                <label for="future_analytic_ids"/>
+                                <field name="future_analytic_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
+                        </div>
+                    </group>
+
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
