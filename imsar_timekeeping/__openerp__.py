@@ -29,7 +29,7 @@
     Timesheet customizations, attempting to be compliant with DCAA
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['account_routing','imsar_accounting',
+    "depends" : ['account_routing','imsar_accounting', 'hr',
     ],
     'data': [
             'res_config_view.xml',

@@ -36,7 +36,7 @@
         </record>
 
         <record id="analytic_review_view" model="ir.actions.act_window">
-            <field name="name">Analytics List (Tasks)</field>
+            <field name="name">Task S.O.W. Reviews</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.analytic.account</field>
             <field name="view_type">form</field>

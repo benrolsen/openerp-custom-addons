@@ -2,27 +2,27 @@
 <openerp>
     <data>
 
-        <!-- Workflow definition -->
+        <!-- Timesheet workflow definition -->
         <record id="wkf_timekeeping" model="workflow">
             <field name="name">hr.timekeeping.sheet</field>
             <field name="osv">hr.timekeeping.sheet</field>
             <field name="on_create">True</field>
         </record>
 
-        <record id="act_draft" model="workflow.activity">
+        <record id="ts_act_draft" model="workflow.activity">
             <field name="wkf_id" ref="wkf_timekeeping"/>
             <field name="name">draft</field>
             <field name="kind">function</field>
             <field name="action">write({'state':'draft'})</field>
             <field name="flow_start">True</field>
         </record>
-        <record id="act_confirm" model="workflow.activity">
+        <record id="ts_act_confirm" model="workflow.activity">
             <field name="wkf_id" ref="wkf_timekeeping"/>
             <field name="name">confirm</field>
             <field name="kind">function</field>
             <field name="action">write({'state':'confirm'})</field>
         </record>
-        <record id="act_done" model="workflow.activity">
+        <record id="ts_act_done" model="workflow.activity">
             <field name="wkf_id" ref="wkf_timekeeping"/>
             <field name="name">done</field>
             <field name="kind">function</field>
@@ -30,23 +30,71 @@
             <field name="flow_stop">True</field>
         </record>
 
-        <record id="t1" model="workflow.transition">
-            <field name="act_from" ref="act_draft"/>
-            <field name="act_to" ref="act_confirm"/>
+        <record id="ts_t1" model="workflow.transition">
+            <field name="act_from" ref="ts_act_draft"/>
+            <field name="act_to" ref="ts_act_confirm"/>
             <field name="signal">confirm</field>
             <field name="group_id" ref="base.group_user"/>
         </record>
-        <record id="t2" model="workflow.transition">
-            <field name="act_from" ref="act_confirm"/>
-            <field name="act_to" ref="act_done"/>
+        <record id="ts_t2" model="workflow.transition">
+            <field name="act_from" ref="ts_act_confirm"/>
+            <field name="act_to" ref="ts_act_done"/>
             <field name="signal">done</field>
-            <field name="group_id" ref="base.group_hr_user"/>
+            <field name="group_id" ref="base.group_user"/>
         </record>
-        <record id="t3" model="workflow.transition">
-            <field name="act_from" ref="act_confirm"/>
-            <field name="act_to" ref="act_draft"/>
+        <record id="ts_t3" model="workflow.transition">
+            <field name="act_from" ref="ts_act_confirm"/>
+            <field name="act_to" ref="ts_act_draft"/>
             <field name="signal">cancel</field>
-            <field name="group_id" ref="base.group_hr_user"/>
+            <field name="group_id" ref="base.group_user"/>
         </record>
+
+        <!-- Timesheet approval line workflow definition -->
+        <record id="wkf_timekeeping_approval" model="workflow">
+            <field name="name">hr.timekeeping.approval</field>
+            <field name="osv">hr.timekeeping.approval</field>
+            <field name="on_create">True</field>
+        </record>
+
+        <record id="appr_act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_timekeeping_approval"/>
+            <field name="name">draft</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'draft'})</field>
+            <field name="flow_start">True</field>
+        </record>
+        <record id="appr_act_confirm" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_timekeeping_approval"/>
+            <field name="name">confirm</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'confirm'})</field>
+        </record>
+        <record id="appr_act_done" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_timekeeping_approval"/>
+            <field name="name">done</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'done'})</field>
+            <field name="flow_stop">True</field>
+        </record>
+
+        <record id="appr_t1" model="workflow.transition">
+            <field name="act_from" ref="appr_act_draft"/>
+            <field name="act_to" ref="appr_act_confirm"/>
+            <field name="signal">confirm</field>
+            <field name="group_id" ref="base.group_user"/>
+        </record>
+        <record id="appr_t2" model="workflow.transition">
+            <field name="act_from" ref="appr_act_confirm"/>
+            <field name="act_to" ref="appr_act_done"/>
+            <field name="signal">done</field>
+            <field name="group_id" ref="base.group_user"/>
+        </record>
+        <record id="appr_t3" model="workflow.transition">
+            <field name="act_from" ref="appr_act_confirm"/>
+            <field name="act_to" ref="appr_act_draft"/>
+            <field name="signal">cancel</field>
+            <field name="group_id" ref="base.group_user"/>
+        </record>
+
     </data>
 </openerp>

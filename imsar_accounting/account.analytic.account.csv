@@ -1,80 +1,80 @@
-id,name,description,parent_id/id,type,require_review
-aa_expenses,Expenses,Expenses,,Analytic View,False
-aa_direct_expenses,Direct Expenses,Direct Expenses,aa_expenses,Analytic View,False
-aa_contracts,Contracts,Contracts,aa_direct_expenses,Analytic View,False
-houdini2,Houdini II,Houdini II,aa_contracts,Contract or Project,True
-hawkeye2,Hawkeye II,Hawkeye II,aa_contracts,Contract or Project,True
-future_dod,Future DoD Contract,Future DoD Contract,aa_contracts,Contract or Project,True
-future_deployment,Future Deployment,Future Deployment,aa_contracts,Contract or Project,True
-darpa_hotspot,Darpa Hot Spots,Darpa Hot Spots,aa_contracts,Contract or Project,True
-fair_weather,Fair Weather,Fair Weather,aa_contracts,Contract or Project,True
-future_non_dod,Future Non-DoD,Future Non-DoD,aa_contracts,Contract or Project,True
-imsar_aviation,IMSAR Aviation,IMSAR Aviation,aa_contracts,Contract or Project,True
-aviant,Aviant,Aviant,aa_contracts,Contract or Project,True
-tagsmyth,Tagsmyth,Tagsmyth,aa_contracts,Contract or Project,True
-japan1,Japan,Japan,aa_contracts,Contract or Project,True
-future_commercial,Future Commercial Contract,Future Commercial Contract,aa_contracts,Contract or Project,True
-future_retail,Future Retail Contract,Future Retail Contract,aa_contracts,Contract or Project,True
-aa_indirect_expenses,Indirect Expenses,Indirect Expenses,aa_expenses,Analytic View,False
-aa_irad,IR&D,IR&D,aa_indirect_expenses,Analytic View,False
-wolverine,Wolverine,Wolverine,aa_irad,Analytic Account,True
-raphael2,Raphael II,Raphael II,aa_irad,Analytic Account,True
-lisa3d,Lisa 3D,Lisa 3D,aa_irad,Analytic Account,True
-future_irad,Future IR&D,Future IR&D,aa_irad,Analytic Account,True
-aa_dloh,Direct Labor Overhead,Direct Labor Overhead,aa_indirect_expenses,Analytic View,False
-gna_labor,General Labor,General Labor,aa_dloh,Analytic Account,True
-benefit_admin,Benefits Administration,Benefits Administration,aa_dloh,Analytic Account,True
-erp_impl,ERP Implementation,ERP Implementation,aa_dloh,Analytic Account,True
-equip_labor,Equipment Maint & Calibration Labor,Equipment Maint & Calibration Labor,aa_dloh,Analytic Account,True
-govt_compliance,Govt Compliance Labor,Govt Compliance Labor,aa_dloh,Analytic Account,True
-it_labor,IT Labor,IT Labor,aa_dloh,Analytic Account,True
-leased_labor,Leased Labor,Leased Labor,aa_dloh,Analytic Account,True
-mgmt_labor,Management Labor,Management Labor,aa_dloh,Analytic Account,True
-meeting_labor,Meeting Labor,Meeting Labor,aa_dloh,Analytic Account,True
-packing_shipping_labor,Packing & Shipping Labor,Packing & Shipping Labor,aa_dloh,Analytic Account,True
-procurement_labor,Procurement Labor,Procurement Labor,aa_dloh,Analytic Account,True
-recruiting_labor,Recruiting,Recruiting,aa_dloh,Analytic Account,True
-relocation_bonus,Relocation Bonus,Relocation Bonus,aa_dloh,Analytic Account,True
-tech_writing_labor,Technical Writing,Technical Writing,aa_dloh,Analytic Account,True
-training_labor,Training,Training,aa_dloh,Analytic Account,True
-travel_labor,Travel Labor,Travel Labor,aa_dloh,Analytic Account,True
-aa_materials_overhead,Materials Overhead,Materials Overhead,aa_indirect_expenses,Analytic View,False
-parts_materials,Parts & Materials,Parts & Materials,aa_materials_overhead,Analytic Account,False
-equipment_under,Equipment under $1K,Equipment under $1K,aa_materials_overhead,Analytic Account,False
-equipment_lease,Equipment Lease,Equipment Lease,aa_materials_overhead,Analytic Account,False
-equipment_maint,Equipment Maint & Calibration Materials,Equipment Maint & Calibration Materials,aa_materials_overhead,Analytic Account,False
-govt_compliance_mat,Govt Compliance Materials,Govt Compliance Materials,aa_materials_overhead,Analytic Account,False
-it_equipment,IT Equipment,IT Equipment,aa_materials_overhead,Analytic Account,False
-printing_allowable,Printing – Allowable,Printing – Allowable,aa_materials_overhead,Analytic Account,False
-printing_unallowable,Printing – Unallowable,Printing – Unallowable,aa_materials_overhead,Analytic Account,False
-packing_shipping_mat,Packing & Shipping Materials,Packing & Shipping Materials,aa_materials_overhead,Analytic Account,False
-software,Software,Software,aa_materials_overhead,Analytic Account,False
-supplies,Supplies,Supplies,aa_materials_overhead,Analytic Account,False
-training_mat,Training & Reference Materials,Training & Reference Materials,aa_materials_overhead,Analytic Account,False
-uniforms_apparel,Uniforms & Apparel,Uniforms & Apparel,aa_materials_overhead,Analytic Account,False
-inv_writedown,Writedown Obsolete Inventory,Writedown Obsolete Inventory,aa_materials_overhead,Analytic Account,False
-aa_travel_overhead,Travel Overhead,Travel Overhead,aa_indirect_expenses,Analytic View,False
-general_travel,General Travel,General Travel,aa_travel_overhead,Analytic Account,False
-contractor_travel,Contractor Accommodations,Contractor Accommodations,aa_travel_overhead,Analytic Account,False
-govt_compliance_travel,Govt Compliance Travel,Govt Compliance Travel,aa_travel_overhead,Analytic Account,False
-recruiting_travel,Recruiting Travel,Recruiting Travel,aa_travel_overhead,Analytic Account,False
-training_travel,Training Travel,Training Travel,aa_travel_overhead,Analytic Account,False
-unallowable_travel,Unallowable Travel,Unallowable Travel,aa_travel_overhead,Analytic Account,False
-misc_overhead,Misc Overhead,Misc Overhead,aa_indirect_expenses,Analytic View,False
-misc_misc,Miscellaneous,Miscellaneous,misc_overhead,Analytic Account,False
-dues_subs,Dues & Subscriptions,Dues & Subscriptions,misc_overhead,Analytic Account,False
-misc_equip_lease,Misc Equipment Lease,Misc Equipment Lease,misc_overhead,Analytic Account,False
-shipping,Shipping,Shipping,misc_overhead,Analytic Account,False
-training_fees,Training & Conference Fees,Training & Conference Fees,misc_overhead,Analytic Account,False
-vehicle_fuel,Vehicle Fuel,Vehicle Fuel,misc_overhead,Analytic Account,False
-vehicle_insurance,Vehicle Insurance,Vehicle Insurance,misc_overhead,Analytic Account,False
-vehicle_license,Vehicle License & Registration,Vehicle License & Registration,misc_overhead,Analytic Account,False
-vehicle_repair,Vehicle Repair & Maintenance,Vehicle Repair & Maintenance,misc_overhead,Analytic Account,False
-aa_benefits,Benefits Expenses,Benefits Expenses,aa_indirect_expenses,Analytic View,False
-aa_benefits_employee,Employee Benefits,Employee Benefits,aa_benefits,Analytic Account,False
-aa_benefits_owner,Owner Benefits,Owner Benefits,aa_benefits,Analytic Account,False
-aa_unallowable,Unallowable Expenses,Unallowable Expenses,aa_indirect_expenses,Analytic View,False
-pto,PTO (Eligible Employees),PTO (Exempt Employee),aa_unallowable,Analytic Account,True
-idle_time,Idle Time,Idle Time,aa_unallowable,Analytic Account,True
-holiday,Holiday (Eligible Employees),Holiday (Eligible Employees),aa_unallowable,Analytic Account,True
-general_unallowable,General Unallowable,General Unallowable,aa_unallowable,Analytic Account,True
+id,name,description,parent_id/id,type
+aa_expenses,Expenses,Expenses,,Analytic View
+aa_direct_expenses,Direct Expenses,Direct Expenses,aa_expenses,Analytic View
+aa_contracts,Contracts,Contracts,aa_direct_expenses,Analytic View
+houdini2,Houdini II,Houdini II,aa_contracts,Contract or Project
+hawkeye2,Hawkeye II,Hawkeye II,aa_contracts,Contract or Project
+future_dod,Future DoD Contract,Future DoD Contract,aa_contracts,Contract or Project
+future_deployment,Future Deployment,Future Deployment,aa_contracts,Contract or Project
+darpa_hotspot,Darpa Hot Spots,Darpa Hot Spots,aa_contracts,Contract or Project
+fair_weather,Fair Weather,Fair Weather,aa_contracts,Contract or Project
+future_non_dod,Future Non-DoD,Future Non-DoD,aa_contracts,Contract or Project
+imsar_aviation,IMSAR Aviation,IMSAR Aviation,aa_contracts,Contract or Project
+aviant,Aviant,Aviant,aa_contracts,Contract or Project
+tagsmyth,Tagsmyth,Tagsmyth,aa_contracts,Contract or Project
+japan1,Japan,Japan,aa_contracts,Contract or Project
+future_commercial,Future Commercial Contract,Future Commercial Contract,aa_contracts,Contract or Project
+future_retail,Future Retail Contract,Future Retail Contract,aa_contracts,Contract or Project
+aa_indirect_expenses,Indirect Expenses,Indirect Expenses,aa_expenses,Analytic View
+aa_irad,IR&D,IR&D,aa_indirect_expenses,Analytic View
+wolverine,Wolverine,Wolverine,aa_irad,Analytic Account
+raphael2,Raphael II,Raphael II,aa_irad,Analytic Account
+lisa3d,Lisa 3D,Lisa 3D,aa_irad,Analytic Account
+future_irad,Future IR&D,Future IR&D,aa_irad,Analytic Account
+aa_dloh,Direct Labor Overhead,Direct Labor Overhead,aa_indirect_expenses,Analytic View
+gna_labor,General Labor,General Labor,aa_dloh,Analytic Account
+benefit_admin,Benefits Administration,Benefits Administration,aa_dloh,Analytic Account
+erp_impl,ERP Implementation,ERP Implementation,aa_dloh,Analytic Account
+equip_labor,Equipment Maint & Calibration Labor,Equipment Maint & Calibration Labor,aa_dloh,Analytic Account
+govt_compliance,Govt Compliance Labor,Govt Compliance Labor,aa_dloh,Analytic Account
+it_labor,IT Labor,IT Labor,aa_dloh,Analytic Account
+leased_labor,Leased Labor,Leased Labor,aa_dloh,Analytic Account
+mgmt_labor,Management Labor,Management Labor,aa_dloh,Analytic Account
+meeting_labor,Meeting Labor,Meeting Labor,aa_dloh,Analytic Account
+packing_shipping_labor,Packing & Shipping Labor,Packing & Shipping Labor,aa_dloh,Analytic Account
+procurement_labor,Procurement Labor,Procurement Labor,aa_dloh,Analytic Account
+recruiting_labor,Recruiting,Recruiting,aa_dloh,Analytic Account
+relocation_bonus,Relocation Bonus,Relocation Bonus,aa_dloh,Analytic Account
+tech_writing_labor,Technical Writing,Technical Writing,aa_dloh,Analytic Account
+training_labor,Training,Training,aa_dloh,Analytic Account
+travel_labor,Travel Labor,Travel Labor,aa_dloh,Analytic Account
+aa_materials_overhead,Materials Overhead,Materials Overhead,aa_indirect_expenses,Analytic View
+parts_materials,Parts & Materials,Parts & Materials,aa_materials_overhead,Analytic Account
+equipment_under,Equipment under $1K,Equipment under $1K,aa_materials_overhead,Analytic Account
+equipment_lease,Equipment Lease,Equipment Lease,aa_materials_overhead,Analytic Account
+equipment_maint,Equipment Maint & Calibration Materials,Equipment Maint & Calibration Materials,aa_materials_overhead,Analytic Account
+govt_compliance_mat,Govt Compliance Materials,Govt Compliance Materials,aa_materials_overhead,Analytic Account
+it_equipment,IT Equipment,IT Equipment,aa_materials_overhead,Analytic Account
+printing_allowable,Printing – Allowable,Printing – Allowable,aa_materials_overhead,Analytic Account
+printing_unallowable,Printing – Unallowable,Printing – Unallowable,aa_materials_overhead,Analytic Account
+packing_shipping_mat,Packing & Shipping Materials,Packing & Shipping Materials,aa_materials_overhead,Analytic Account
+software,Software,Software,aa_materials_overhead,Analytic Account
+supplies,Supplies,Supplies,aa_materials_overhead,Analytic Account
+training_mat,Training & Reference Materials,Training & Reference Materials,aa_materials_overhead,Analytic Account
+uniforms_apparel,Uniforms & Apparel,Uniforms & Apparel,aa_materials_overhead,Analytic Account
+inv_writedown,Writedown Obsolete Inventory,Writedown Obsolete Inventory,aa_materials_overhead,Analytic Account
+aa_travel_overhead,Travel Overhead,Travel Overhead,aa_indirect_expenses,Analytic View
+general_travel,General Travel,General Travel,aa_travel_overhead,Analytic Account
+contractor_travel,Contractor Accommodations,Contractor Accommodations,aa_travel_overhead,Analytic Account
+govt_compliance_travel,Govt Compliance Travel,Govt Compliance Travel,aa_travel_overhead,Analytic Account
+recruiting_travel,Recruiting Travel,Recruiting Travel,aa_travel_overhead,Analytic Account
+training_travel,Training Travel,Training Travel,aa_travel_overhead,Analytic Account
+unallowable_travel,Unallowable Travel,Unallowable Travel,aa_travel_overhead,Analytic Account
+misc_overhead,Misc Overhead,Misc Overhead,aa_indirect_expenses,Analytic View
+misc_misc,Miscellaneous,Miscellaneous,misc_overhead,Analytic Account
+dues_subs,Dues & Subscriptions,Dues & Subscriptions,misc_overhead,Analytic Account
+misc_equip_lease,Misc Equipment Lease,Misc Equipment Lease,misc_overhead,Analytic Account
+shipping,Shipping,Shipping,misc_overhead,Analytic Account
+training_fees,Training & Conference Fees,Training & Conference Fees,misc_overhead,Analytic Account
+vehicle_fuel,Vehicle Fuel,Vehicle Fuel,misc_overhead,Analytic Account
+vehicle_insurance,Vehicle Insurance,Vehicle Insurance,misc_overhead,Analytic Account
+vehicle_license,Vehicle License & Registration,Vehicle License & Registration,misc_overhead,Analytic Account
+vehicle_repair,Vehicle Repair & Maintenance,Vehicle Repair & Maintenance,misc_overhead,Analytic Account
+aa_benefits,Benefits Expenses,Benefits Expenses,aa_indirect_expenses,Analytic View
+aa_benefits_employee,Employee Benefits,Employee Benefits,aa_benefits,Analytic Account
+aa_benefits_owner,Owner Benefits,Owner Benefits,aa_benefits,Analytic Account
+aa_unallowable,Unallowable Expenses,Unallowable Expenses,aa_indirect_expenses,Analytic View
+pto,PTO (Eligible Employees),PTO (Exempt Employee),aa_unallowable,Analytic Account
+idle_time,Idle Time,Idle Time,aa_unallowable,Analytic Account
+holiday,Holiday (Eligible Employees),Holiday (Eligible Employees),aa_unallowable,Analytic Account
+general_unallowable,General Unallowable,General Unallowable,aa_unallowable,Analytic Account

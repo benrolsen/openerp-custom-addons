@@ -1,0 +1,5 @@
+id,name,parent_id/id,user_id/id,wage_rate,flsa_status,company_id/id
+employee_adam_robertson,Adam Robertson,hr.employee,users_adam_robertson,50,Exempt,base.main_company
+employee_andy_may,Andy May,employee_adam_robertson,users_andy_may,40,Non-exempt,base.main_company
+employee_ben_olsen,Ben Olsen,employee_adam_robertson,users_ben_olsen,30,Non-exempt,base.main_company
+employee_jeny_grierson,Jeny Grierson,employee_adam_robertson,users_jeny_grierson,35,Exempt,base.main_company

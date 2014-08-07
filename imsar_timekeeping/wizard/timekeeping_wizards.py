@@ -15,7 +15,7 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
     def open_timesheet(self):
         today = date.today()
         thisyear = today.isocalendar()[0]
-        weeknumber = today.isocalendar()[1]
+        week_number = today.isocalendar()[1]
 
         employee = self.env['hr.employee'].search([('user_id','=',self._uid)])
         if not employee:
@@ -25,14 +25,14 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
         sheet_ids = self.env['hr.timekeeping.sheet'].search([
             ('employee_id','=',employee.id),
             ('year','=',thisyear),
-            ('week_number','=',weeknumber),
+            ('week_number','=',week_number),
             ('type','=','regular'),
             ])
 
         if len(sheet_ids) < 1:
             values = dict()
             values['year'] = today.year
-            values['week_number'] = weeknumber
+            values['week_number'] = week_number
             values['type'] = 'regular'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
@@ -112,5 +112,31 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
             'view_id': False,
             'type': 'ir.actions.act_window',
             'res_id': sheet_ids[0].id,
+        }
+        return view
+
+
+class filter_timesheets_need_my_approval(models.TransientModel):
+    _name = 'hr.timekeeping.my_approval_filter'
+    _description = 'hr.timekeeping.my_approval_filter'
+
+    @api.model
+    def my_approval_filter(self):
+        sheet_ids = set()
+        for sheet in self.env['hr.timekeeping.sheet'].search([]):
+            if sheet.state != 'confirm':
+                continue
+            for approval_line in sheet.approval_line_ids:
+                if approval_line.state == 'confirm' and approval_line.uid_can_approve:
+                    sheet_ids.add(sheet.id)
+
+        view = {
+            'name': _('Waiting for my approval'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'hr.timekeeping.sheet',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'domain': [('id','in',list(sheet_ids))],
         }
         return view

@@ -39,6 +39,10 @@
                                 <label for="future_analytic_ids"/>
                                 <field name="future_analytic_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
+                            <div>
+                                <label for="global_approval_user_ids"/>
+                                <field name="global_approval_user_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
                         </div>
                     </group>
 

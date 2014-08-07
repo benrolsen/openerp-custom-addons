@@ -32,7 +32,10 @@
     'data': [
         'ldap_data.xml',
         'res.partner.csv',
+        'res.users.csv',
+        'hr.employee.csv',
         'product.template.csv',
+        'account.analytic.account.csv',
         'account.routing.csv',
         'account.routing.line.csv',
         'account.routing.subrouting.csv',

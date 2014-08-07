@@ -27,11 +27,9 @@ def get_now_tz(user, config):
     if user.tz:
         now = datetime.now(pytz.timezone(user.tz))
     else:
-        default_tz_res = config.search([('key','=','user.default_tz')])
-        default_tz_id = default_tz_res and default_tz_res[0]
-        if default_tz_id:
-            default_tz = config.browse(default_tz_id).value
-            now = datetime.now(pytz.timezone(default_tz))
+        config_default_tz = config.search([('key','=','user.default_tz')])
+        if config_default_tz:
+            now = datetime.now(pytz.timezone(config_default_tz.value))
         else:
             now = datetime.now(pytz.timezone(_default_tz))
     # use a timezone, but then strip out tz info for the comparison
@@ -50,7 +48,7 @@ class hr_timekeeping_sheet(models.Model):
     week_number = fields.Integer(string="Week Number")
     date_from = fields.Date(compute='_computed_fields', readonly=True)
     date_to = fields.Date(compute='_computed_fields', readonly=True)
-    state = fields.Selection([('draft','Open'),('confirm','Waiting Approval'),('done','Approved')],
+    state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', select=True, required=True, readonly=True,)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
@@ -61,6 +59,7 @@ class hr_timekeeping_sheet(models.Model):
     subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
+    approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
 
     @api.one
     @api.depends('line_ids')
@@ -108,21 +107,28 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def button_confirm(self):
+        # log submission for approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submitted for approval"
         body = "{} submitted timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
         self.message_post(subject=subject, body=body,)
         self.signal_workflow('confirm')
+        # mark all approval lines as confirm status
+        for appr_line in self.approval_line_ids:
+            appr_line.signal_workflow('confirm')
         return True
 
     @api.multi
     def button_cancel(self):
-        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        subject = "Submission rejected"
-        body = "{} rejected timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
-        self.message_post(subject=subject, body=body,)
         self.signal_workflow('cancel')
-        return True
+        # mark all approval lines as open status
+        for appr_line in self.approval_line_ids:
+            if appr_line.state == 'confirm':
+                appr_line.signal_workflow('cancel')
+            elif appr_line.state == 'done':
+                appr_line.state = 'draft'
+                appr_line.create_workflow()
+        return { 'type': 'ir.actions.client', 'tag': 'reload' }
 
     @api.multi
     def button_set_to_draft(self):
@@ -233,11 +239,41 @@ class hr_timekeeping_sheet(models.Model):
             self.move_id = move.id
             move.post()
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        subject = "Submission approved"
-        body = "{} approved timesheet on {}".format(self.env.user.name, now.strftime('%c'))
+        subject = "Submission final approval"
+        body = "All approvals met on {}".format(now.strftime('%c'))
         self.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
-        return True
+        # refresh the page
+        return { 'type': 'ir.actions.client', 'tag': 'reload' }
+
+    @api.model
+    def create(self, vals):
+        new_id = super(hr_timekeeping_sheet, self).create(vals)
+        approval_vars = {'type': 'hr', 'state': 'draft', 'sheet_id': new_id[0].id,}
+        self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+        approval_vars.update({'type': 'manager'})
+        self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+        return new_id
+
+    @api.multi
+    def write(self, vals):
+        # add PM approval lines for any timesheet lines for contracts/projects
+        res = super(hr_timekeeping_sheet, self).write(vals)
+        existing_approval_project_ids = set()
+        for approval_line in self.approval_line_ids:
+            if approval_line.analytic_account_id:
+                existing_approval_project_ids.add(approval_line.analytic_account_id.id)
+        existing_project_ids = set()
+        for line in self.line_ids:
+            existing_project_ids.add(line.analytic_account_id.id)
+            if line.analytic_account_id.type == 'contract' and line.analytic_account_id.id not in existing_approval_project_ids:
+                approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'analytic_account_id': line.analytic_account_id.id}
+                self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+        # remove approval lines if no timesheet lines exist for those projects
+        for approval_line in self.approval_line_ids:
+            if approval_line.analytic_account_id.type == 'contract' and approval_line.analytic_account_id.id not in existing_project_ids:
+                approval_line.sudo().unlink()
+        return res
 
 
 class hr_timekeeping_line(models.Model):
@@ -413,6 +449,80 @@ class hr_timekeeping_line(models.Model):
     }
 
 
+class hr_timekeeping_approval(models.Model):
+    _name = 'hr.timekeeping.approval'
+    _description = 'Timekeeping Approval Line'
+
+    type = fields.Selection([('hr','HR'),('manager','Manager'),('project','PM'),], string="Approval Source", required=True, readonly=True)
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
+                             'Status', select=True, required=True, readonly=True,)
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
+    uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
+
+    @api.one
+    def _computed_fields(self):
+        user = self.env.user
+        # check if the user has global approval rights
+        if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
+            self.uid_can_approve = True
+            return
+        # check to see if user is HR Officer (should include HR Manager automatically)
+        if self.type == 'hr':
+            hr_category = self.env['ir.module.category'].search([('name','=','Human Resources')])
+            hr_officer = self.env['res.groups'].search([('name','=','Officer'),('category_id','=',hr_category.id)])
+            if hr_officer.id in user.groups_id:
+                self.uid_can_approve = True
+            else:
+                self.uid_can_approve = False
+            return
+        # check to see if user is PM on this project
+        elif self.type == 'project':
+            if user in self.analytic_account_id.pm_ids:
+                self.uid_can_approve = True
+            else:
+                self.uid_can_approve = False
+            return
+        # check to see if user is manager for the timesheet's owner
+        elif self.type == 'manager':
+            self.uid_can_approve = False
+            manager = self.sheet_id.employee_id.parent_id
+            while manager:
+                if user == manager.user_id:
+                    self.uid_can_approve = True
+                    break
+                manager = manager.parent_id
+            return
+        else:
+            self.uid_can_approve = False
+
+    @api.multi
+    def button_reject(self):
+        # log rejection
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submission rejected"
+        body = "{} rejected timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
+        self.sheet_id.message_post(subject=subject, body=body,)
+        return self.sheet_id.button_cancel()
+
+    @api.multi
+    def button_approve(self):
+        # log approval line approval
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submission approved"
+        body = "{} approved timesheet on {}".format(self.env.user.name, now.strftime('%c'))
+        self.sheet_id.message_post(subject=subject, body=body,)
+        self.signal_workflow('done')
+        # if everything is approved, signal done for the whole sheet
+        all_done = True
+        for approval_line in self.sheet_id.approval_line_ids:
+            if approval_line.state != 'done':
+                all_done = False
+        if all_done:
+            # this has to sudo because it makes the accounting move lines
+            return self.sheet_id.sudo().button_done()
+
+
 class employee(models.Model):
     _inherit = 'hr.employee'
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
@@ -450,11 +560,13 @@ class res_users(models.Model):
 
     analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
+    pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
 
 
 class account_analytic_account(models.Model):
     _inherit = "account.analytic.account"
 
+    pm_ids = fields.Many2many('res.users', 'analytic_user_pm_rel', 'analytic_id', 'user_id', string='Project Managers')
     overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
     timesheets_future_filter = fields.Char(store=False, compute='_dummy_func', search='_filter_future_accounts')
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
@@ -505,6 +617,7 @@ class account_analytic_account(models.Model):
         # res = { 'type': 'ir.actions.client', 'tag': 'reload' }
         self.sudo().write({'user_review_ids': [(4,self.env.user.id)]})
         return True
+
 
 class account_move_line(models.Model):
     _inherit = "account.move.line"

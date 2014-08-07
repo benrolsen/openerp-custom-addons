@@ -2,6 +2,7 @@
 <openerp>
     <data>
 
+        <!-- The main timesheet form -->
         <record id="hr_timekeeping_sheet_form" model="ir.ui.view">
             <field name="name">hr.timekeeping.sheet.form</field>
             <field name="model">hr.timekeeping.sheet</field>
@@ -10,8 +11,8 @@
                 <header>
                     <button name="button_confirm" string="Submit to Manager" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
-                    <button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight oe_right"/>
-                    <button name="button_cancel" states="confirm" string="Reject" type="object" groups="base.group_hr_user" class="oe_right"/>
+                    <!--<button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight oe_right"/>-->
+                    <!--<button name="button_cancel" states="confirm" string="Reject" type="object" groups="base.group_hr_user" class="oe_right"/>-->
                     <!--<button name="button_set_to_draft" string="Set to Draft" type="object" groups="base.group_hr_user" class="oe_right"-->
                             <!--attrs="{'invisible':['|',('state','!=','done'),('move_id','=',None)]}"/>-->
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
@@ -33,13 +34,12 @@
                             <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
                         </group>
                     </group>
-                    <group attrs="{'invisible':['|',('state','!=','done'),('type','!=','regular')]}">
+                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <notebook>
                         <page string="Details">
-                            <!--<field context="{'employee_id': employee_id, 'user_id':user_id, 'timesheet_date_from': date_from, 'timesheet_date_to': date_to}" name="line_ids" nolabel="1">-->
-                            <field name="line_ids" nolabel="1" attrs="{'readonly':[('uid_is_user_id','!=',True)]}">
+                            <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
                                 <tree string="Timesheet Activities">
                                     <field name="date"/>
                                     <field name="day_name"/>
@@ -78,6 +78,20 @@
                                         <field name="change_explanation" attrs="{'required':[('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
                                     </group>
                                 </form>
+                            </field>
+                        </page>
+                        <page string="Approvals">
+                            <field name="approval_line_ids" nolabel="1" readonly="True">
+                                <tree editable="False">
+                                    <field name="type"/>
+                                    <field name="analytic_account_id"/>
+                                    <field name="state"/>
+                                    <field name="uid_can_approve" invisible="True"/>
+                                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
+                                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                                    <button name="button_approve" string="Approve" class="oe_highlight" type="object"
+                                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                                </tree>
                             </field>
                         </page>
                         <!--<page string="Summary">-->
@@ -121,17 +135,16 @@
         <menuitem id="hr.menu_hr_main" name="Human Resources" parent="hr.menu_hr_root" sequence="10"/>
 
         <!-- default filter of to approve -->
-        <record id="act_hr_timekeeping_to_approve" model="ir.actions.act_window">
-            <field name="name">Timesheets to Validate</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">hr.timekeeping.sheet</field>
-            <field name="view_type">form</field>
-            <field name="view_id" eval="False"/>
-            <field name="context">{'search_default_to_approve':1}</field>
-            <field name="search_view_id" ref="view_hr_timekeeping_sheet_filter"/>
-        </record>
-
-        <menuitem id="menu_act_hr_timekeeping_to_approve" action="act_hr_timekeeping_to_approve" parent="menu_hr_timekeeping" sequence="2" groups="base.group_hr_user"/>
+        <!--<record id="act_hr_timekeeping_to_approve" model="ir.actions.act_window">-->
+            <!--<field name="name">Timesheets to Validate</field>-->
+            <!--<field name="type">ir.actions.act_window</field>-->
+            <!--<field name="res_model">hr.timekeeping.sheet</field>-->
+            <!--<field name="view_type">form</field>-->
+            <!--<field name="view_id" eval="False"/>-->
+            <!--<field name="context">{'search_default_to_approve':1}</field>-->
+            <!--<field name="search_view_id" ref="view_hr_timekeeping_sheet_filter"/>-->
+        <!--</record>-->
+        <!--<menuitem id="menu_act_hr_timekeeping_to_approve" action="act_hr_timekeeping_to_approve" parent="menu_hr_timekeeping" sequence="3"/>-->
 
         <!-- My Current Timesheet -->
         <record id="action_hr_timekeeping_current_open" model="ir.actions.server">
@@ -161,7 +174,7 @@
             <field name="name">hr.timekeeping.sheet.tree</field>
             <field name="model">hr.timekeeping.sheet</field>
             <field name="arch" type="xml">
-                <tree string="Past Timesheets" create="false" edit="false" delete="false">
+                <tree string="Timesheets" create="false" edit="false" delete="false">
                     <field name="employee_id" />
                     <field name="name" />
                     <field name="total_time"/>
@@ -170,9 +183,8 @@
                 </tree>
             </field>
         </record>
-
         <record id="past_timesheets_view_form" model="ir.actions.act_window">
-            <field name="name">Previous Timesheets</field>
+            <field name="name">My Timesheets</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">hr.timekeeping.sheet</field>
             <field name="view_type">form</field>
@@ -191,8 +203,20 @@
             <field name="view_id" ref="past_timesheet_tree"/>
             <field name="act_window_id" ref="past_timesheets_view_form"/>
         </record>
+        <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" name="My Timesheets" sequence="2"/>
 
-        <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" sequence="20" />
+        <!-- Need My Approval -->
+        <record id="action_hr_timekeeping_my_approval_filter" model="ir.actions.server">
+            <field name="sequence" eval="6"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_hr_timekeeping_my_approval_filter"/>
+            <field name="code">action = pool.get('hr.timekeeping.my_approval_filter').my_approval_filter(cr, uid, context)</field>
+            <field name="condition">True</field>
+            <field name="name">My Approvals</field>
+        </record>
+        <menuitem id="menu_act_hr_timekeeping_my_approval_filter" action="action_hr_timekeeping_my_approval_filter" parent="menu_hr_timekeeping" sequence="3"/>
+
 
         <!--Employee form view, add new fields -->
         <record id="imsar_view_employee_form" model="ir.ui.view">
@@ -207,42 +231,45 @@
             </field>
         </record>
 
-    <!-- Add override account routing for overtime premiums on contracts, and allowable/unallowable -->
-    <record id="account_analytic_account_overtime_override_form" model="ir.ui.view">
-        <field name="name">account.analytic.account.overtime.form</field>
-        <field name="model">account.analytic.account</field>
-        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
-        <field name="arch" type="xml">
-            <xpath expr='//div[@name="project"]' position='after'>
-                <div>
-                    <field name="require_review" class="oe_inline"/>
-                    <label for="require_review" class="oe_inline"/>
-                </div>
-                <div>
-                    <field name="dcaa_allowable" class="oe_inline"/>
-                    <label for="dcaa_allowable" class="oe_inline"/>
-                </div>
-                <div attrs="{'invisible':[('type','!=','contract')]}">
-                    <label for="overtime_account" class="oe_inline" string="Overtime Premium Routing Account (leave blank if none)"/>
-                    <field name="overtime_account" widget="selection" class="oe_inline"/>
-                </div>
-            </xpath>
-            <xpath expr='//group[@name="main"]' position='after'>
-                <separator string="Description" name="description"/>
-                <field name="description" attrs="{'required':[('require_review','=',True)]}"/>
-            </xpath>
-            <xpath expr='//notebook/page/group[@name="contract"]' position='before'>
-                <group name="authorization" string="Authorization">
-                    <field name="limit_to_auth"/>
-                    <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
-                </group>
+        <!-- Analytic Account view, add override account routing for overtime premiums on contracts, add allowable/unallowable -->
+        <record id="account_analytic_account_overtime_override_form" model="ir.ui.view">
+            <field name="name">account.analytic.account.overtime.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//div[@name="project"]' position='after'>
+                    <div>
+                        <field name="require_review" class="oe_inline"/>
+                        <label for="require_review" class="oe_inline"/>
+                    </div>
+                    <div>
+                        <field name="dcaa_allowable" class="oe_inline"/>
+                        <label for="dcaa_allowable" class="oe_inline"/>
+                    </div>
+                    <div attrs="{'invisible':[('type','!=','contract')]}">
+                        <label for="overtime_account" class="oe_inline" string="Overtime Premium Routing Account (leave blank if none)"/>
+                        <field name="overtime_account" widget="selection" class="oe_inline"/>
+                    </div>
+                </xpath>
+                <xpath expr='//field[@name="manager_id"]' position='replace'>
+                    <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                </xpath>
+                <xpath expr='//group[@name="main"]' position='after'>
+                    <separator string="Description" name="description"/>
+                    <field name="description" attrs="{'required':[('require_review','=',True)]}"/>
+                </xpath>
+                <xpath expr='//notebook/page/group[@name="contract"]' position='before'>
+                    <group name="authorization" string="Authorization">
+                        <field name="limit_to_auth"/>
+                        <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                    </group>
+                </xpath>
 
-            </xpath>
-            <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
-            <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
+                <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
+                <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
 
-        </field>
-    </record>
+            </field>
+        </record>
 
     </data>
 </openerp>
