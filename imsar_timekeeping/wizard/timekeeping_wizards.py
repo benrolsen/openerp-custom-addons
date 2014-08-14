@@ -1,7 +1,4 @@
 from datetime import datetime, date, timedelta
-from collections import defaultdict
-import pytz
-import json
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
@@ -46,9 +43,11 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
             'res_model': 'hr.timekeeping.sheet',
             'view_id': False,
             'type': 'ir.actions.act_window',
+            'target': 'inline',
             'res_id': sheet_ids[0].id,
         }
         return view
+
 
 class imsar_hr_timesheet_addendum_open(models.TransientModel):
     """
@@ -111,6 +110,7 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
             'res_model': 'hr.timekeeping.sheet',
             'view_id': False,
             'type': 'ir.actions.act_window',
+            'target': 'inline',
             'res_id': sheet_ids[0].id,
         }
         return view
@@ -137,6 +137,77 @@ class filter_timesheets_need_my_approval(models.TransientModel):
             'res_model': 'hr.timekeeping.sheet',
             'view_id': False,
             'type': 'ir.actions.act_window',
+            # 'target': 'inline',
             'domain': [('id','in',list(sheet_ids))],
         }
         return view
+
+
+class hr_timesheet_preferences(models.TransientModel):
+    _name = "hr.timekeeping.preferences"
+    _description = "hr.timekeeping.preferences"
+
+    user_id = fields.Many2one('res.users', 'User', )
+    routing_id = fields.Many2one('account.routing', 'Default Billing Category')
+    account_type_id = fields.Many2one('account.account.type', 'Billing Type', )
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Default Task',)
+
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        route = self.env['account.routing'].browse(self.routing_id.id)
+        self.account_type_id = route.timesheet_routing_line.account_type_id.id
+        self.account_id = route.timesheet_routing_line.account_id.id
+        if self.analytic_account_id.id not in route.timesheet_routing_line._get_analytic_ids():
+            self.analytic_account_id = ''
+
+    @api.multi
+    def save(self):
+        user = self.env.user
+        user.default_routing_category = self.routing_id
+        user.default_subroute_analytic = self.analytic_account_id
+        return True
+
+    @api.multi
+    def _get_user_default_route(self):
+        return self.env.user.default_routing_category
+
+    @api.multi
+    def _get_user_default_analytic(self):
+        return self.env.user.default_subroute_analytic
+
+    _defaults = {
+        'routing_id': _get_user_default_route,
+        'analytic_account_id': _get_user_default_analytic,
+    }
+
+
+class hr_timesheet_comment(models.TransientModel):
+    _name = 'hr.timekeeping.comment'
+    _description = 'hr.timekeeping.comment'
+
+    # sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    comment = fields.Char('Comment', required=True)
+
+    @api.model
+    def open_comment(self):
+        view = {
+            'name': _('Open Comment'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.comment',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'nodestroy': True,
+            # 'res_id': sheet_ids[0].id,
+        }
+        return view
+
+    @api.multi
+    def submit_explanation(self):
+        model = self._context['active_model']
+        id = self._context['active_id']
+        approval = self.env[model].browse(id)
+        approval.log_rejection(comment=self.comment)
+        return { 'type': 'ir.actions.client', 'tag': 'reload' }
+

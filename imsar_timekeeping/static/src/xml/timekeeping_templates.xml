@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+
+    <div t-name="imsar_timekeeping.stopwatch" class="oe_timekeeping_example timekeeping_stopped">
+        <h4 class="timekeeping_timer">00:00:00</h4>
+        <p class="timekeeping_start">
+            <button type="button">Start</button>
+        </p>
+        <p class="timekeeping_stop">
+            <button type="button">Stop</button>
+        </p>
+    </div>
+
+    <div t-name="imsar_timekeeping.QuickTaskView" class="oe_timekeeping_example">
+        <div><input name="oe_timekeeping_input" class="oe_timekeeping_input" type="text"/></div>
+        <div class="timekeeping_start"><button type="button">Start</button></div>
+        <div class="timekeeping_stop"><button type="button">Stop</button></div>
+    </div>
+
+</templates>

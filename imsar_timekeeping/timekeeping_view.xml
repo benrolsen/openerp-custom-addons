@@ -2,6 +2,64 @@
 <openerp>
     <data>
 
+        <!-- The time entry detail form -->
+        <record id="hr_timekeeping_line_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.line.form</field>
+            <field name="model">hr.timekeeping.line</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet Activities">
+                    <group>
+                        <group>
+                            <field name="date" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"/>
+                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
+                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="state" invisible="True"/>
+                            <field name="logging_required" invisible="True"/>
+                            <field name="amount" invisible="True" />
+                            <field name="premium_amount" invisible="True" />
+                            <field name="account_id" invisible="True" />
+                            <field name="sheet_id" invisible="True"/>
+                            <field name="uid_is_user_id" invisible="1"/>
+                            <field name="sheet_state" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                   domain="[('timesheet_routing_line','!=',None)]" string="Billing Category"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                   domain="[('routing_filter','=',routing_id)]" invisible="True"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="analytic_account_id" options="{'create': false, 'create_edit': false}" widget="selection" string="Task"
+                                   domain="[('routing_line_filter','in',(routing_id,account_type_id)),
+                                            ('timesheets_future_filter','in',state),('user_has_reviewed','=',True)]"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="location" options="{'create': false, 'create_edit': false}"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                        </group>
+                    </group>
+                    <group attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
+                        <field name="change_explanation" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
+                    </group>
+                    <footer attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
+                        <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
+                        <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <!-- Action for button of entry details-->
+        <record id="action_timekeeping_line_details" model="ir.actions.act_window">
+            <field name="name">Time Entry Details</field>
+            <field name="res_model">hr.timekeeping.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="hr_timekeeping_line_form"/>
+            <field name="target">new</field>
+        </record>
+
         <!-- The main timesheet form -->
         <record id="hr_timekeeping_sheet_form" model="ir.ui.view">
             <field name="name">hr.timekeeping.sheet.form</field>
@@ -9,12 +67,11 @@
             <field name="arch" type="xml">
                 <form string="Timesheet" create="false" delete="false">
                 <header>
-                    <button name="button_confirm" string="Submit to Manager" type="object" class="oe_highlight oe_right"
+                    <button name="cancel" string="Cancel Changes" special="cancel" class="oe_link" attrs="{'invisible':[('state','!=','draft')]}"/>
+                    <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
-                    <!--<button name="button_done" states="confirm" string="Approve" type="object" groups="base.group_hr_user" class="oe_highlight oe_right"/>-->
-                    <!--<button name="button_cancel" states="confirm" string="Reject" type="object" groups="base.group_hr_user" class="oe_right"/>-->
-                    <!--<button name="button_set_to_draft" string="Set to Draft" type="object" groups="base.group_hr_user" class="oe_right"-->
-                            <!--attrs="{'invisible':['|',('state','!=','done'),('move_id','=',None)]}"/>-->
+                    <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
+                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
                 </header>
                 <sheet>
@@ -29,8 +86,8 @@
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
                         </group>
                         <group>
-                            <field name="employee_flsa_status"/>
-                            <field name="type"/>
+                            <field name="employee_flsa_status" readonly="True"/>
+                            <field name="type" string="Timesheet Type"/>
                             <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
                         </group>
                     </group>
@@ -38,49 +95,62 @@
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <notebook>
-                        <page string="Details">
+                        <!--<page string="Today" invisible="True">-->
+                            <!--<widget type="timekeeping_quick_tasks"/>-->
+                        <!--</page>-->
+                        <!-- page for editable time entries -->
+                        <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}">
+                            <button name="write" type="object" string="Validate &amp; Save"
+                                    attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
                             <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
-                                <tree string="Timesheet Activities">
-                                    <field name="date"/>
+                                <tree string="Timesheet Activities" editable="top" create="false" delete="false">
+                                    <field name="date_mirror" />
+                                    <field name="day_name" attrs="{'required':['|',('unit_amount','>',0.0)]}"/>
+                                    <field name="routing_id" widget="selection" options="{'create': false, 'create_edit': false}"
+                                           attrs="{'readonly':['|',('state','!=','open')]}" string="Billing Category"
+                                           domain="[('timesheet_routing_line','!=',None)]" />
+                                    <field name="account_type_id" widget="selection" options="{'create': false, 'create_edit': false}"
+                                           domain="[('routing_filter','=',routing_id)]" invisible="True"/>
+                                    <field name="analytic_account_id" widget="selection" options="{'create': false, 'create_edit': false}"
+                                           attrs="{'readonly':['|',('state','!=','open')]}" string="Task"
+                                           domain="[('routing_line_filter','in',(routing_id,account_type_id)),
+                                           ('timesheets_future_filter','in',state),('user_has_reviewed','=',True)]"/>
+                                    <field name="name" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
+                                    <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
+                                           attrs="{'readonly':['|',('state','!=','open')]}"/>
+                                    <button name="button_details" string="Details" type="object"
+                                            attrs="{'invisible':['|',('sheet_state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
+                                    <!-- invisible fields -->
+                                    <field name="worktype" invisible="True" />
+                                    <field name="state" invisible="True"/>
+                                    <field name="sheet_state" invisible="True"/>
+                                    <field name="date" invisible="True"/>
+                                    <field name="logging_required" invisible="True"/>
+                                    <field name="amount" invisible="True" />
+                                    <field name="premium_amount" invisible="True" />
+                                    <field name="account_id" invisible="True" />
+                                    <field name="change_explanation" invisible="True" />
+                                    <field name="uid_is_user_id" invisible="True"/>
+                                </tree>
+                            </field>
+                            <!--<button name="button_create_line" string="Add Entry" type="object"/>-->
+                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
+                        </page>
+                        <!-- page for readonly time entries -->
+                        <page string="Entries" attrs="{'invisible':[('state','=','draft'),('uid_is_user_id','=',True)]}">
+                            <field name="view_line_ids" nolabel="1" readonly="True">
+                                <tree string="Timesheet Activities" create="false" edit="false" delete="false">
+                                    <field name="date_mirror" />
                                     <field name="day_name"/>
-                                    <field name="routing_id"/>
-                                    <field name="analytic_account_id"/>
+                                    <field name="routing_id" string="Billing Category"/>
+                                    <field name="analytic_account_id" string="Task"/>
                                     <field name="name"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
-                                    <field name="worktype"/>
+                                    <field name="worktype" />
                                 </tree>
-                                <form string="Timesheet Activities">
-                                    <group>
-                                        <group>
-                                            <field name="date"/>
-                                            <field name="name"/>
-                                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"/>
-                                            <field name="state" invisible="True"/>
-                                            <field name="logging_required" invisible="True"/>
-                                            <field name="amount" invisible="True" />
-                                            <field name="premium_amount" invisible="True" />
-                                            <field name="account_id" invisible="True" />
-                                        </group>
-                                        <group>
-                                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                                   domain="[('timesheet_routing_line','!=',None)]" />
-                                            <field name="account_type_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                                   domain="[('routing_filter','=',routing_id)]" invisible="True"/>
-                                            <field name="analytic_account_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                                   domain="[('routing_line_filter','in',(routing_id,account_type_id)),
-                                                            ('timesheets_future_filter','in',state),
-                                                            ('user_has_reviewed','=',True)]"/>
-                                            <field name="location" options="{'create': false, 'create_edit': false}"/>
-                                            <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"/>
-                                        </group>
-                                    </group>
-                                    <group>
-                                        <field name="change_explanation" attrs="{'required':[('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
-                                    </group>
-                                </form>
                             </field>
                         </page>
-                        <page string="Approvals">
+                        <page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">
                             <field name="approval_line_ids" nolabel="1" readonly="True">
                                 <tree editable="False">
                                     <field name="type"/>
@@ -93,6 +163,40 @@
                                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
                                 </tree>
                             </field>
+                        </page>
+                        <page string="Instructions" attrs="{'invisible':[('state','!=','draft')]}">
+                            <p><strong>How to keep time</strong></p>
+                            <p>Timesheets are intended to be filled out every day, on the day  that work is done. You may edit entries for other days,
+                            but you will typically be required to provide an explanation for the change. You may not create work entries for days
+                            outside of this timesheet's work week.</p>
+                            <p>First, you must review the Statement of Work for any task that you want to work on. The link to review task S.O.W.s is
+                            on the left menu. Please read the description before clicking the acknowledgement button. Note that on the S.O.W. review page,
+                            you may click the left and right buttons in the upper right corner to go to the previous/next S.O.W. page.</p>
+                            <p>On the timesheet page, you may add new work entries with the "Add an item" link. You can set a default Billing Category
+                            and/or Task on the Preferences page (left menu link). Additionally, you may only delete an entry from a line entry
+                            Detail page.</p>
+                            <p>Note that for any entries in the future, there is a very limited set of tasks that you may choose. (Typically
+                            PTO and Holiday, under the Fringe category).</p>
+                            <p>New entries are not saved until you click Validate and Save! Make a habit of clicking this button frequently
+                            so as not to lose data.</p>
+                            <p><strong>Approvals</strong></p>
+                            <p>Once your timesheet is completely filled out for a given week, click the red "Submit For Approval" button in the
+                            upper right corner. The timesheet may no longer be edited while it's waiting for approval (or once approved).
+                            While waiting for approval, you have the option to set the timesheet back to an Open state, but doing so
+                            will reset all approval lines.</p>
+                            <p>Every timesheet needs to be approved by at least two people: someone from HR and someone in your management chain.
+                            Additionally, if you work on a contract or IRaD project, there will be additional approval lines added that must
+                            be approved by a PM for that contract/project. Once all approval lines are approved, the timesheet goes into
+                            a finished state, and it can no longer be edited in any way.</p>
+                            <p><strong>Addendums</strong></p>
+                            <p>When a timesheet is fully approved, an additional button will appear to make any work entry addendums, should
+                            the need arise. A timesheet addendum is effectively the same as a regular timesheet, only without some of the
+                            overtime rules for non-exempt employees. Negative hours are allowed. If you need to move hours from one
+                            project to another, you would make two entries: one with negative hours on the incorrect task, and one
+                            with positive hours on the correct task. The approval process for addendums is the same as for regular timesheets.</p>
+                            <p>If an addendum is submitted with non-zero total hours, please notify HR so they can make the appropriate
+                            payroll adjustments!</p>
+
                         </page>
                         <!--<page string="Summary">-->
                             <!--<widget type="weekly_timesheet" attrs="{'readonly': True}">-->
@@ -109,6 +213,34 @@
                 </div>
                 </form>
             </field>
+        </record>
+
+        <!-- The time entry reject form -->
+        <record id="hr_timekeeping_reject_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.comment.form</field>
+            <field name="model">hr.timekeeping.comment</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet Activities">
+                    <group>
+                        <!--<field name="sheet_id" invisible="True"/>-->
+                        <field name="comment" widget="text"/>
+                    </group>
+                    <footer>
+                        <button string="Submit" name="submit_explanation" type="object" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <!-- Action for reject approval button -->
+        <record id="action_timekeeping_reject_form" model="ir.actions.act_window">
+            <field name="name">Reject Timesheet</field>
+            <field name="res_model">hr.timekeeping.comment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="hr_timekeeping_reject_form"/>
+            <field name="target">new</field>
         </record>
 
 
@@ -134,19 +266,7 @@
         <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user,base.group_hr_user,base.group_hr_manager"/>
         <menuitem id="hr.menu_hr_main" name="Human Resources" parent="hr.menu_hr_root" sequence="10"/>
 
-        <!-- default filter of to approve -->
-        <!--<record id="act_hr_timekeeping_to_approve" model="ir.actions.act_window">-->
-            <!--<field name="name">Timesheets to Validate</field>-->
-            <!--<field name="type">ir.actions.act_window</field>-->
-            <!--<field name="res_model">hr.timekeeping.sheet</field>-->
-            <!--<field name="view_type">form</field>-->
-            <!--<field name="view_id" eval="False"/>-->
-            <!--<field name="context">{'search_default_to_approve':1}</field>-->
-            <!--<field name="search_view_id" ref="view_hr_timekeeping_sheet_filter"/>-->
-        <!--</record>-->
-        <!--<menuitem id="menu_act_hr_timekeeping_to_approve" action="act_hr_timekeeping_to_approve" parent="menu_hr_timekeeping" sequence="3"/>-->
-
-        <!-- My Current Timesheet -->
+        <!-- My Current Timesheet menuitem -->
         <record id="action_hr_timekeeping_current_open" model="ir.actions.server">
             <field name="sequence" eval="5"/>
             <field name="state">code</field>
@@ -191,6 +311,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="hr_timekeeping_sheet_form"/>
             <field name="context">{'search_default_my_user_id':1}</field>
+            <field name="target">current</field>
             <field name="help" type="html">
               <p class="oe_view_nocontent_create">
                 Add a new timesheet from My Current Timesheet
@@ -216,6 +337,38 @@
             <field name="name">My Approvals</field>
         </record>
         <menuitem id="menu_act_hr_timekeeping_my_approval_filter" action="action_hr_timekeeping_my_approval_filter" parent="menu_hr_timekeeping" sequence="3"/>
+
+        <!-- Timekeeping user preferences -->
+        <record id="user_preferences_form" model="ir.ui.view">
+            <field name="name">timekeeping.preferences.form</field>
+            <field name="model">hr.timekeeping.preferences</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet" create="false" delete="false" edit="false">
+                    <sheet>
+                        <group>
+                            <field name="routing_id" widget="selection" domain="[('timesheet_routing_line','!=',None)]"/>
+                            <field name="account_type_id" widget="selection" domain="[('routing_filter','=',routing_id)]" invisible="1"/>
+                            <field name="analytic_account_id" widget="selection"
+                                    domain="[('routing_line_filter','in',(routing_id,account_type_id)),('user_has_reviewed','=',True)]"/>
+                        </group>
+                        <group>
+                            <button string="Save" name="save" type="object" class="oe_highlight"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_user_preferences_form" model="ir.actions.act_window">
+            <field name="name">Preferences</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.preferences</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" eval="user_preferences_form"/>
+            <field name="target">inline</field>
+        </record>
+        <menuitem id="menu_user_preferences_form" action="action_user_preferences_form" parent="menu_hr_timekeeping" sequence="7"/>
+
 
 
         <!--Employee form view, add new fields -->

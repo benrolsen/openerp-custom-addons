@@ -1,0 +1,12 @@
+.openerp .oe_timekeeping_example {
+    height: 100%;
+}
+
+.openerp .oe_timekeeping_example h4 {
+    margin: 0;
+}
+
+.openerp .oe_timekeeping_example.timekeeping_started .timekeeping_start button,
+.openerp .oe_timekeeping_example.timekeeping_stopped .timekeeping_stop button {
+    display: none;
+}

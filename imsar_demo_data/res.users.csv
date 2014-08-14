@@ -1,5 +1,13 @@
 id,name,login,partner_id/id,password,company_id/id,tz
-users_ben_olsen,Ben Olsen,ben.olsen,partner_ben_olsen,test,base.main_company,'America/Denver'
-users_adam_robertson,Adam,adamr,partner_adam_robertson,test,base.main_company,'America/Denver'
-users_andy_may,Andy May,andy.may,partner_andy_may,test,base.main_company,'America/Denver'
-users_jeny_grierson,Jeny Grierson,jenylyng,partner_jeny_grierson,test,base.main_company,'America/Denver'
+users_ben_olsen,Ben Olsen,ben.olsen,partner_ben_olsen,test,base.main_company,America/Denver
+users_adam_robertson,Adam,adamr,partner_adam_robertson,test,base.main_company,America/Denver
+users_andy_may,Andy May,andy.may,partner_andy_may,test,base.main_company,America/Denver
+users_jeny_grierson,Jeny Grierson,jenylyng,partner_jeny_grierson,test,base.main_company,America/Denver
+users_aarons,Aaron Swan,aarons,partner_aarons,test,base.main_company,America/Denver
+users_ashley_werner,Ashley Werner,ashley.werner,partner_ashley_werner,test,base.main_company,America/Denver
+users_brycer,Bryce Ready,brycer,partner_brycer,test,base.main_company,America/Denver
+users_chad_kidder,Chad Kidder,chad.kidder,partner_chad_kidder,test,base.main_company,America/Denver
+users_dyarrington,Doug Yarrington,dyarrington,partner_dyarrington,test,base.main_company,America/Denver
+users_michaeld,Michael Duersch,michaeld,partner_michaeld,test,base.main_company,America/Denver
+users_nathan_hardy,Nathan Hardy,nathan.hardy,partner_nathan_hardy,test,base.main_company,America/Denver
+users_pweir,Peter Weir,pweir,partner_pweir,test,base.main_company,America/Denver

@@ -3,8 +3,8 @@
     <data>
         <template id="assets_backend" name="timekeeping_assets" inherit_id="web.assets_backend">
             <xpath expr="." position="inside">
-                <link rel="stylesheet" href="/imsar_timekeeping/static/src/css/timesheet.css"/>
-                <script type="text/javascript" src="/imsar_timekeeping/static/src/js/timesheet.js"/>
+                <link rel="stylesheet" href="/imsar_timekeeping/static/src/css/timekeeping.css"/>
+                <script type="text/javascript" src="/imsar_timekeeping/static/src/js/timekeeping.js"></script>
             </xpath>
         </template>
     </data>

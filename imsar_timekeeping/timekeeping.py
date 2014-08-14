@@ -42,6 +42,7 @@ class hr_timekeeping_sheet(models.Model):
     _description = 'Timekeeping Sheet'
     _order = 'year,week_number desc'
 
+    # model columns
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
     type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
     year = fields.Integer(string="Year")
@@ -55,6 +56,7 @@ class hr_timekeeping_sheet(models.Model):
     employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
+    view_line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
     subtotal_line = fields.Char(string="Subtotals: ", compute='_compute_subtotals')
     subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
@@ -80,18 +82,23 @@ class hr_timekeeping_sheet(models.Model):
     @api.one
     @api.constrains('line_ids')
     def _check_subtotals(self):
-        # don't constrain addendum worksheets
-        if self.type != 'regular':
-            return
+        # check subtotals for each day
+        day_totals = defaultdict(float)
+        for line in self.line_ids:
+            day_totals[line.date] += line.unit_amount
+        for day, total in day_totals.items():
+            if total > 24.0:
+                raise Warning(_("You have more than 24 hours entered for {}, please fix before saving.".format(day)))
+
         subtotals = json.loads(self.subtotal_json)
         regular_worktype_id = str(self.employee_id.user_id.company_id.regular_worktype_id.id)
         overtime_worktype_id = str(self.employee_id.user_id.company_id.overtime_worktype_id.id)
         regular = subtotals.get(regular_worktype_id, 0.0)
         overtime = subtotals.get(overtime_worktype_id, 0.0)
         if self.employee_flsa_status != 'exempt':
-            if regular > 40.0:
+            if regular > 40.0 and self.type == 'regular':
                 raise Warning(_("You cannot log more than 40 hours of regular time."))
-            if overtime > 0.0 and regular < 40.0:
+            if overtime > 0.0 and regular < 40.0 and self.type == 'regular':
                 raise Warning(_("You cannot log overtime without having 40 hours of regular time first."))
         else:
             if overtime > 0.0:
@@ -131,10 +138,12 @@ class hr_timekeeping_sheet(models.Model):
         return { 'type': 'ir.actions.client', 'tag': 'reload' }
 
     @api.multi
-    def button_set_to_draft(self):
-        self.write({'state': 'draft'})
-        self.create_workflow()
-        return True
+    def button_self_cancel(self):
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        subject = "Submission set back to Open"
+        body = "{} set timesheet back to Open on {}".format(self.env.user.name, now.strftime('%c'))
+        self.message_post(subject=subject, body=body,)
+        return self.button_cancel()
 
     @api.multi
     def button_addendum(self):
@@ -144,6 +153,20 @@ class hr_timekeeping_sheet(models.Model):
         action_server_obj = self.pool.get('ir.actions.server')
         action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_addendum_open').id
         return action_server_obj.run(self._cr, self._uid, action_id, context=ctx)
+
+    @api.multi
+    def button_create_line(self):
+        view = {
+            'name': _('Create Entry'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.line',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_id': False,
+        }
+        return view
 
     @api.multi
     def _make_move_lines(self):
@@ -280,16 +303,18 @@ class hr_timekeeping_line(models.Model):
     _name = 'hr.timekeeping.line'
     _keys_to_log = ['date','routing_id','account_id','name','unit_amount','location']
     _description = 'Timekeeping Sheet Line'
-    _order = 'date desc'
+    _order = 'date desc, create_date desc'
 
     # model columns
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
-    name = fields.Char('Description', required=True)
+    uid_is_user_id = fields.Boolean(related='sheet_id.uid_is_user_id', readonly=True)
+    name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, digits_compute=dp.get_precision('Account'))
     premium_amount = fields.Float(string='Premium Amount', required=True, help='The additional amount based on work type, like overtime', digits_compute=dp.get_precision('Account'))
     date = fields.Date(string='Date', required=True)
+    date_mirror = fields.Date(related='date', string='Date', readonly=True)
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
     routing_id = fields.Many2one('account.routing', 'Category', required=True,)
@@ -299,6 +324,7 @@ class hr_timekeeping_line(models.Model):
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, help="Location the hours were worked",)
     change_explanation = fields.Char(string='Change Explanation')
     state = fields.Char(compute='_check_state') # 'past','open','future'
+    sheet_state = fields.Selection(related='sheet_id.state', readonly=True)
     logging_required = fields.Boolean(compute='_check_state')
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, )
     move_line_ids = fields.One2many('account.move.line', 'timekeeping_line', string='Journal Line Item', readonly=True, ondelete='restrict',)
@@ -334,8 +360,17 @@ class hr_timekeeping_line(models.Model):
                 self.state = 'past'
                 self.logging_required = True
 
+    @api.one
+    @api.constrains('unit_amount', 'worktype')
+    def _check_hours(self):
+        if self.unit_amount > 24.0:
+            raise Warning(_("You cannot have more than 24 hours entered a single day."))
+        self.sheet_id._check_subtotals()
+
     @api.multi
     def _log_changes(self, vals, new_record=False):
+        if not vals:
+            return True
         # log any changes that are outside the valid time window
         body = "<strong>Change explanation:</strong> {}<br>".format(vals['change_explanation_log'])
         if new_record:
@@ -359,13 +394,30 @@ class hr_timekeeping_line(models.Model):
             body += (line_str.format(key_str, oldval, newval))
         sheet.message_post(subject=subject, body=body,)
 
+    @api.model
+    def _safety_checks(self, sheet):
+        if sheet.state != 'draft':
+            raise Warning(_("You cannot make changes to this timesheet!"))
+        if not sheet.uid_is_user_id:
+            raise Warning(_("You cannot make changes to this timesheet!"))
+
     @api.multi
     def write(self, vals):
+        self._safety_checks(self.sheet_id)
+        # for some reason write gets called twice with this setup, the second time with context as first arg
+        if vals.get('active_model') != None:
+            return True
+            # return { 'type': 'ir.actions.client', 'tag': 'reload' }
         vals['previous_date'] = vals.get('date') or self.date
         if self.logging_required:
             vals['change_explanation_log'] = vals.get('change_explanation')
             vals['change_explanation'] = ''
             self._log_changes(vals)
+        unit_amount = vals.get('unit_amount') or self.unit_amount
+        worktype_id = vals.get('worktype') or self.worktype.id
+        worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
+        vals['amount'] = self.sheet_id.employee_id.wage_rate * unit_amount
+        vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         return super(hr_timekeeping_line, self).write(vals)
 
     @api.model
@@ -373,6 +425,14 @@ class hr_timekeeping_line(models.Model):
         vals['previous_date'] = vals['date']
         vals['change_explanation_log'] = vals['change_explanation']
         vals['change_explanation'] = ''
+        unit_amount = vals.get('unit_amount', 0.0)
+        worktype_id = vals.get('worktype')
+        worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
+        sheet_id = vals.get('sheet_id')
+        sheet = self.env['hr.timekeeping.sheet'].browse(sheet_id)
+        self._safety_checks(sheet)
+        vals['amount'] = sheet.employee_id.wage_rate * unit_amount
+        vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         vals['id'] = super(hr_timekeeping_line, self).create(vals)
         if vals['id'].logging_required:
             self._log_changes(vals, new_record=True)
@@ -380,8 +440,7 @@ class hr_timekeeping_line(models.Model):
 
     @api.multi
     def unlink(self):
-        if self.amount > 0.0 or self.unit_amount > 0.0:
-            raise Warning(_('You cannot delete a timesheet entry with more than 0 hours. Please edit the entry to 0 hours first.'))
+        self._safety_checks(self.sheet_id)
         if self.logging_required:
             subject = 'Deleted Line ID: %s' % self.id
             body = ''
@@ -394,21 +453,18 @@ class hr_timekeeping_line(models.Model):
                 body += 'Removed <strong>%s</strong>: <strong>%s</strong><br>' % (key_str, oldval)
 
             self.sheet_id.message_post(subject=subject, body=body,)
-        return super(hr_timekeeping_line, self).unlink()
+        super(hr_timekeeping_line, self).unlink()
+        return { 'type': 'ir.actions.client', 'tag': 'reload' }
 
     @api.onchange('unit_amount')
     def onchange_unit_amount(self):
-        self.amount = self.sheet_id.employee_id.wage_rate * self.unit_amount
-
-    @api.onchange('amount','worktype')
-    def onchange_premium(self):
-        if self.worktype:
-            self.premium_amount = self.amount * self.worktype.premium_rate
-        else:
-            self.premium_amount = 0.0
+        if self.unit_amount > 24.0:
+            raise Warning(_("You cannot have more than 24 hours entered a single day."))
 
     @api.onchange('date')
     def onchange_date(self):
+        if not self.sheet_id:
+            self.sheet_id = self.env['hr.timekeeping.sheet'].browse(self._context['active_id'])
         date = datetime.strptime(self.date, '%Y-%m-%d')
         from_date = datetime.strptime(self.sheet_id.date_from, '%Y-%m-%d')
         to_date = datetime.strptime(self.sheet_id.date_to, '%Y-%m-%d')
@@ -422,12 +478,28 @@ class hr_timekeeping_line(models.Model):
             if not (self.analytic_account_id and self.analytic_account_id in future_analytics.ids):
                 self.routing_id = ''
 
+    @api.multi
+    def button_details(self):
+        view = {
+            'name': _('Entry Details'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.line',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'readonly': True,
+            'res_id': self.id,
+        }
+        return view
+
     @api.onchange('routing_id')
     def onchange_routing_id(self):
         route = self.env['account.routing'].browse(self.routing_id.id)
         self.account_type_id = route.timesheet_routing_line.account_type_id.id
         self.account_id = route.timesheet_routing_line.account_id.id
-        self.analytic_account_id = ''
+        if self.analytic_account_id.id not in route.timesheet_routing_line._get_analytic_ids():
+            self.analytic_account_id = ''
 
     @api.onchange('analytic_account_id')
     def onchange_account_type_id(self):
@@ -436,9 +508,26 @@ class hr_timekeeping_line(models.Model):
             analytic = self.env['account.analytic.account'].browse(self.analytic_account_id.id)
             self.account_id = analytic._search_for_subroute_account(routing_line_id=route.timesheet_routing_line.id)
 
-    @api.model
+    @api.multi
+    def _get_default_date(self):
+        today_str = fields.Date.today()
+        today = fields.Date.from_string(today_str)
+        date_to = fields.Date.from_string(self.sheet_id.date_to)
+        if today > date_to:
+            return self.sheet_id.date_to
+        return today_str
+
+    @api.multi
     def _get_default_worktype(self):
         return self.env.user.company_id.regular_worktype_id.id
+
+    @api.multi
+    def _get_user_default_route(self):
+        return self.env.user.default_routing_category
+
+    @api.multi
+    def _get_user_default_analytic(self):
+        return self.env.user.default_subroute_analytic
 
     _defaults = {
         'date': fields.Date.today(),
@@ -446,6 +535,8 @@ class hr_timekeeping_line(models.Model):
         'state': 'open',
         'worktype': _get_default_worktype,
         'premium_amount': 0.0,
+        'routing_id': _get_user_default_route,
+        'analytic_account_id': _get_user_default_analytic,
     }
 
 
@@ -497,13 +588,29 @@ class hr_timekeeping_approval(models.Model):
             self.uid_can_approve = False
 
     @api.multi
-    def button_reject(self):
-        # log rejection
+    def log_rejection(self, comment=''):
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submission rejected"
         body = "{} rejected timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
+        if comment:
+            body += "<br><strong>Comment:</strong> {}".format(comment)
         self.sheet_id.message_post(subject=subject, body=body,)
         return self.sheet_id.button_cancel()
+
+    @api.multi
+    def button_reject(self):
+        view = {
+            'name': _('Rejection Comment'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.comment',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'readonly': True,
+            # 'res_id': self.id,
+        }
+        return view
 
     @api.multi
     def button_approve(self):
@@ -554,13 +661,15 @@ class hr_timesheet_worktype(models.Model):
     }
 
 
-# set up m2m to record when a user has reviewed an analytic's description
+# additional fields for res.users
 class res_users(models.Model):
     _inherit = "res.users"
 
     analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
     pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
+    default_routing_category = fields.Many2one('account.routing', 'Default Billing Category')
+    default_subroute_analytic = fields.Many2one('account.analytic.account', 'Default Task')
 
 
 class account_analytic_account(models.Model):

@@ -29,7 +29,7 @@
     Timesheet customizations, attempting to be compliant with DCAA
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['account_routing','imsar_accounting', 'hr',
+    "depends" : ['web','account_routing','imsar_accounting', 'hr',
     ],
     'data': [
             'res_config_view.xml',
@@ -40,9 +40,9 @@
             'timekeeping_worktype_view.xml',
             'timekeeping_view.xml',
             'timekeeping_review_view.xml',
-            'views/hr_timekeeping_sheet.xml',
+            'views/imsar_timekeeping.xml',
             ],
-    'qweb': ['static/src/xml/timesheet.xml',],
+    'qweb': ['static/src/xml/timekeeping_templates.xml',],
     'installable': True,
     'auto_install': False,
 }
