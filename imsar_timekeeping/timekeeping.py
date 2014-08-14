@@ -110,7 +110,7 @@ class hr_timekeeping_sheet(models.Model):
         self.name = "Week {} of {}".format(self.week_number, self.year)
         self.date_from = week_start_date(self.year, self.week_number)
         self.date_to = week_start_date(self.year, self.week_number) + timedelta(days=6)
-        self.uid_is_user_id = (self.user_id.id == self._uid)
+        self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
 
     @api.multi
     def button_confirm(self):

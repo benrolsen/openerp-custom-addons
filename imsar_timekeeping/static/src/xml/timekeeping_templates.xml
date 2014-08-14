@@ -12,10 +12,14 @@
         </p>
     </div>
 
-    <div t-name="imsar_timekeeping.QuickTaskView" class="oe_timekeeping_example">
-        <div><input name="oe_timekeeping_input" class="oe_timekeeping_input" type="text"/></div>
-        <div class="timekeeping_start"><button type="button">Start</button></div>
-        <div class="timekeeping_stop"><button type="button">Stop</button></div>
+    <div t-name="imsar_timekeeping.WeeklySummary" class="oe_timekeeping">
+        <div class="testline" id="testline_id"><p>Bad</p></div>
+        <table>
+            <tr t-foreach="widget.accounts" t-as="account">
+                <td>Account <t t-esc="account"/></td>
+            </tr>
+        </table>
+
     </div>
 
 </templates>

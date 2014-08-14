@@ -46,29 +46,26 @@ openerp.imsar_timekeeping = function (instance) {
         }
     });
 
-    module.QuickTaskView = instance.web.form.FormWidget.extend({
-        template: 'imsar_timekeeping.QuickTaskView',
+    module.WeeklySummary = instance.web.form.FormWidget.extend({
+        template: 'imsar_timekeeping.WeeklySummary',
         init: function(parent) {
             this._super.apply(this, arguments);
-            this.field_manager.on("change:oe_timekeeping_input", this, this.log_result);
-            this.parent_model = parent.dataset.model;
-            this.parent_id = parent.dataset.ids[0];
+            this.field_manager.on("field_changed:line_ids", this, this.log_result);
+            this.lines = [];
+            this.accounts = [1,2,3];
         },
         start: function(){
-            var model = new instance.web.Model("hr.timekeeping.line");
-            var res = model.call('search', [[ ['user_id','=',instance.session.uid], ['sheet_id','=',this.parent_id] ]])
-                .then(function(res_list) {
-                    console.log(res_list);
-                });
-            //console.log($('.timekeeping_start').text());
-            //console.log(context);
+            this.date_from = instance.web.str_to_date(this.field_manager.get_field_value("date_from"));
+            this.date_to = instance.web.str_to_date(this.field_manager.get_field_value("date_to"));
+            this.date_from_display = $.datepicker.formatDate('M dd, yy', this.date_from)
+            this.date_to_display = $.datepicker.formatDate('M dd, yy', this.date_to);
+            this.$('#testline_id').html("<p>From " + this.date_from_display + " to " + this.date_to_display + "</p>");
         },
-        log_result: function(source, options) {
-            console.log(source);
-            console.log(options);
+        log_result: function() {
+            console.log(this.field_manager.get_field_value("name"));
         }
     });
 
-    instance.web.form.custom_widgets.add('timekeeping_quick_tasks', 'instance.imsar_timekeeping.QuickTaskView');
+    instance.web.form.custom_widgets.add('timekeeping_weekly_summary', 'instance.imsar_timekeeping.WeeklySummary');
 
 };
