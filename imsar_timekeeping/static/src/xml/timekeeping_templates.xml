@@ -2,21 +2,33 @@
 
 <templates>
 
-    <div t-name="imsar_timekeeping.stopwatch" class="oe_timekeeping_example timekeeping_stopped">
-        <h4 class="timekeeping_timer">00:00:00</h4>
-        <p class="timekeeping_start">
-            <button type="button">Start</button>
-        </p>
-        <p class="timekeeping_stop">
-            <button type="button">Stop</button>
-        </p>
-    </div>
-
-    <div t-name="imsar_timekeeping.WeeklySummary" class="oe_timekeeping">
-        <div class="testline" id="testline_id"><p>Bad</p></div>
+    <div t-name="imsar_timekeeping.WeeklySummary" class="oe_timekeeping_summary">
         <table>
-            <tr t-foreach="widget.accounts" t-as="account">
-                <td>Account <t t-esc="account"/></td>
+            <tr>
+                <th class="oe_timesheet_first_col">Tasks</th>
+                <t t-foreach="widget.dates" t-as="date">
+                    <th>
+                        <t t-esc="date.toString('ddd')"/><br />
+                        <t t-esc="date.toString('MMM d')"/>
+                    </th>
+                </t>
+                <th class="oe_timekeeping_summary">Total</th>
+            </tr>
+            <tr t-foreach="widget.grid" t-as="line">
+                <td class="oe_timesheet_weekly_account"><t t-esc="line.task"/></td>
+                <t t-foreach="widget.dates" t-as="date">
+                    <t t-set="day" t-value="date.toString('yyyy-MM-dd')"/>
+                    <td><span class="oe_timesheet_weekly_account"><t t-esc="line.days[day]"/></span></td>
+                </t>
+                <td class="oe_timesheet_total"><t t-esc="line.total"/></td>
+            </tr>
+            <tr class="oe_timesheet_total">
+                <td>Totals</td>
+                <t t-foreach="widget.dates" t-as="date">
+                    <t t-set="day" t-value="date.toString('yyyy-MM-dd')"/>
+                    <td><t t-esc="widget.totals[day]"/></td>
+                </t>
+                <td class="oe_timesheet_total"><t t-esc="widget.total"/></td>
             </tr>
         </table>
 

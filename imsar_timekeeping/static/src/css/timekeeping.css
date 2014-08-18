@@ -1,12 +1,42 @@
-.openerp .oe_timekeeping_example {
-    height: 100%;
+.openerp .oe_timekeeping_summary {
+  overflow-x: auto;
 }
-
-.openerp .oe_timekeeping_example h4 {
-    margin: 0;
+.openerp .oe_timekeeping_summary table {
+  width: 100%;
 }
-
-.openerp .oe_timekeeping_example.timekeeping_started .timekeeping_start button,
-.openerp .oe_timekeeping_example.timekeeping_stopped .timekeeping_stop button {
-    display: none;
+.openerp .oe_timekeeping_summary td {
+  padding: 3px;
+  text-align: center;
+}
+.openerp .oe_timekeeping_summary tr {
+  border-width: 1px;
+  border-style:solid;
+}
+.openerp .oe_timekeeping_summary th {
+  text-align: center;
+  color: #006699;
+  font-family: "Helvetica Neue", Arial, Verdana, "Nimbus Sans L", sans-serif;
+  font-size: 11px;
+  background: #eeeeee;
+  min-width: 60px;
+  border-width: 3px;
+  border-style:solid;
+}
+.openerp .oe_timekeeping_summary .oe_timesheet_total td {
+  color: #006699;
+  font-family: "Helvetica Neue", Arial, Verdana, "Nimbus Sans L", sans-serif;
+  font-size: 11px;
+  background: #eeeeee;
+  border-width: 3px;
+  border-style:solid;
+  font-weight: bold;
+}
+.openerp .oe_timekeeping_summary .oe_timesheet_weekly_account {
+  text-align: right;
+}
+.openerp .oe_timekeeping_summary .oe_timesheet_first_col {
+  min-width: 250px;
+}
+.openerp .oe_timekeeping_summary .oe_timesheet_total {
+  font-weight: bold;
 }

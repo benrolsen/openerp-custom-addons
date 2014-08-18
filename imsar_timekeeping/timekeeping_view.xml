@@ -20,6 +20,7 @@
                             <field name="premium_amount" invisible="True" />
                             <field name="account_id" invisible="True" />
                             <field name="sheet_id" invisible="True"/>
+                            <field name="user_id" invisible="1"/>
                             <field name="uid_is_user_id" invisible="1"/>
                             <field name="sheet_state" invisible="1"/>
                         </group>
@@ -67,9 +68,8 @@
             <field name="arch" type="xml">
                 <form string="Timesheet" create="false" delete="false">
                 <header>
-                    <!--<button name="cancel" string="Cancel Changes" special="cancel" class="oe_link" attrs="{'invisible':[('state','!=','draft')]}"/>-->
-                    <!--<button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"-->
-                            <!--attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>-->
+                    <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
+                            attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
@@ -95,9 +95,6 @@
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <notebook>
-                        <page string="Today" invisible="1">
-                            <widget type="timekeeping_weekly_summary"/>
-                        </page>
                         <!-- page for editable time entries -->
                         <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}">
                             <button name="write" type="object" string="Validate &amp; Save"
@@ -130,11 +127,10 @@
                                     <field name="premium_amount" invisible="True" />
                                     <field name="account_id" invisible="True" />
                                     <field name="change_explanation" invisible="True" />
-                                    <field name="user_id" invisible="True"/>
-                                    <field name="uid_is_user_id" invisible="True"/>
+                                    <field name="user_id" invisible="1"/>
+                                    <field name="uid_is_user_id" invisible="1"/>
                                 </tree>
                             </field>
-                            <!--<button name="button_create_line" string="Add Entry" type="object"/>-->
                             <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
                         </page>
                         <!-- page for readonly time entries -->
@@ -151,6 +147,11 @@
                                 </tree>
                             </field>
                         </page>
+                        <!-- page for weekly summary -->
+                        <page string="Summary" invisible="0">
+                            <widget type="timekeeping_weekly_summary"/>
+                        </page>
+                        <!-- page for approvals -->
                         <page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">
                             <field name="approval_line_ids" nolabel="1" readonly="True">
                                 <tree editable="False">
@@ -199,10 +200,6 @@
                             payroll adjustments!</p>
 
                         </page>
-                        <!--<page string="Summary">-->
-                            <!--<widget type="weekly_timesheet" attrs="{'readonly': True}">-->
-                            <!--</widget>-->
-                        <!--</page>-->
                     </notebook>
                     <group>
                         <field name="subtotal_line" attrs="{'invisible':[('employee_flsa_status','=','exempt')]}"/>

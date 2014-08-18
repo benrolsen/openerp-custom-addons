@@ -242,6 +242,7 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def button_done(self):
+        # this is called (with sudo) once all approval lines are done
         lines = self._make_move_lines()
         if lines:
             name = self.employee_id.name + ' - ' + self.name
@@ -308,7 +309,7 @@ class hr_timekeeping_line(models.Model):
     # model columns
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
-    uid_is_user_id = fields.Boolean(related='sheet_id.uid_is_user_id', readonly=True)
+    uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, digits_compute=dp.get_precision('Account'))
@@ -394,6 +395,13 @@ class hr_timekeeping_line(models.Model):
             body += (line_str.format(key_str, oldval, newval))
         sheet.message_post(subject=subject, body=body,)
 
+    @api.one
+    @api.depends('user_id')
+    def _computed_fields(self):
+        # You'd think you could just use a related field to self.sheet.uid_is_user_id, right?
+        # Guess again! Related field to computed field loses the self._uid of the function call
+        self.uid_is_user_id = (self.user_id.id == self._uid)
+
     @api.model
     def _safety_checks(self, sheet):
         if sheet.state != 'draft':
@@ -403,11 +411,10 @@ class hr_timekeeping_line(models.Model):
 
     @api.multi
     def write(self, vals):
-        self._safety_checks(self.sheet_id)
         # for some reason write gets called twice with this setup, the second time with context as first arg
         if vals.get('active_model') != None:
             return True
-            # return { 'type': 'ir.actions.client', 'tag': 'reload' }
+        self._safety_checks(self.sheet_id)
         vals['previous_date'] = vals.get('date') or self.date
         if self.logging_required:
             vals['change_explanation_log'] = vals.get('change_explanation')

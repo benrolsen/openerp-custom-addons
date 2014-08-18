@@ -3,68 +3,84 @@ openerp.imsar_timekeeping = function (instance) {
     var _t = instance.web._t;
     module = instance.imsar_timekeeping;
 
-    module.StopWatch = instance.web.Widget.extend({
-        template: 'imsar_timekeeping.stopwatch',
-        events: {
-            'click .timekeeping_start button': 'watch_start',
-            'click .timekeeping_stop button': 'watch_stop'
-        },
-        init: function () {
-            this._super.apply(this, arguments);
-            this._start = null;
-            this._watch = null;
-        },
-        update_counter: function () {
-            var h, m, s;
-            var diff = new Date() - this._start;
-            s = diff / 1000;
-            m = Math.floor(s / 60);
-            s -= 60*m;
-            h = Math.floor(m / 60);
-            m -= 60*h;
-            this.$('.timekeeping_timer').text(_.str.sprintf("%02d:%02d:%02d", h, m, s));
-        },
-        watch_start: function () {
-            console.log("Hit the start button");
-            this.$el.addClass('timekeeping_started').removeClass('timekeeping_stopped');
-            this._start = new Date();
-            this.update_counter();
-            this._watch = setInterval(this.proxy('update_counter'),100);
-        },
-        watch_stop: function () {
-            console.log("Hit the stop button");
-            clearInterval(this._watch);
-            this.update_counter();
-            this._start = this._watch = null;
-            this.$el.removeClass('timekeeping_started').addClass('timekeeping_stopped');
-        },
-        destroy: function () {
-            if (this._watch) {
-                clearInterval(this._watch);
-            }
-            this._super();
-        }
-    });
-
-    module.WeeklySummary = instance.web.form.FormWidget.extend({
+    module.WeeklySummary = instance.web.form.FormWidget.extend(instance.web.form.ReinitializeWidgetMixin, {
         template: 'imsar_timekeeping.WeeklySummary',
+
         init: function(parent) {
             this._super.apply(this, arguments);
-            this.field_manager.on("field_changed:line_ids", this, this.log_result);
+            this.res_o2m_drop = new instance.web.DropMisordered();
+            this.dates = [];
             this.lines = [];
-            this.accounts = [1,2,3];
+            this.grid = [];
+            this.totals = [];
+            this.total = 0;
+            this.field_manager.on("field_changed:line_ids", this, this.line_ids_changed);
         },
-        start: function(){
+
+        initialize_content: function() {
+            // get the date_from and date_to and make a list of the range
+            var dates = [];
+            var totals = [];
+            var total = 0;
             this.date_from = instance.web.str_to_date(this.field_manager.get_field_value("date_from"));
             this.date_to = instance.web.str_to_date(this.field_manager.get_field_value("date_to"));
-            this.date_from_display = $.datepicker.formatDate('M dd, yy', this.date_from)
-            this.date_to_display = $.datepicker.formatDate('M dd, yy', this.date_to);
-            this.$('#testline_id').html("<p>From " + this.date_from_display + " to " + this.date_to_display + "</p>");
+            var start = this.date_from;
+            var end = this.date_to;
+            while (start <= end) {
+                dates.push(start);
+                totals[instance.web.date_to_str(start)] = 0;
+                start = start.clone().addDays(1);
+            }
+            // make a hash of the tasks (routing_id + analytic) mapped to a list of entries for that task
+            var task_objects;
+            if (this.lines.length != 0) {
+                task_objects = _(this.lines).chain().map(function(el) {
+                    return el;
+                }).groupBy(function(el) {
+                    if ((!!el) && (el.constructor === Object)) {
+                        return el.routing_id[1] + ' - ' + el.analytic_account_id[1];
+                    }
+                }).value();
+            }
+            // fill out the grid
+            var grid = [];
+            _(task_objects).map(function(task_line, key) {
+                sum_line = _(task_line).reduce(function(mem,d) {
+                    mem[d.date] = (mem[d.date] || 0) + d.unit_amount;
+                    mem['total'] = (mem['total'] || 0) + d.unit_amount;
+                    totals[d.date] = (totals[d.date] || 0) + d.unit_amount;
+                    return mem;
+                }, {});
+                // because I like to fill in zeros for non-existing keys
+                _(dates).chain().map(function(date) {
+                    date_key = instance.web.date_to_str(date);
+                    sum_line[date_key] = (sum_line[date_key] || 0);
+                    totals[date_key] = (totals[date_key] || 0);
+                });
+                grid.push({'task':key, 'days':sum_line, 'total':sum_line.total});
+                total += sum_line.total;
+            });
+            // wrap it up and display it
+            this.dates = dates;
+            this.grid = grid;
+            this.totals = totals;
+            this.total = total;
+            this.$el.html(instance.web.qweb.render(this.template, {widget: this}));
         },
-        log_result: function() {
-            console.log(this.field_manager.get_field_value("name"));
-        }
+
+        line_ids_changed: function() {
+            // good old javascript namespacing--need to make "this" a global for sub-functions
+            var self = this;
+            this.lines = this.field_manager.get_field_value("line_ids");
+            this.res_o2m_drop.add(new instance.web.Model(this.view.model)
+                .call("resolve_2many_commands", ["line_ids", this.lines, [], new instance.web.CompoundContext()]))
+                .done(function(result) {
+                    self.lines = result;
+                    self.reinitialize();
+            });
+        },
     });
+
 
     instance.web.form.custom_widgets.add('timekeeping_weekly_summary', 'instance.imsar_timekeeping.WeeklySummary');
 
