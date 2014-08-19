@@ -637,6 +637,7 @@ class hr_timekeeping_approval(models.Model):
             return self.sheet_id.sudo().button_done()
 
 
+# additional fields for employees
 class employee(models.Model):
     _inherit = 'hr.employee'
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
@@ -679,6 +680,8 @@ class res_users(models.Model):
     default_subroute_analytic = fields.Many2one('account.analytic.account', 'Default Task')
 
 
+# I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
+# the whole thing more straightforward. Either way, it takes a lot of customization of analytics.
 class account_analytic_account(models.Model):
     _inherit = "account.analytic.account"
 

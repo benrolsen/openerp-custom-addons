@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <template id="assets_backend" name="imsar_assets" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" href="/imsar_default_install/static/src/css/base.css"/>
+            </xpath>
+        </template>
+
+        <template id="imsar_login_layout" name="imsar_login_layout" inherit_id="web.login_layout">
+            <xpath expr="//div[@class='oe_single_form_logo']" position="replace">
+                <div class="oe_single_form_logo">
+                    <img src='/imsar_default_install/static/src/img/login_logo.png' />
+                </div>
+            </xpath>
+        </template>
+
+
+    </data>
+</openerp>

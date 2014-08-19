@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
 
         <!-- Set default wage liability account -->
         <record id="imsar_config_hr_timesheet_wage_account" model="hr.config.settings">
@@ -34,6 +34,13 @@
             <field name="overtime_worktype_id" eval="ref('worktype_ovetime')" />
         </record>
 
+        <!-- Set default analytics allowed for future dates. This doesn't work, for reasons that are beyond me -->
+        <record id="imsar_config_future_analytics" model="hr.config.settings">
+            <field name="future_analytic_ids" eval="[(6,0,[ref('imsar_accounting.pto'),ref('imsar_accounting.holiday')])]" />
+        </record>
+        <record id="base.main_company" model="res.company">
+            <field name="future_analytic_ids" eval="[(6,0,[ref('imsar_accounting.pto'),ref('imsar_accounting.holiday')])]" />
+        </record>
 
     </data>
 </openerp>

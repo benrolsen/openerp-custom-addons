@@ -20,30 +20,20 @@
 ##############################################################################
 
 {
-    'name': "IMSAR Demo Data",
+    'name': "IMSAR Default Install Data/Files",
     'version': "1.0",
     'depends': [
-        'base', 'imsar_accounting', 'imsar_auth_ldap', 'account_routing',
-        'imsar_timekeeping', 'imsar_sale', 'imsar_analytic_account', 'imsar_ui',
+        'web','base',
         ],
     'author': "Ben Olsen",
-    'description': "Loads demo data customized for IMSAR",
+    'description': "Loads default data customized for IMSAR",
     'category': "Uncategorized",
     'data': [
-        'ldap_data.xml',
-        'res.partner.csv',
-        'res.users.csv',
-        'hr.employee.csv',
-        'product.template.csv',
-        'account.analytic.account.csv',
-        'account.routing.csv',
-        'account.routing.line.csv',
-        'account.routing.subrouting.csv',
-        'account_routing_settings.xml',
-        'hr.timekeeping.worktype.csv',
-        'config_settings.xml',
-        ],
+        'default_data.xml',
+        'views/imsar_default_install.xml',
+    ],
+    'qweb': ['static/src/xml/base.xml',],
     'installable': True,
-    'auto_install': False,
+    'auto_install': True,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

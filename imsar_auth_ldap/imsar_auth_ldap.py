@@ -91,20 +91,4 @@ class IMSARLDAP(osv.Model):
             connection.start_tls_s()
         return connection
 
-    # def init(self, cr):
-    #     # load IMSAR ldap settings if not already there
-    #     cldap = self.pool.get('res.company.ldap')
-    #     ldap_list = cldap.search(cr, SUPERUSER_ID, [('ldap_server','=','ldap.imsar.us')])
-    #     if not ldap_list:
-    #         values = dict()
-    #         values['sequence'] = '10'
-    #         values['company'] = 1
-    #         values['ldap_server'] = 'ldap.imsar.us'
-    #         values['ldap_server_port'] = '636'
-    #         values['ldap_filter'] = 'uid=%s'
-    #         values['ldap_base'] = 'dc=imsar,dc=com'
-    #         values['create_user'] = True
-    #         values['create_employee'] = True
-    #         values['ldap_ssl'] = True
-    #         cldap.create(cr, SUPERUSER_ID, values)
 
