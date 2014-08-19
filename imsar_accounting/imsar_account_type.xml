@@ -2,20 +2,36 @@
 <openerp>
     <data noupdate="1">
 
-        <function model="account.account" name="_clean_default_accounting"/>
-
         <!-- Unnecessary Views -->
-        <!--<delete id="account.account_type_income_view1" model="account.account.type" />-->
-        <delete id="account.account_type_expense_view1" model="account.account.type" />
-        <delete id="account.account_type_asset_view1" model="account.account.type" />
-        <delete id="account.account_type_liability_view1" model="account.account.type" />
-        <delete id="account.account_type_income_view1" model="account.account.type" />
+        <!--<record id="account.account_type_income_view1" model="account.account.type">-->
+            <!--<field name="active" eval="False"/>-->
+        <!--</record>-->
+        <record id="account.account_type_expense_view1" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.account_type_asset_view1" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.account_type_liability_view1" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.account_type_income_view1" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <!-- Unused base account stuff -->
-        <delete id="account.data_account_type_receivable" model="account.account.type" />
-        <delete id="account.data_account_type_payable" model="account.account.type" />
-        <delete id="account.data_account_type_income" model="account.account.type" />
-        <delete id="account.data_account_type_expense" model="account.account.type" />
+        <record id="account.data_account_type_receivable" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.data_account_type_payable" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.data_account_type_income" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="account.data_account_type_expense" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <!-- Asset -->
         <record id="l10n_us.user_type_account_receivable" model="account.account.type">
@@ -24,12 +40,24 @@
             <field name="report_type">asset</field>
             <field name="close_method">unreconciled</field>
         </record>        
-        <delete id="l10n_us.user_type_current_asset" model="account.account.type" />
-        <delete id="l10n_us.user_type_cash" model="account.account.type" />
-        <delete id="l10n_us.user_type_other_current_asset" model="account.account.type" />
-        <delete id="l10n_us.user_type_fixed_asset" model="account.account.type" />
-        <delete id="l10n_us.user_type_accumulated_depreciation" model="account.account.type" />
-        <delete id="l10n_us.user_type_other_asset" model="account.account.type" />
+        <record id="l10n_us.user_type_current_asset" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_cash" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_other_current_asset" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_fixed_asset" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_accumulated_depreciation" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_other_asset" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <!-- liability -->
         <record id="l10n_us.user_type_account_payable" model="account.account.type">
@@ -44,17 +72,31 @@
             <field name="report_type">liability</field>
             <field name="close_method">balance</field>
         </record>
-        <delete id="l10n_us.user_type_liability" model="account.account.type" />
-        <delete id="l10n_us.user_type_current_liability" model="account.account.type" />
-        <delete id="l10n_us.user_type_other_current_liability" model="account.account.type" />
-        <delete id="l10n_us.user_type_long_term_liability" model="account.account.type" />
+        <record id="l10n_us.user_type_liability" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_current_liability" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_other_current_liability" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_long_term_liability" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <!-- Equity -->
-        <delete id="l10n_us.user_type_equity" model="account.account.type" />
+        <record id="l10n_us.user_type_equity" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <!-- Income -->
-        <delete id="l10n_us.user_type_income" model="account.account.type" />
-        <delete id="l10n_us.user_type_other_income" model="account.account.type" />
+        <record id="l10n_us.user_type_income" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="l10n_us.user_type_other_income" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <record id="user_type_eng_revenue" model="account.account.type">
             <field name="name">Engineering Services Revenue</field>
@@ -85,7 +127,9 @@
         </record>
 
         <!-- Expense -->
-        <delete id="l10n_us.user_type_expense" model="account.account.type" />
+        <record id="l10n_us.user_type_expense" model="account.account.type">
+            <field name="active" eval="False"/>
+        </record>
 
         <record id="l10n_us.user_type_other_expense" model="account.account.type">
             <field name="name">Other Expense</field>

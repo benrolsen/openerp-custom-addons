@@ -1,11 +1,7 @@
-import logging
-_logger = logging.getLogger(__name__)
-
-from openerp.osv import fields, osv
+from openerp import models, fields, api, _
 
 
-class imsar_accounting(osv.Model):
-    _inherit = 'account.account'
+class account_account_type(models.Model):
+    _inherit = 'account.account.type'
 
-    def _clean_default_accounting(self, cr, uid, ids=[], context=None):
-        cr.execute("truncate account_chart_template cascade")
+    active = fields.Boolean(string='Active', default=True)
