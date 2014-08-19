@@ -12,7 +12,7 @@ openerp.imsar_timekeeping = function (instance) {
             this.dates = [];
             this.lines = [];
             this.grid = [];
-            this.totals = [];
+            this.totals = {};
             this.total = 0;
             this.field_manager.on("field_changed:line_ids", this, this.line_ids_changed);
         },
@@ -20,7 +20,7 @@ openerp.imsar_timekeeping = function (instance) {
         initialize_content: function() {
             // get the date_from and date_to and make a list of the range
             var dates = [];
-            var totals = [];
+            var totals = {};
             var total = 0;
             this.date_from = instance.web.str_to_date(this.field_manager.get_field_value("date_from"));
             this.date_to = instance.web.str_to_date(this.field_manager.get_field_value("date_to"));
@@ -38,11 +38,11 @@ openerp.imsar_timekeeping = function (instance) {
                     return el;
                 }).groupBy(function(el) {
                     if ((!!el) && (el.constructor === Object)) {
-                        return el.routing_id[1] + ' - ' + el.analytic_account_id[1];
+                        return el.analytic_account_id[1] + ' (' + el.routing_id[1] + ')';
                     }
                 }).value();
             }
-            // fill out the grid
+            // fill out the grid, put in nice formatting
             var grid = [];
             _(task_objects).map(function(task_line, key) {
                 sum_line = _(task_line).reduce(function(mem,d) {
@@ -51,20 +51,20 @@ openerp.imsar_timekeeping = function (instance) {
                     totals[d.date] = (totals[d.date] || 0) + d.unit_amount;
                     return mem;
                 }, {});
-                // because I like to fill in zeros for non-existing keys
-                _(dates).chain().map(function(date) {
-                    date_key = instance.web.date_to_str(date);
-                    sum_line[date_key] = (sum_line[date_key] || 0);
-                    totals[date_key] = (totals[date_key] || 0);
+                total += sum_line.total;
+                _(sum_line).map(function(day_total, index) {
+                    sum_line[index] = instance.web.format_value(day_total, { type:"float_time" });
                 });
                 grid.push({'task':key, 'days':sum_line, 'total':sum_line.total});
-                total += sum_line.total;
+            });
+            _(totals).map(function(day_total, index) {
+                totals[index] = instance.web.format_value(day_total, { type:"float_time" });
             });
             // wrap it up and display it
             this.dates = dates;
             this.grid = grid;
             this.totals = totals;
-            this.total = total;
+            this.total = instance.web.format_value(total, { type:"float_time" });
             this.$el.html(instance.web.qweb.render(this.template, {widget: this}));
         },
 
