@@ -586,7 +586,7 @@ class hr_timekeeping_approval(models.Model):
             self.uid_can_approve = False
             manager = self.sheet_id.employee_id.parent_id
             while manager:
-                if user == manager.user_id:
+                if user == manager.resource_id.user_id:
                     self.uid_can_approve = True
                     break
                 manager = manager.parent_id
