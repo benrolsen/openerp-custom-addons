@@ -30,6 +30,9 @@
             <field name="partner_id" position="replace">
                 <field name="partner_id" on_change="on_change_partner_id(partner_id, name)" domain="[('customer','=',True)]" />
             </field>
+            <field name="parent_id" position="replace">
+                <field name="parent_id" on_change="on_change_parent(parent_id)" />
+            </field>
         </field>
     </record>
 

@@ -690,7 +690,7 @@ class account_analytic_account(models.Model):
     timesheets_future_filter = fields.Char(store=False, compute='_dummy_func', search='_filter_future_accounts')
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
     user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
-    require_review = fields.Boolean(string="Require user review before timesheet use", default=False)
+    require_review = fields.Boolean(string="Is a labor code", default=False)
     dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
     limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
     auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
