@@ -152,7 +152,8 @@
                             <widget type="timekeeping_weekly_summary"/>
                         </page>
                         <!-- page for approvals -->
-                        <page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">
+                        <!--<page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">-->
+                        <page string="Approvals">
                             <field name="approval_line_ids" nolabel="1" readonly="True">
                                 <tree editable="False">
                                     <field name="type"/>

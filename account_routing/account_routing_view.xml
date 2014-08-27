@@ -84,7 +84,7 @@
         </record>
 
         <record id="account_routing_view_form" model="ir.actions.act_window">
-            <field name="name">Accounting Routing</field>
+            <field name="name">Account Routing</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.routing</field>
             <field name="view_type">form</field>

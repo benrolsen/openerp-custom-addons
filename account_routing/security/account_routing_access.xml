@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- All users need read access to these models -->
+        <record id="account_routing_user" model="ir.model.access">
+            <field name="name">account.routing.user</field>
+            <field name="model_id" ref="account_routing.model_account_routing"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+        <record id="account_routing_line_user" model="ir.model.access">
+            <field name="name">account.routing.line.user</field>
+            <field name="model_id" ref="account_routing.model_account_routing_line"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+        <record id="account_routing__subroute_user" model="ir.model.access">
+            <field name="name">account.routing.subroute.user</field>
+            <field name="model_id" ref="account_routing.model_account_routing_subrouting"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <!-- Financial manager gets full access to these models -->
+        <record id="account_routing_manager" model="ir.model.access">
+            <field name="name">account.routing.manager</field>
+            <field name="model_id" ref="account_routing.model_account_routing"/>
+            <field name="group_id" ref="account.group_account_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+        <record id="account_routing_line_manager" model="ir.model.access">
+            <field name="name">account.routing.line.manager</field>
+            <field name="model_id" ref="account_routing.model_account_routing_line"/>
+            <field name="group_id" ref="account.group_account_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+        <record id="account_routing__subroute_manager" model="ir.model.access">
+            <field name="name">account.routing.subroute.manager</field>
+            <field name="model_id" ref="account_routing.model_account_routing_subrouting"/>
+            <field name="group_id" ref="account.group_account_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+    </data>
+</openerp>

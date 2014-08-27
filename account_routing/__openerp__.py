@@ -23,7 +23,6 @@
     'name': "Account Routing",
     'version': "1.0",
     'depends': ['base', 'account', 'account_accountant', 'analytic', 'product', 'purchase', 'sale',
-#                'hr_timesheet', 'hr_timesheet_sheet',
                 ],
     'author': "Ben Olsen",
     'description':  """
@@ -35,10 +34,9 @@
     'data': ['account_routing_view.xml',
              'account_type_view.xml',
              'account_invoice_view.xml',
-             'security/ir.model.access.csv',
+             'security/account_routing_access.xml',
              'sale_view.xml',
              'purchase_view.xml',
-#             'hr_timesheet_view.xml',
             ],
 	'css' : [
 		"static/src/css/txn_category_style.css",

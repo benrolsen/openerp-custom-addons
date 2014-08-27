@@ -12,6 +12,8 @@
                     <field name="type" />
                     <!--<field name="user_review_ids" />-->
                     <field name="user_has_reviewed" />
+                    <button name="button_reviewed_users" class="oe_inline oe_stat_button" type="object"
+                            groups="base.group_hr_user" string="View Users Reviewed"/>
                 </tree>
             </field>
         </record>
@@ -35,6 +37,7 @@
             </field>
         </record>
 
+        <!-- Menus -->
         <record id="analytic_review_view" model="ir.actions.act_window">
             <field name="name">Task S.O.W. Reviews</field>
             <field name="type">ir.actions.act_window</field>
@@ -53,6 +56,16 @@
 
         <menuitem id="menu_analytic_review_view" action="analytic_review_view" parent="menu_hr_timekeeping" sequence="30" />
 
+        <!-- Users who have reviewed an account -->
+        <!--<record id="users_analytic_review_tree" model="ir.ui.view">-->
+            <!--<field name="name">hr.timekeeping.users.review.tree</field>-->
+            <!--<field name="model">res.users</field>-->
+            <!--<field name="arch" type="xml">-->
+                <!--<tree string="Users have reviewed" create="false" edit="false" delete="false">-->
+                    <!--<field name="name" />-->
+                <!--</tree>-->
+            <!--</field>-->
+        <!--</record>-->
 
     </data>
 </openerp>

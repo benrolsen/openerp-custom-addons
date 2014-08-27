@@ -6,6 +6,7 @@ import json
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
 import openerp.addons.decimal_precision as dp
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 
 # helper function since sheets are primarily based off week number
 def week_start_date(year, week):
@@ -293,6 +294,7 @@ class hr_timekeeping_sheet(models.Model):
             if line.analytic_account_id.type == 'contract' and line.analytic_account_id.id not in existing_approval_project_ids:
                 approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'analytic_account_id': line.analytic_account_id.id}
                 self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+                existing_approval_project_ids.add(line.analytic_account_id.id)
         # remove approval lines if no timesheet lines exist for those projects
         for approval_line in self.approval_line_ids:
             if approval_line.analytic_account_id.type == 'contract' and approval_line.analytic_account_id.id not in existing_project_ids:
@@ -312,9 +314,9 @@ class hr_timekeeping_line(models.Model):
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
-    amount = fields.Float('Amount', required=True, digits_compute=dp.get_precision('Account'))
-    premium_amount = fields.Float(string='Premium Amount', required=True, help='The additional amount based on work type, like overtime', digits_compute=dp.get_precision('Account'))
-    date = fields.Date(string='Date', required=True)
+    amount = fields.Float('Amount', required=True, default=0.0, digits_compute=dp.get_precision('Account'))
+    premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits_compute=dp.get_precision('Account'))
+    date = fields.Date(string='Date', required=True, default=date.today().strftime(DATE_FORMAT))
     date_mirror = fields.Date(related='date', string='Date', readonly=True)
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
@@ -322,9 +324,9 @@ class hr_timekeeping_line(models.Model):
     account_type_id = fields.Many2one('account.account.type', 'Type', required=True,)
     account_id = fields.Many2one('account.account', 'General Account', required=True, ondelete='restrict', select=True,)
     analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, ondelete='restrict', select=True,)
-    location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, help="Location the hours were worked",)
+    location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
     change_explanation = fields.Char(string='Change Explanation')
-    state = fields.Char(compute='_check_state') # 'past','open','future'
+    state = fields.Char(compute='_check_state', default='open') # 'past','open','future'
     sheet_state = fields.Selection(related='sheet_id.state', readonly=True)
     logging_required = fields.Boolean(compute='_check_state')
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, )
@@ -537,11 +539,7 @@ class hr_timekeeping_line(models.Model):
         return self.env.user.default_subroute_analytic
 
     _defaults = {
-        'date': fields.Date.today(),
-        'location': 'office',
-        'state': 'open',
         'worktype': _get_default_worktype,
-        'premium_amount': 0.0,
         'routing_id': _get_user_default_route,
         'analytic_account_id': _get_user_default_analytic,
     }
@@ -689,11 +687,16 @@ class account_analytic_account(models.Model):
     overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
     timesheets_future_filter = fields.Char(store=False, compute='_dummy_func', search='_filter_future_accounts')
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
+    user_review_ids_count = fields.Integer(compute='_computed_fields', readonly=True)
     user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
     require_review = fields.Boolean(string="Is a labor code", default=False)
     dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
     limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
     auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
+
+    @api.one
+    def _computed_fields(self):
+        self.user_review_ids_count = len(self.user_review_ids)
 
     @api.one
     def _dummy_func(self):
@@ -736,6 +739,20 @@ class account_analytic_account(models.Model):
         # res = { 'type': 'ir.actions.client', 'tag': 'reload' }
         self.sudo().write({'user_review_ids': [(4,self.env.user.id)]})
         return True
+
+    @api.multi
+    def button_reviewed_users(self):
+        view = {
+            'name': _('Users reviewed'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'res.users',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            # 'target': 'inline',
+            'domain': [('analytic_review_ids','in',self.ids)],
+        }
+        return view
 
 
 class account_move_line(models.Model):

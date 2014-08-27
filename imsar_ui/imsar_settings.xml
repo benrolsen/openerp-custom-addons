@@ -69,10 +69,16 @@
             <!--<field name="implied_ids" eval="[(4,ref('product.group_mrp_properties'))]" />-->
         <!--</record>-->
 
-        <!-- Projects settings (currently chosing not to install project) -->
-        <!--<record id="base.group_user" model="res.groups">-->
-            <!--<field name="implied_ids" eval="[(4,ref('project.group_delegate_task'))]" />-->
-        <!--</record>-->
+        <!-- Projects settings -->
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4,ref('project.group_delegate_task'))]" />
+        </record>
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4,ref('project.group_time_work_estimation_tasks'))]" />
+        </record>
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[(4,ref('project.group_delegate_task'))]" />
+        </record>
 
         <!-- Human Resources settings -->
 
