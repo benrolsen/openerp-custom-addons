@@ -20,31 +20,17 @@
 ############################################################################################################################################################
 
 {
-    "name" : "IMSAR Interface Customizations",
+    "name" : "IMSAR WMS/MRP",
     "version" : "1.0",
     "author" : "IMSAR LLC",
     "category": 'Uncategorized',
     'complexity': "normal",
     "description": """
-    Interface customizations:
+    Warehouse and Manufacturing customizations
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', 'web_m2x_options',
-                 'imsar_default_install', 'imsar_accounting', 'imsar_sale',
-                 "purchase", "sale",
-                 'product', 'account', 'stock',
-                 'mrp', 'mrp_operations',
-    ],
-    'data': [
-        'product_view.xml',
-        'invoice_view.xml',
-        'mrp_view.xml',
-        'partner_view.xml',
-        'account_view.xml',
-        'purchase_view.xml',
-        'menus.xml',
-        'imsar_settings.xml',
-    ],
+    "depends" : ['base', 'stock', 'mrp',],
+    'data': ['mrp_view.xml'],
     'installable': True,
     'auto_install': False,
 }

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="mrp_production_form_view" model="ir.ui.view">
+        <field name="name">mrp.production.form</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Products Consumed -->
+            <xpath expr="//sheet/notebook//field[@name='move_lines']//field[@name='product_uom_qty']" position="after">
+                <field name="restrict_lot_id" groups="stock.group_production_lot"/>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='move_lines']//field[@name='product_uom']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='move_lines2']//field[@name='product_uom']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <!-- Finished Products -->
+            <xpath expr="//sheet/notebook//field[@name='move_created_ids']//field[@name='product_uom_qty']" position="after">
+                <field name="restrict_lot_id" groups="stock.group_production_lot"/>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='move_created_ids']//field[@name='product_uom']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//field[@name='move_created_ids2']//field[@name='product_uom']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <!-- menu link for pickings -->
+    <record id="act_pickings" model="ir.actions.act_window">
+        <field name="name">Pickings</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form,graph</field>
+    </record>
+    <menuitem id="menu_pickings" name="Pickings" parent="stock.menu_traceability" sequence="30" action="act_pickings" groups="base.group_no_one"/>
+
+</data>
+</openerp>

@@ -3,10 +3,14 @@ coa_basic,0,Basic,view,l10n_us.user_type_view,,FALSE
 asset,1,Assets,view,l10n_us.user_type_view,coa_basic,FALSE
 current_asset,100,Current Assets,view,l10n_us.user_type_view,asset,FALSE
 cash_expenditure,1000,Cash or Cash Equivalents,view,l10n_us.user_type_view,current_asset,FALSE
+100001,100001,Cash,liquidity,account.data_account_type_asset,cash_expenditure,FALSE
+100002,100002,Bank,liquidity,account.data_account_type_asset,cash_expenditure,FALSE
 receivables,1200,Accounts Receivable,view,l10n_us.user_type_view,current_asset,FALSE
 accounts_receivable,12001,Default Accounts Receivable,receivable,l10n_us.user_type_account_receivable,receivables,TRUE
 prepaid_expenses,1300,Prepaid Expenses,view,l10n_us.user_type_view,current_asset,FALSE
 inventory,1400,Inventory,view,l10n_us.user_type_view,current_asset,FALSE
+140001,140001,Inventory in Stock,other,account.data_account_type_asset,inventory,FALSE
+140002,140002,Finished Goods,other,account.data_account_type_asset,inventory,FALSE
 short_term_notes_receivable,1500,Short Term Notes Receivable,view,l10n_us.user_type_view,current_asset,FALSE
 other_current_assets,1600,Other Current Assets,view,l10n_us.user_type_view,current_asset,FALSE
 fixed_assets,170,Fixed Assets,view,l10n_us.user_type_view,asset,FALSE
