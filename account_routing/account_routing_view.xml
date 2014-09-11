@@ -16,33 +16,14 @@
             </field>
         </record>
 
-        <record id="account_routing_line_form" model="ir.ui.view">
-            <field name="name">account.routing.line.form</field>
-            <field name="model">account.routing.line</field>
-            <field name="arch" type="xml">
-                <form string="Account Routing lines">
-                    <group>
-                        <field name="account_type_id" widget="selection" domain="[('allow_routing','=','true')]" />
-                        <field name="account_id" widget="selection" domain="[('user_type','=',account_type_id),('type','not in',['view','closed'])]" />
-                        <field name="subrouting_ids" >
-                            <tree editable="bottom">
-                                <field name="account_analytic_id" widget="selection" domain="[('state','not in',['template','close','cancelled']),('type','not in',['view','template'])]"/>
-                                <field name="account_id" widget="selection" domain="[('user_type','=',parent.account_type_id),('type','not in',['view','closed'])]" />
-                            </tree>
-                        </field>
-                    </group>
-                </form>
-            </field>
-        </record>
-
         <record id="account_routing_tree" model="ir.ui.view">
             <field name="name">account.routing.tree</field>
             <field name="model">account.routing</field>
             <field name="arch" type="xml">
                 <tree string="Account Routing">
                     <field name="name" />
-                    <field name="timesheet_routing_line" />
                     <field name="routing_lines" />
+                    <field name="section_ids" />
                 </tree>
             </field>
         </record>
@@ -61,8 +42,8 @@
                         </tr>
                         <tr>
                             <td colspan="4">
-                                <label for="timesheet_routing_line" class="oe_inline"/>
-                                <field name="timesheet_routing_line" class="oe_inline" domain="[('routing_id','=',id)]" />
+                                <label for="section_ids" class="oe_inline"/>
+                                <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
                             </td>
                         </tr>
                         <tr>
@@ -71,14 +52,36 @@
                                 <field name="routing_lines" domain="">
                                     <tree>
                                         <field name="account_type_id" />
-                                        <field name="account_id"/>
                                         <field name="subrouting_ids" />
+                                        <field name="section_ids" />
                                     </tree>
                                 </field>
                             </td>
                         </tr>
                     </table>
 
+                </form>
+            </field>
+        </record>
+
+        <record id="account_routing_line_form" model="ir.ui.view">
+            <field name="name">account.routing.line.form</field>
+            <field name="model">account.routing.line</field>
+            <field name="arch" type="xml">
+                <form string="Account Routing lines">
+                    <group>
+                        <field name="account_type_id" widget="selection" domain="[('allow_routing','=','true')]" />
+                        <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
+                        <field name="subrouting_ids">
+                            <tree editable="bottom">
+                                <field name="account_analytic_id" widget="selection" domain="[('state','not in',['template','close','cancelled']),('type','not in',['template'])]"
+                                        attrs="{'readonly':[('from_parent','=',True)]}"/>
+                                <field name="account_id" widget="selection" domain="[('user_type','=',parent.account_type_id),('type','not in',['view','closed'])]"
+                                        attrs="{'readonly':[('from_parent','=',True)]}"/>
+                                <field name="from_parent" invisible="True"/>
+                            </tree>
+                        </field>
+                    </group>
                 </form>
             </field>
         </record>

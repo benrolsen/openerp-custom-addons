@@ -1,0 +1,3 @@
+id,name,parent_id/id,type
+ffp,Firm Fixed Price Products,product.product_category_all,normal
+components,Components,product.product_category_all,normal

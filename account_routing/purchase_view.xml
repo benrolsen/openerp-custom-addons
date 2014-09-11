@@ -9,13 +9,15 @@
         <field name="arch" type="xml">
 
             <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
-                <field name="routing_id" options="{'create': false, 'create_edit': false}" />
-                <field name="account_type_id" options="{'create': false, 'create_edit': false}"
-                        domain="[('routing_filter','=',routing_id)]"/>
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_line_id','=',routing_line_id)]" />
             </xpath>
-            <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='replace'>
-                <field name="account_analytic_id" options="{'create': false, 'create_edit': false}"
-                        domain="[('routing_line_filter','=',(routing_id,account_type_id))]" />
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='attributes'>
+                <attribute name="invisible">1</attribute>
             </xpath>
 
         </field>

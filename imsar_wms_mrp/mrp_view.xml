@@ -7,6 +7,20 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
         <field name="arch" type="xml">
+
+            <!-- MO overview -->
+            <xpath expr="//sheet/group" position="inside">
+                <group>
+                    <field name="account_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(imsar_wms_mrp.ar_section_mrp)d])]"/>
+                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',account_routing_id),('section_ids','in',[%(imsar_wms_mrp.ar_section_mrp)d])]"/>
+                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',routing_line_id)]" />
+                    <field name="account_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="0"/>
+                </group>
+            </xpath>
+
             <!-- Products Consumed -->
             <xpath expr="//sheet/notebook//field[@name='move_lines']//field[@name='product_uom_qty']" position="after">
                 <field name="restrict_lot_id" groups="stock.group_production_lot"/>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- account routing sections -->
+        <record id="ar_section_sale" model="account.routing.section">
+            <field name="name">Sale</field>
+        </record>
+        <record id="ar_section_purchase" model="account.routing.section">
+            <field name="name">Purchase</field>
+        </record>
+
+    </data>
+</openerp>

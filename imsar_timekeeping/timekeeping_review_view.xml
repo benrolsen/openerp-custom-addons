@@ -45,7 +45,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="analytic_review_form"/>
-            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('require_review','=',True)]</field>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True)]</field>
         </record>
         <record id="action_analytic_review_tree" model="ir.actions.act_window.view">
             <field name="sequence" eval="1"/>

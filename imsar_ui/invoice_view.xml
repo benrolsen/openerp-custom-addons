@@ -11,9 +11,35 @@
             <field name="fiscal_position" position="attributes">
                <attribute name="invisible">True</attribute>
             </field>
+            <field name="currency_id" position="attributes">
+               <attribute name="invisible">True</attribute>
+            </field>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
 
         </field>
     </record>
+
+    <record id="imsar_customer_supplier_invoice" model="ir.ui.view">
+        <field name="name">imsar_invoice.invoice.supplier.form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+        <field name="arch" type="xml">
+
+            <field name="fiscal_position" position="attributes">
+               <attribute name="invisible">True</attribute>
+            </field>
+            <field name="currency_id" position="attributes">
+               <attribute name="invisible">True</attribute>
+            </field>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
 
 </data>
 </openerp>

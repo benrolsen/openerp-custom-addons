@@ -15,9 +15,15 @@
             <field name="group_id" ref="base.group_user"/>
             <field name="perm_read">1</field>
         </record>
-        <record id="account_routing__subroute_user" model="ir.model.access">
+        <record id="account_routing_subroute_user" model="ir.model.access">
             <field name="name">account.routing.subroute.user</field>
             <field name="model_id" ref="account_routing.model_account_routing_subrouting"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+        <record id="account_routing_section_user" model="ir.model.access">
+            <field name="name">account.routing.section.user</field>
+            <field name="model_id" ref="account_routing.model_account_routing_section"/>
             <field name="group_id" ref="base.group_user"/>
             <field name="perm_read">1</field>
         </record>

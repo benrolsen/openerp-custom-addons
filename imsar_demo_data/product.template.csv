@@ -1,2 +1,5 @@
-id,name,description,type,uom_po_id/id,uom_id/id,purchase_ok,sale_ok,rental,cost_method,standard_price,list_price,categ_id/id
-widget,Widget,,Stockable Product,product.product_uom_unit,product.product_uom_unit,True,True,False,Standard Price,5,10,product.product_category_all
+id,name,description,type,uom_po_id/id,uom_id/id,purchase_ok,sale_ok,rental,track_all,cost_method,standard_price,list_price,categ_id/id,route_ids/id
+widget,Widget,,Stockable Product,product.product_uom_unit,product.product_uom_unit,False,True,False,True,Standard Price,5,10,ffp,mrp.route_warehouse0_manufacture
+resistor,resistor,,Stockable Product,product.product_uom_unit,product.product_uom_unit,True,False,False,True,Standard Price,0.1,0.1,components,purchase.route_warehouse0_buy
+capacitor,capacitor,,Stockable Product,product.product_uom_unit,product.product_uom_unit,True,False,False,True,Standard Price,0.5,0.5,components,purchase.route_warehouse0_buy
+transistor,transistor,,Stockable Product,product.product_uom_unit,product.product_uom_unit,True,False,False,True,Standard Price,10,10,components,purchase.route_warehouse0_buy

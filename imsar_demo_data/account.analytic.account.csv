@@ -1,4 +1,4 @@
-id,require_review
+id,is_labor_code
 imsar_accounting.houdini2,True
 imsar_accounting.hawkeye2,True
 imsar_accounting.future_dod,True

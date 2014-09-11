@@ -29,8 +29,11 @@
     Warehouse and Manufacturing customizations
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', 'stock', 'mrp',],
-    'data': ['mrp_view.xml'],
+    "depends" : ['base', 'stock', 'mrp','account_routing',],
+    'data': [
+        'ar_section_data.xml',
+        'mrp_view.xml',
+    ],
     'installable': True,
     'auto_install': False,
 }

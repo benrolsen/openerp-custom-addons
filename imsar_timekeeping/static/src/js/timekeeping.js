@@ -31,14 +31,14 @@ openerp.imsar_timekeeping = function (instance) {
                 totals[instance.web.date_to_str(start)] = 0;
                 start = start.clone().addDays(1);
             }
-            // make a hash of the tasks (routing_id + analytic) mapped to a list of entries for that task
+            // make a hash of the tasks (routing_id + routing_subrouting_id) mapped to a list of entries for that task
             var task_objects;
             if (this.lines.length != 0) {
                 task_objects = _(this.lines).chain().map(function(el) {
                     return el;
                 }).groupBy(function(el) {
                     if ((!!el) && (el.constructor === Object)) {
-                        return el.analytic_account_id[1] + ' (' + el.routing_id[1] + ')';
+                        return el.routing_subrouting_id[1] + ' (' + el.routing_id[1] + ')';
                     }
                 }).value();
             }

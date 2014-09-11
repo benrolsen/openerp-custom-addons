@@ -73,7 +73,7 @@ class hr_timekeeping_sheet(models.Model):
         for line in self.line_ids:
             worktype = self.env['hr.timekeeping.worktype'].browse(line.worktype.id)
             worktype_names[line.worktype.id] = worktype.name
-            if line.analytic_account_id not in worktype.nonexempt_limit_ignore_ids:
+            if line.routing_subrouting_id.account_analytic_id not in worktype.nonexempt_limit_ignore_ids:
                 totals[line.worktype.id] += line.unit_amount
             total_time += line.unit_amount
         self.subtotal_line = ", ".join(["%s: %s" % (worktype_names[key], val) for key, val in totals.items()])
@@ -185,7 +185,7 @@ class hr_timekeeping_sheet(models.Model):
             temp_line = {
                 'type': 'dest',
                 'quantity': line.unit_amount,
-                'account_analytic_id': line.analytic_account_id.id,
+                'account_analytic_id': line.routing_subrouting_id.account_analytic_id.id,
                 'date_maturity': date.today(),
                 'ref': name,
             }
@@ -193,7 +193,7 @@ class hr_timekeeping_sheet(models.Model):
             temp_line.update({
                 'name': line.name,
                 'price': line.amount,
-                'account_id': line.account_id.id,
+                'account_id': line.routing_subrouting_id.account_id.id,
             })
             # adding values post conversion takes an extra step
             converted_line = self.env['account.invoice'].line_get_convert(temp_line, partner_id, now)
@@ -205,7 +205,7 @@ class hr_timekeeping_sheet(models.Model):
             if line.premium_amount != 0.0:
                 # some contracts don't allow overtime premiums to be charged to them, so deal with that here
                 overtime_worktype_id = self.user_id.company_id.overtime_worktype_id.id
-                contract_overtime_routing = line.analytic_account_id.overtime_account
+                contract_overtime_routing = line.routing_subrouting_id.account_analytic_id.overtime_account
                 if contract_overtime_routing and (line.worktype.id == overtime_worktype_id):
                     final_account_id = contract_overtime_routing.id
                 else:
@@ -286,25 +286,26 @@ class hr_timekeeping_sheet(models.Model):
         res = super(hr_timekeeping_sheet, self).write(vals)
         existing_approval_project_ids = set()
         for approval_line in self.approval_line_ids:
-            if approval_line.analytic_account_id:
-                existing_approval_project_ids.add(approval_line.analytic_account_id.id)
+            if approval_line.account_analytic_id:
+                existing_approval_project_ids.add(approval_line.account_analytic_id.id)
         existing_project_ids = set()
         for line in self.line_ids:
-            existing_project_ids.add(line.analytic_account_id.id)
-            if line.analytic_account_id.type == 'contract' and line.analytic_account_id.id not in existing_approval_project_ids:
-                approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'analytic_account_id': line.analytic_account_id.id}
+            analytic = line.routing_subrouting_id.account_analytic_id
+            existing_project_ids.add(analytic.id)
+            if analytic.type == 'contract' and analytic.id not in existing_approval_project_ids:
+                approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'account_analytic_id': analytic.id}
                 self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
-                existing_approval_project_ids.add(line.analytic_account_id.id)
+                existing_approval_project_ids.add(analytic.id)
         # remove approval lines if no timesheet lines exist for those projects
         for approval_line in self.approval_line_ids:
-            if approval_line.analytic_account_id.type == 'contract' and approval_line.analytic_account_id.id not in existing_project_ids:
+            if approval_line.account_analytic_id.type == 'contract' and approval_line.account_analytic_id.id not in existing_project_ids:
                 approval_line.sudo().unlink()
         return res
 
 
 class hr_timekeeping_line(models.Model):
     _name = 'hr.timekeeping.line'
-    _keys_to_log = ['date','routing_id','account_id','name','unit_amount','location']
+    _keys_to_log = ['date','routing_id','routing_subrouting_id','name','unit_amount','location']
     _description = 'Timekeeping Sheet Line'
     _order = 'date desc, create_date desc'
 
@@ -321,9 +322,8 @@ class hr_timekeeping_line(models.Model):
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
     routing_id = fields.Many2one('account.routing', 'Category', required=True,)
-    account_type_id = fields.Many2one('account.account.type', 'Type', required=True,)
-    account_id = fields.Many2one('account.account', 'General Account', required=True, ondelete='restrict', select=True,)
-    analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, ondelete='restrict', select=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
     change_explanation = fields.Char(string='Change Explanation')
     state = fields.Char(compute='_check_state', default='open') # 'past','open','future'
@@ -484,7 +484,7 @@ class hr_timekeeping_line(models.Model):
         self._check_state()
         if self.state == 'future':
             future_analytics = self.env.user.company_id.future_analytic_ids
-            if not (self.analytic_account_id and self.analytic_account_id in future_analytics.ids):
+            if not (self.routing_subrouting_id.account_analytic_id and self.routing_subrouting_id.account_analytic_id in future_analytics.ids):
                 self.routing_id = ''
 
     @api.multi
@@ -502,24 +502,32 @@ class hr_timekeeping_line(models.Model):
         }
         return view
 
+    @api.model
+    def _get_timekeeping_routing_line(self, routing_id):
+        timekeeping_id = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.ar_section_timekeeping')
+        routing_line = self.env['account.routing.line'].search([
+            ('routing_id','=',routing_id),
+            ('section_ids','in',[timekeeping_id]),
+        ])
+        # this is admittedly sketchy, but there *should* only ever be one labor routing line per category
+        if routing_line and len(routing_line) > 1:
+            routing_line = routing_line[0]
+        return routing_line
+
     @api.onchange('routing_id')
     def onchange_routing_id(self):
-        route = self.env['account.routing'].browse(self.routing_id.id)
-        self.account_type_id = route.timesheet_routing_line.account_type_id.id
-        self.account_id = route.timesheet_routing_line.account_id.id
-        if self.analytic_account_id.id not in route.timesheet_routing_line._get_analytic_ids():
-            self.analytic_account_id = ''
+        routing_line = self._get_timekeeping_routing_line(self.routing_id.id)
+        self.routing_line_id = routing_line
+        self.routing_subrouting_id = ''
 
-    @api.onchange('analytic_account_id')
+    @api.onchange('routing_subrouting_id')
     def onchange_account_type_id(self):
-        if self.routing_id and self.account_id:
-            route = self.env['account.routing'].browse(self.routing_id.id)
-            analytic = self.env['account.analytic.account'].browse(self.analytic_account_id.id)
-            self.account_id = analytic._search_for_subroute_account(routing_line_id=route.timesheet_routing_line.id)
+        # this onchange can probably be removed
+        pass
 
     @api.multi
     def _get_default_date(self):
-        today_str = fields.Date.today()
+        today_str = fields.Date.to_string(date.today())
         today = fields.Date.from_string(today_str)
         date_to = fields.Date.from_string(self.sheet_id.date_to)
         if today > date_to:
@@ -532,16 +540,16 @@ class hr_timekeeping_line(models.Model):
 
     @api.multi
     def _get_user_default_route(self):
-        return self.env.user.default_routing_category
+        return self.env.user.default_account_routing
 
     @api.multi
-    def _get_user_default_analytic(self):
-        return self.env.user.default_subroute_analytic
+    def _get_user_default_subroute(self):
+        return self.env.user.default_routing_subrouting
 
     _defaults = {
         'worktype': _get_default_worktype,
         'routing_id': _get_user_default_route,
-        'analytic_account_id': _get_user_default_analytic,
+        'routing_subrouting_id': _get_user_default_subroute,
     }
 
 
@@ -553,7 +561,7 @@ class hr_timekeeping_approval(models.Model):
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', select=True, required=True, readonly=True,)
-    analytic_account_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
+    account_analytic_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
     uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
 
     @api.one
@@ -567,14 +575,14 @@ class hr_timekeeping_approval(models.Model):
         if self.type == 'hr':
             hr_category = self.env['ir.module.category'].search([('name','=','Human Resources')])
             hr_officer = self.env['res.groups'].search([('name','=','Officer'),('category_id','=',hr_category.id)])
-            if hr_officer.id in user.groups_id:
+            if hr_officer in user.groups_id:
                 self.uid_can_approve = True
             else:
                 self.uid_can_approve = False
             return
         # check to see if user is PM on this project
         elif self.type == 'project':
-            if user in self.analytic_account_id.pm_ids:
+            if user in self.account_analytic_id.pm_ids:
                 self.uid_can_approve = True
             else:
                 self.uid_can_approve = False
@@ -674,8 +682,8 @@ class res_users(models.Model):
     analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
     pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
-    default_routing_category = fields.Many2one('account.routing', 'Default Billing Category')
-    default_subroute_analytic = fields.Many2one('account.analytic.account', 'Default Task')
+    default_account_routing = fields.Many2one('account.routing', 'Default Category')
+    default_routing_subrouting = fields.Many2one('account.routing.subrouting', 'Default Task')
 
 
 # I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
@@ -689,7 +697,7 @@ class account_analytic_account(models.Model):
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
     user_review_ids_count = fields.Integer(compute='_computed_fields', readonly=True)
     user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
-    require_review = fields.Boolean(string="Is a labor code", default=False)
+    is_labor_code = fields.Boolean(string="Is a labor code", default=False)
     dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
     limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
     auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
@@ -724,7 +732,7 @@ class account_analytic_account(models.Model):
             reviewed_ids = self.search([('user_review_ids','in',self._uid)])
         else:
             reviewed_ids = self.search([])
-        # this is actually part of auth users, not reviewed users, but I didn't want to make yet another
+        # this next filter actually depends on auth users, not reviewed users, but I didn't want to make yet another
         # field and search just for one line, and auth_users always applies in this case
         auth_ids = reviewed_ids.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
         intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
@@ -759,3 +767,12 @@ class account_move_line(models.Model):
     _inherit = "account.move.line"
 
     timekeeping_line = fields.Many2one('hr.timekeeping.line', 'Timekeeping Line', ondelete='restrict')
+
+
+class account_routing_subrouting(models.Model):
+    _inherit = "account.routing.subrouting"
+
+    # these are part of the analytic but need to be exposed for the subroute
+    timesheets_future_filter = fields.Char(related='account_analytic_id.timesheets_future_filter', readonly=True)
+    user_has_reviewed = fields.Boolean(related='account_analytic_id.user_has_reviewed', readonly=True)
+    dcaa_allowable = fields.Boolean(related='account_analytic_id.dcaa_allowable', readonly=True)

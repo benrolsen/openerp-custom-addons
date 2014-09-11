@@ -11,6 +11,9 @@
             <xpath expr='//field[@name="order_line"]/tree//field[@name="company_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>
             </xpath>
+            <field name="currency_id" position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </field>
 
         </field>
     </record>

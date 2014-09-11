@@ -42,5 +42,13 @@
             <field name="future_analytic_ids" eval="[(6,0,[ref('imsar_accounting.pto'),ref('imsar_accounting.holiday')])]" />
         </record>
 
+        <!-- Set default Purchases - invoice settings -->
+        <record id="imsar_config_puchase_invoice_setting" model="hr.config.settings">
+            <field name="default_invoice_method">picking</field>
+        </record>
+        <record id="base.main_company" model="res.company">
+            <field name="default_invoice_method">picking</field>
+        </record>
+
     </data>
 </openerp>

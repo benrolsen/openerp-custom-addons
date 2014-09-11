@@ -148,36 +148,34 @@ class hr_timesheet_preferences(models.TransientModel):
     _description = "hr.timekeeping.preferences"
 
     user_id = fields.Many2one('res.users', 'User', )
-    routing_id = fields.Many2one('account.routing', 'Default Billing Category')
-    account_type_id = fields.Many2one('account.account.type', 'Billing Type', )
-    analytic_account_id = fields.Many2one('account.analytic.account', 'Default Task',)
+    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
-        route = self.env['account.routing'].browse(self.routing_id.id)
-        self.account_type_id = route.timesheet_routing_line.account_type_id.id
-        self.account_id = route.timesheet_routing_line.account_id.id
-        if self.analytic_account_id.id not in route.timesheet_routing_line._get_analytic_ids():
-            self.analytic_account_id = ''
+        routing_line = self.env['hr.timekeeping.line']._get_timekeeping_routing_line(self.routing_id.id)
+        if self.routing_subrouting_id not in routing_line.subrouting_ids:
+            self.routing_subrouting_id = ''
 
     @api.multi
     def save(self):
         user = self.env.user
-        user.default_routing_category = self.routing_id
-        user.default_subroute_analytic = self.analytic_account_id
+        user.default_account_routing = self.routing_id
+        user.default_routing_subrouting = self.routing_subrouting_id
         return True
 
     @api.multi
     def _get_user_default_route(self):
-        return self.env.user.default_routing_category
+        return self.env.user.default_account_routing
 
     @api.multi
-    def _get_user_default_analytic(self):
-        return self.env.user.default_subroute_analytic
+    def _get_user_default_subroute(self):
+        return self.env.user.default_routing_subrouting
 
     _defaults = {
         'routing_id': _get_user_default_route,
-        'analytic_account_id': _get_user_default_analytic,
+        'routing_subrouting_id': _get_user_default_subroute,
     }
 
 

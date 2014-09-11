@@ -1,171 +1,140 @@
-from openerp import api
-from openerp.osv import fields, osv
+from openerp import models, fields, api, _
 
 
-class account_routing(osv.Model):
+class account_routing(models.Model):
     _name = 'account.routing'
     _description = 'Account Routing'
 
-    _columns = {
-        'name': fields.char('Routing Category', size=128, required=True),
-        'routing_lines': fields.one2many('account.routing.line', 'routing_id', 'Account Type Routes', ondelete='cascade'),
-        'timesheet_routing_line': fields.many2one('account.routing.line', 'Timesheet Routing Type'),
-    }
-
-    _defaults = {
-        'timesheet_routing_line': None,
-    }
+    name = fields.Char('Routing Category', size=128, required=True)
+    routing_lines = fields.One2many('account.routing.line', 'routing_id', 'Account Type Routes', ondelete='cascade')
+    section_ids = fields.Many2many('account.routing.section','account_routing_section_rel', 'routing_id', 'section_id', string="Applies to sections")
 
     @api.multi
     def _get_account_types(self):
         return [routing_line.account_type_id.id for routing_line in self.routing_lines]
 
 
-class account_routing_line(osv.Model):
+class account_routing_line(models.Model):
     _name = 'account.routing.line'
     _description = 'Account Routing Line'
 
-    _columns = {
-        'routing_id':  fields.many2one('account.routing', 'Account Routing', required=True,),
-        'account_type_id': fields.many2one('account.account.type', 'Account Type', required=True, select=True),
-        'account_id':  fields.many2one('account.account', 'Default Account', required=True, select=True),
-        'subrouting_ids': fields.one2many('account.routing.subrouting', 'routing_line_id', 'Analytic Routes', ondelete='cascade'),
-    }
+    name = fields.Char(related='account_type_id.name')
+    routing_id = fields.Many2one('account.routing', 'Account Routing', required=True, ondelete='cascade')
+    account_type_id = fields.Many2one('account.account.type', 'Account Type', required=True, select=True, ondelete='cascade')
+    subrouting_ids = fields.One2many('account.routing.subrouting', 'routing_line_id', 'Analytic Routes', ondelete='cascade')
+    section_ids = fields.Many2many('account.routing.section','account_routing_line_section_rel', 'routing_line_id', 'section_id', string="Applies to sections")
 
     _sql_constraints = [
         ('routing_account_type_uniq', 'unique (routing_id,account_type_id)', 'Only one account type allowed per account routing!')
     ]
 
-    @api.multi
-    def name_get(self):
-        result = super(account_routing_line, self).name_get()
-        return [(line[0], self.account_type_id.name) for line in result]
 
-    @api.multi
-    def _get_analytic_ids(self):
-        res = list()
-        for subroute in self.subrouting_ids:
-            analytic = subroute.account_analytic_id
-            if analytic.type != 'view':
-                res.append(analytic.id)
-            for child in analytic.child_complete_ids:
-                if child.type != 'view':
-                    res.append(child.id)
-        return res
-
-
-class account_routing_subrouting(osv.Model):
+class account_routing_subrouting(models.Model):
     _name = 'account.routing.subrouting'
     _description = 'Account Subrouting'
 
-    _columns = {
-        'routing_line_id':  fields.many2one('account.routing.line', 'Account Routing Line', required=True,),
-        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account', required=True, select=True),
-        'account_id': fields.many2one('account.account', 'Real Account', required=True, select=True),
-    }
+    name = fields.Char(related='account_analytic_id.name')
+    routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True,)
+    account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, select=True)
+    account_id = fields.Many2one('account.account', 'Real Account', required=True, select=True)
+    from_parent = fields.Boolean('Added by parent', readonly=True, default=False)
+    type = fields.Selection(related='account_analytic_id.type', readonly=True)
+
+    @api.model
+    def create(self, vals):
+        existing_subroute = self.search([('routing_line_id','=',vals.get('routing_line_id')),('account_analytic_id','=',vals.get('account_analytic_id'))])
+        if not existing_subroute:
+            subroute = super(account_routing_subrouting, self).create(vals)
+        else:
+            subroute = existing_subroute
+        account_analytic_id = self.env['account.analytic.account'].browse(vals.get('account_analytic_id'))
+        if len(account_analytic_id.child_ids) > 0:
+            for analytic in account_analytic_id.child_ids:
+                if analytic.type in ('normal', 'contract'):
+                    vals['account_analytic_id'] = analytic.id
+                    vals['from_parent'] = True
+                    self.env['account.routing.subrouting'].create(vals)
+        return subroute
+
+    @api.multi
+    def unlink(self):
+        if len(self.account_analytic_id.child_ids) > 0:
+            for subroute in self.search([('routing_line_id','=',self.routing_line_id.id),('account_analytic_id','in',self.account_analytic_id.child_ids.ids)]):
+                if subroute.from_parent:
+                    subroute.unlink()
+        super(account_routing_subrouting, self).unlink()
+
+    @api.multi
+    def write(self, vals):
+        # Well this is just stupid. If you try to delete some records in a write, for some reason it chains the write
+        # to the records that got deleted and tries to call write on them. I have no idea what's going on. But if you
+        # leave out the delete calls, it works as normal. This check is to see if the system is trying to call write
+        # on an already deleted record.
+        if not self.search([('id','=',self.id)]):
+            return True
+        # if the analytic didn't change, do the write and end here
+        account_analytic_id = self.env['account.analytic.account'].browse(vals.get('account_analytic_id'))
+        if not account_analytic_id:
+            return super(account_routing_subrouting, self).write(vals)
+
+        # if we're changing analytics, first delete any children of the existing subroute
+        if len(self.account_analytic_id.child_ids) > 0:
+            for subroute in self.search([('routing_line_id','=',self.routing_line_id.id),('account_analytic_id','in',self.account_analytic_id.child_ids.ids)]):
+                if subroute and subroute.from_parent:
+                    subroute.unlink()
+
+        # now create subroutes for any children
+        if len(account_analytic_id.child_ids) > 0:
+            childvals = {
+                'routing_line_id': self.routing_line_id.id,
+                'account_id': vals.get('account_id') or self.account_id.id,
+                'from_parent': True,
+            }
+            for child_id in account_analytic_id.child_ids.ids:
+                childvals['account_analytic_id'] = child_id
+                self.env['account.routing.subrouting'].create(childvals)
+        return super(account_routing_subrouting, self).write(vals)
 
     _sql_constraints = [
         ('routing_line_analytic_uniq', 'unique (routing_line_id,account_analytic_id)', 'Only one analytic allowed per account routing line!')
     ]
 
-class account_account_type_routing(osv.Model):
+
+class account_routing_section(models.Model):
+    _name = 'account.routing.section'
+    _description = 'Sections (or apps) the routes/lines apply to'
+
+    name = fields.Char('Section', size=64, required=True)
+
+
+class account_account_type_routing(models.Model):
     _inherit = "account.account.type"
 
-    def _dummy_func(self):
-        return ''
-
-    def _search_routing_ids(self, cr, uid, obj, name, args, context=None):
-        routing_id = args[0][2]
-        id_list = list()
-        if routing_id:
-            route = self.pool.get('account.routing').browse(cr, uid, routing_id)
-            id_list = route._get_account_types()
-        res = [('id','in',id_list)]
-        return res
-
-    _columns = {
-        'allow_routing': fields.boolean('Allow routing', help="Allows you to set special account routing rules via this account type"),
-        'routing_filter': fields.function(_dummy_func, method=True, fnct_search=_search_routing_ids, type='char')
-    }
-
-    _defaults = {
-        'allow_routing': False,
-    }
-
-class account_analytic_account_routing(osv.Model):
-    _inherit = "account.analytic.account"
-
-    def _dummy_func(self, cr, uid, ids):
-        return ''
-
-    def _search_routing_line_ids(self, cr, uid, obj, name, args, context=None):
-        routing_id = args[0][2][0]
-        account_type_id = args[0][2][1]
-        id_list = list()
-        if routing_id and account_type_id:
-            routing_line_id = self.pool.get('account.routing.line').search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
-            routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
-            id_list = routing_line._get_analytic_ids()
-        res = [('id','in',id_list)]
-        return res
-
-    _columns = {
-        'routing_line_filter': fields.function(_dummy_func, method=True, fnct_search=_search_routing_line_ids, type='char')
-    }
-
-    @api.multi
-    def _search_for_subroute_account(self, routing_line_id):
-        routing_line = self.env['account.routing.line'].browse(routing_line_id)
-        subrouting_obj = self.env['account.routing.subrouting']
-
-        # because multi and onchange pass "self" in as different things
-        if isinstance(self.id, int):
-            analytic = self
-        else:
-            analytic = self.id
-        subroute = False
-        while not subroute:
-            subroute = subrouting_obj.search([('routing_line_id','=',routing_line_id),('account_analytic_id','=',analytic.id)])
-            if not analytic.parent_id:
-                break
-            analytic = analytic.parent_id
-        if subroute:
-            return subroute.account_id.id
-        return routing_line.account_id.id
+    allow_routing = fields.Boolean('Allow routing', default=False, help="Allows you to set special account routing rules via this account type")
 
 
-class account_invoice_line(osv.Model):
+class account_invoice_line(models.Model):
     _inherit = "account.invoice.line"
 
-    _columns = {
-        'routing_id': fields.many2one('account.routing', 'Category', required=True,),
-        'account_type_id': fields.many2one('account.account.type', 'Purchase Type', required=True,),
-    }
+    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
-        self.account_type_id = ''
+        self.routing_line_id = ''
+        self.routing_subrouting_id = ''
         self.account_id = ''
-        self.account_analytic_id = ''
 
-    @api.onchange('account_type_id')
+    @api.onchange('routing_line_id')
     def onchange_account_type_id(self):
-        if not self.routing_id or not self.account_type_id:
-            return {}
-        domain = [('routing_id','=',self.routing_id.id),('account_type_id','=',self.account_type_id.id)]
-        routing_line_id = self.pool['account.routing.line'].search(self._cr, self._uid, domain)[0]
-        routing_line = self.pool['account.routing.line'].browse(self._cr, self._uid, routing_line_id)
-        self.account_id = routing_line.account_id.id
-        self.account_analytic_id = ''
+        self.routing_subrouting_id = ''
+        self.account_id = ''
 
-    @api.onchange('account_analytic_id')
+    @api.onchange('routing_subrouting_id')
     def onchange_analytic_id(self):
-        if not self.routing_id or not self.account_type_id or not self.account_analytic_id:
-            return {}
-        domain = [('routing_id','=',self.routing_id.id),('account_type_id','=',self.account_type_id.id)]
-        routing_line_id = self.pool.get('account.routing.line').search(self._cr, self._uid, domain)[0]
-        analytic = self.pool.get('account.analytic.account').browse(self._cr, self._uid, self.account_analytic_id.id)
-        self.account_id = analytic._search_for_subroute_account(routing_line_id=routing_line_id)
+        self.account_id = self.routing_subrouting_id.account_id
+        self.account_analytic_id = self.routing_subrouting_id.account_analytic_id
 
     def product_id_change(self, *args, **kwargs):
         res = super(account_invoice_line, self).product_id_change(*args, **kwargs)
@@ -174,81 +143,59 @@ class account_invoice_line(osv.Model):
         return res
 
 
-class sale_order_line(osv.Model):
+class sale_order_line(models.Model):
     _inherit = "sale.order.line"
 
-    _columns = {
-        'routing_id': fields.many2one('account.routing', 'Category', required=True,),
-        'account_type_id': fields.many2one('account.account.type', 'Income Type', required=True,),
-        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic', ),
-    }
+    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Purchase Type', required=True,)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
-        self.account_type_id = ''
-        self.account_analytic_id = ''
+        self.routing_line_id = ''
+        self.routing_subrouting_id = ''
 
     @api.onchange('account_type_id')
     def onchange_account_type_id(self):
-        self.account_analytic_id = ''
+        self.routing_subrouting_id = ''
 
+    @api.v7
     def _prepare_order_line_invoice_line(self, cr, uid, line, account_id=False, context=None):
-        routing_id = line.routing_id.id
-        account_type_id = line.account_type_id.id
-        account_analytic_id = line.account_analytic_id.id
-
-        routing_line_id = self.pool['account.routing.line'].search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
-        if account_analytic_id:
-            analytic = self.pool.get('account.analytic.account').browse(cr, uid, account_analytic_id)
-            account_id = analytic._search_for_subroute_account(routing_line_id=routing_line_id)
-        else:
-            routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
-            account_id = routing_line.account_id.id
-
+        account_id = line.routing_subrouting_id.account_id.id
         res = super(sale_order_line, self)._prepare_order_line_invoice_line(cr, uid, line, account_id, context)
-        res['routing_id'] = routing_id
-        res['account_type_id'] = account_type_id
-        res['account_analytic_id'] = account_analytic_id
-
+        res['routing_id'] = line.routing_id.id
+        res['routing_line_id'] = line.routing_line_id.id
+        res['routing_subrouting_id'] = line.routing_subrouting_id.id
+        res['account_analytic_id'] = line.routing_subrouting_id.account_analytic_id.id
         return res
 
 
-class purchase_order(osv.Model):
+class purchase_order(models.Model):
     _inherit = "purchase.order"
 
+    @api.v7
     def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
-        routing_id = order_line.routing_id.id
-        account_type_id = order_line.account_type_id.id
-        account_analytic_id = order_line.account_analytic_id.id
-
-        routing_line_id = self.pool['account.routing.line'].search(cr, uid, [('routing_id','=',routing_id),('account_type_id','=',account_type_id)])[0]
-        if account_analytic_id:
-            analytic = self.pool.get('account.analytic.account').browse(cr, uid, account_analytic_id)
-            account_id = analytic._search_for_subroute_account(routing_line_id=routing_line_id)
-        else:
-            routing_line = self.pool['account.routing.line'].browse(cr, uid, routing_line_id)
-            account_id = routing_line.account_id.id
-
+        account_id = order_line.routing_subrouting_id.account_id.id
         res = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)
-        res['routing_id'] = routing_id
-        res['account_type_id'] = account_type_id
-        res['account_analytic_id'] = account_analytic_id
+        res['routing_id'] = order_line.routing_id.id
+        res['routing_line_id'] = order_line.routing_line_id.id
+        res['routing_subrouting_id'] = order_line.routing_subrouting_id.id
+        res['account_analytic_id'] = order_line.routing_subrouting_id.account_analytic_id.id
         return res
 
 
-class purchase_order_line(osv.Model):
+class purchase_order_line(models.Model):
     _inherit = "purchase.order.line"
 
-    _columns = {
-        'routing_id': fields.many2one('account.routing', 'Category', required=True,),
-        'account_type_id': fields.many2one('account.account.type', 'Purchase Type', required=True,),
-    }
+    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
-        self.account_type_id = ''
-        self.account_analytic_id = ''
+        self.routing_line_id = ''
+        self.routing_subrouting_id = ''
 
     @api.onchange('account_type_id')
     def onchange_account_type_id(self):
-        self.account_analytic_id = ''
+        self.routing_subrouting_id = ''

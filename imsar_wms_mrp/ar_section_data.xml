@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- account routing sections -->
+        <record id="ar_section_mrp" model="account.routing.section">
+            <field name="name">Manufacturing</field>
+        </record>
+
+    </data>
+</openerp>
