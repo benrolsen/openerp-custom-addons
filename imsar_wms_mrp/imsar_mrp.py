@@ -15,13 +15,6 @@ class product_template(models.Model):
         self.routing_line_id = ''
         self.routing_subrouting_id = ''
 
-    @api.onchange('routing_subrouting_id')
-    def onchange_routing_subrouting_id(self):
-        if not self.account_routing_id or not self.routing_line_id or not self.routing_subrouting_id:
-            self.account_id = ''
-        else:
-            self.account_id = self.routing_subrouting_id.account_id.id
-
 
 class product_template(models.Model):
     _inherit = 'product.template'
