@@ -34,7 +34,6 @@
     'data': [
              'data.xml',
              'account_routing_view.xml',
-             'account_type_view.xml',
              'account_invoice_view.xml',
              'security/account_routing_access.xml',
              'sale_view.xml',

@@ -2,20 +2,6 @@
 <openerp>
     <data>
 
-        <record id="account_routing_line_search" model="ir.ui.view">
-            <field name="name">account.routing.search</field>
-            <field name="model">account.routing</field>
-            <field name="arch" type="xml">
-                <search string="Account Routing">
-                    <field name="name"/>
-                    <group expand="0" string="Group By...">
-                        <filter string="Contains real account" icon="terp-folder-green" domain="[]" context="{'group_by':'account_ids'}"/>
-                        <filter string="Contains analytic account" icon="terp-folder-green" domain="[]" context="{'group_by':'analytic_ids'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-
         <record id="account_routing_tree" model="ir.ui.view">
             <field name="name">account.routing.tree</field>
             <field name="model">account.routing</field>
@@ -93,7 +79,6 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="account_routing_form"/>
-            <field name="search_view_id" ref="account_routing_line_search"/>
             <field name="help" type="html">
               <p class="oe_view_nocontent_create">
                 Click to create new accounting category.
@@ -114,11 +99,52 @@
             <field name="view_id" ref="account_routing_form"/>
             <field name="act_window_id" ref="account_routing_view_form"/>
         </record>
-
         <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
 
 
+        <!-- allow routing checkbox on account types -->
+        <record id="view_account_type_routing_form" model="ir.ui.view">
+            <field name="name">routing_account.account.type.form</field>
+            <field name="model">account.account.type</field>
+            <field name="inherit_id" ref="account.view_account_type_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='code']" position="after">
+                        <field name="allow_routing" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
 
+        <!-- Analytic Account view, add subroute view -->
+        <record id="account_analytic_account_subroute_form" model="ir.ui.view">
+            <field name="name">account.analytic.account.subroute.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//notebook' position='inside'>
+                    <page string="Analytic Routing" attrs="{'invisible':[('type','in',['view', 'template'])]}">
+                        <group name="subrouting">
+                            <field name="account_routing_subrouting_ids">
+                                <tree>
+                                    <field name="routing_id"/>
+                                    <field name="routing_line_id"/>
+                                    <field name="account_id"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="routing_id" string="Routing Category" widget="selection" readonly="False"/>
+                                        <field name="routing_line_id" string="Account Type" widget="selection" domain="[('routing_id','=',routing_id)]"/>
+                                        <field name="account_type_id" invisible="True"/>
+                                        <field name="account_id" widget="selection" domain="[('user_type','=',account_type_id),('type','not in',['view','closed'])]"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>

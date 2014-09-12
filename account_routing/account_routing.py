@@ -34,7 +34,9 @@ class account_routing_subrouting(models.Model):
     _description = 'Account Subrouting'
 
     name = fields.Char(related='account_analytic_id.name')
-    routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True,)
+    routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', readonly=True)
+    routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True)
+    account_type_id = fields.Many2one('account.account.type', related='routing_line_id.account_type_id', readonly=True)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, select=True)
     account_id = fields.Many2one('account.account', 'Real Account', required=True, select=True)
     from_parent = fields.Boolean('Added by parent', readonly=True, default=False)
@@ -107,7 +109,12 @@ class account_routing_section(models.Model):
     name = fields.Char('Section', size=64, required=True)
 
 
-class account_account_type_routing(models.Model):
+class account_analytic_account(models.Model):
+    _inherit = "account.analytic.account"
+
+    account_routing_subrouting_ids = fields.One2many('account.routing.subrouting', 'account_analytic_id', 'Routing Subroutes')
+
+class account_account_type(models.Model):
     _inherit = "account.account.type"
 
     allow_routing = fields.Boolean('Allow routing', default=False, help="Allows you to set special account routing rules via this account type")
