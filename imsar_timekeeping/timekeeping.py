@@ -331,6 +331,7 @@ class hr_timekeeping_line(models.Model):
     logging_required = fields.Boolean(compute='_check_state')
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, )
     move_line_ids = fields.One2many('account.move.line', 'timekeeping_line', string='Journal Line Item', readonly=True, ondelete='restrict',)
+    dcaa_allowable = fields.Boolean("DCAA Allowable", default=True)
 
     @api.one
     @api.depends('date')
@@ -520,10 +521,9 @@ class hr_timekeeping_line(models.Model):
         self.routing_line_id = routing_line
         self.routing_subrouting_id = ''
 
-    @api.onchange('routing_subrouting_id')
-    def onchange_account_type_id(self):
-        # this onchange can probably be removed
-        pass
+    @api.onchange('dcaa_allowable')
+    def onchange_routing_id(self):
+        self.routing_subrouting_id = ''
 
     @api.multi
     def _get_default_date(self):

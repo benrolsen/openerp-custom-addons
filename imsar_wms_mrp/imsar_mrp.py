@@ -9,22 +9,18 @@ class product_template(models.Model):
                                  states={'done': [('readonly', True)], 'cancel': [('readonly', True)]})
     routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
-    account_id = fields.Many2one('account.account', 'General Account', required=True, ondelete='restrict', select=True,)
 
     @api.onchange('account_routing_id')
     def onchange_routing_id(self):
-        self.account_type_id = ''
-        self.analytic_account_id = ''
+        self.routing_line_id = ''
+        self.routing_subrouting_id = ''
 
-    @api.onchange('analytic_account_id')
-    def onchange_account_type_id(self):
-        if not self.account_routing_id or not self.account_type_id or not self.analytic_account_id:
+    @api.onchange('routing_subrouting_id')
+    def onchange_routing_subrouting_id(self):
+        if not self.account_routing_id or not self.routing_line_id or not self.routing_subrouting_id:
             self.account_id = ''
         else:
-            domain = [('routing_id','=',self.account_routing_id.id),('account_type_id','=',self.account_type_id.id)]
-            routing_line_id = self.env['account.routing.line'].search(domain)
-            analytic = self.env['account.analytic.account'].browse(self.analytic_account_id.id)
-            self.account_id = analytic._search_for_subroute_account(routing_line_id=routing_line_id.id)
+            self.account_id = self.routing_subrouting_id.account_id.id
 
 
 class product_template(models.Model):

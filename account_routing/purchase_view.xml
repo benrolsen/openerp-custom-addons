@@ -14,7 +14,7 @@
                 <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
                         domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
                 <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                        domain="[('routing_line_id','=',routing_line_id)]" />
+                        domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
             </xpath>
             <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='attributes'>
                 <attribute name="invisible">1</attribute>

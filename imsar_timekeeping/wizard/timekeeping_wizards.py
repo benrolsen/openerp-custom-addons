@@ -148,9 +148,9 @@ class hr_timesheet_preferences(models.TransientModel):
     _description = "hr.timekeeping.preferences"
 
     user_id = fields.Many2one('res.users', 'User', )
-    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
+    routing_id = fields.Many2one('account.routing', 'Category',)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type',)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code',)
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
