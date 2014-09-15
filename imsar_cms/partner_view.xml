@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<openerp>
+<data>
+
+    <record id="partner_form_view" model="ir.ui.view">
+        <field name="name">partner.view.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <field name="function" position="after">
+                <field name="manager_id" domain="[('parent_id','=',parent_id),('is_company','=',False)]" />
+            </field>
+        </field>
+    </record>
+
+</data>
+</openerp>
