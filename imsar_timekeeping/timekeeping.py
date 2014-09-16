@@ -522,7 +522,7 @@ class hr_timekeeping_line(models.Model):
         self.routing_subrouting_id = ''
 
     @api.onchange('dcaa_allowable')
-    def onchange_routing_id(self):
+    def onchange_dcaa(self):
         self.routing_subrouting_id = ''
 
     @api.multi

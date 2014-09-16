@@ -33,6 +33,7 @@
     'data': [
         'ar_section_data.xml',
         'mrp_view.xml',
+        'wms_view.xml',
     ],
     'installable': True,
     'auto_install': False,
