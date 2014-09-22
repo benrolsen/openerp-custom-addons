@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record id="action_analytic_line_tree" model="ir.actions.act_window">
+        <field name="name">Analytic Lines</field>
+        <field name="res_model">account.analytic.line</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to view the Analytic Lines for this Budget Line. 
+          </p>
+        </field>
+    </record>        
+    
+    <record model="ir.ui.view" id="ursa_view_crossovered_budget_line_tree">
+        <field name="name">ursa.crossovered.budget.line.tree</field>
+        <field name="model">crossovered.budget.lines</field>
+        <field name="inherit_id" ref="account_budget.view_crossovered_budget_line_tree" />
+        <field name="priority" eval="20"/>
+        <field name="arch" type="xml">
+            <field name="practical_amount" position="after">
+                <button type="object" icon="gtk-justify-fill" name="get_analytic_lines" /> 
+            </field>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="ursa_view_crossovered_budget_line_form">
+        <field name="name">ursa.crossovered.budget.line.form</field>
+        <field name="model">crossovered.budget.lines</field>
+
+        <field name="inherit_id" ref="account_budget.view_crossovered_budget_line_form" />
+        <field name="priority" eval="25"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form/sheet/group" position="before">
+                <button type="object" icon="gtk-justify-fill" string="Analytic Items" name="get_analytic_lines" /> 
+            </xpath>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="ursa_view_crossovered_budget_form_line_tree">
+        <field name="name">ursa.crossovered.budget.form.line.tree</field>
+        <field name="model">crossovered.budget</field>
+        <field name="inherit_id" ref="account_budget.crossovered_budget_view_form" />
+        <field name="priority" eval="30"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='practical_amount']" position="after">
+                <button type="object" icon="gtk-justify-fill" name="get_analytic_lines" /> 
+            </xpath>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="ursa_view_budget_post_form_line_tree">
+        <field name="name">ursa.view.budget.post.form.line.tree</field>
+        <field name="model">account.budget.post</field>
+        <field name="inherit_id" ref="account_budget.view_budget_post_form" />
+        <field name="priority" eval="35"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='practical_amount']" position="after">
+                <button type="object" icon="gtk-justify-fill" name="get_analytic_lines" /> 
+            </xpath>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="ursa_view_account_analytic_account_form_line_tree">
+        <field name="name">ursa.view.account.analytic.account.form.line.tree</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form" />
+        <field name="priority" eval="40"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='practical_amount']" position="after">
+                <button type="object" icon="gtk-justify-fill" name="get_analytic_lines" /> 
+            </xpath>
+        </field>
+    </record>
+    
+</data>
+</openerp>
