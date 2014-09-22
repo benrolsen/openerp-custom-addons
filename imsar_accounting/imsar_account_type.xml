@@ -19,7 +19,7 @@
             <field name="active" eval="False"/>
         </record>
 
-        <!-- Unused base account stuff -->
+        <!-- Unused base account stuff (replaced by l10n_us) -->
         <record id="account.data_account_type_receivable" model="account.account.type">
             <field name="active" eval="False"/>
         </record>
@@ -98,34 +98,6 @@
             <field name="active" eval="False"/>
         </record>
 
-        <record id="user_type_eng_revenue" model="account.account.type">
-            <field name="name">Engineering Services Revenue</field>
-            <field name="code">eng-revenue</field>
-            <field name="report_type">income</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_product_sales" model="account.account.type">
-            <field name="name">Product Sales Revenue</field>
-            <field name="code">product-revenue</field>
-            <field name="report_type">income</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_parts_sales" model="account.account.type">
-            <field name="name">Parts Sales Revenue</field>
-            <field name="code">parts-revenue</field>
-            <field name="report_type">income</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_product_leases" model="account.account.type">
-            <field name="name">Product Leases Revenue</field>
-            <field name="code">leases-revenue</field>
-            <field name="report_type">income</field>
-            <field name="close_method">none</field>
-        </record>
-
         <!-- Expense -->
         <record id="l10n_us.user_type_expense" model="account.account.type">
             <field name="active" eval="False"/>
@@ -141,48 +113,6 @@
         <record id="l10n_us.user_type_cogs" model="account.account.type">
             <field name="name">Cost of Goods Sold</field>
             <field name="code">cogs</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_labor_expense" model="account.account.type">
-            <field name="name">Labor Expense</field>
-            <field name="code">labor-expense</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_material_expense" model="account.account.type">
-            <field name="name">Material Expense</field>
-            <field name="code">material-expense</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_travel_expense" model="account.account.type">
-            <field name="name">Travel Expense</field>
-            <field name="code">travel-expense</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_subcontractor_expense" model="account.account.type">
-            <field name="name">Subcontractor Expense</field>
-            <field name="code">Subcontractor-expense</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_equipment_expense" model="account.account.type">
-            <field name="name">Equipment and Software Expense</field>
-            <field name="code">equipment-expense</field>
-            <field name="report_type">expense</field>
-            <field name="close_method">none</field>
-        </record>
-
-        <record id="user_type_fees_expense" model="account.account.type">
-            <field name="name">Fees Expense</field>
-            <field name="code">fees-expense</field>
             <field name="report_type">expense</field>
             <field name="close_method">none</field>
         </record>

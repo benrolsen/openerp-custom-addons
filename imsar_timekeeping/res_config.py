@@ -25,7 +25,7 @@ class timekeeping_settings(models.TransientModel):
     _inherit = 'hr.config.settings'
 
     wage_account_id = fields.Many2one('account.account', 'Wage Liability Account')
-    general_journal_id = fields.Many2one('account.journal', 'Timekeeping Journal')
+    timekeeping_journal_id = fields.Many2one('account.journal', 'Timekeeping Journal')
     regular_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Regular Work Type")
     overtime_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Overtime Work Type")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'config_future_analytic_rel', 'config_id', 'analytic_id', string="Analytics allowed for future dates")
@@ -36,7 +36,7 @@ class timekeeping_settings(models.TransientModel):
         user = self.env.user
         res = dict()
         res['wage_account_id'] = user.company_id.wage_account_id.id
-        res['general_journal_id'] = user.company_id.general_journal_id.id
+        res['timekeeping_journal_id'] = user.company_id.timekeeping_journal_id.id
         res['regular_worktype_id'] = user.company_id.regular_worktype_id.id
         res['overtime_worktype_id'] = user.company_id.overtime_worktype_id.id
         res['future_analytic_ids'] = user.company_id.future_analytic_ids.ids
@@ -47,7 +47,7 @@ class timekeeping_settings(models.TransientModel):
     def set_default_timekeeping(self):
         self.env.user.company_id.write({
             'wage_account_id': self.wage_account_id.id,
-            'general_journal_id': self.general_journal_id.id,
+            'timekeeping_journal_id': self.timekeeping_journal_id.id,
             'regular_worktype_id': self.regular_worktype_id.id,
             'overtime_worktype_id': self.overtime_worktype_id.id,
             'future_analytic_ids': [(6,0, self.future_analytic_ids.ids)],
@@ -58,7 +58,7 @@ class res_company(models.Model):
     _inherit = 'res.company'
 
     wage_account_id = fields.Many2one('account.account', 'Wage Liability Account')
-    general_journal_id = fields.Many2one('account.journal', 'Timekeeping Journal')
+    timekeeping_journal_id = fields.Many2one('account.journal', 'Timekeeping Journal')
     regular_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Regular Work Type")
     overtime_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Overtime Work Type")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'company_future_analytic_rel', 'company_id', 'analytic_id', string="Analytics allowed for future dates")

@@ -2,41 +2,6 @@
 <openerp>
     <data noupdate="0">
 
-        <!-- Allow account routing for certain account types -->
-        <record id="imsar_accounting.user_type_eng_revenue" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_product_sales" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_parts_sales" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_product_leases" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="l10n_us.user_type_other_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_labor_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_material_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_travel_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_subcontractor_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_equipment_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-        <record id="imsar_accounting.user_type_fees_expense" model="account.account.type">
-            <field name="allow_routing">True</field>
-        </record>
-
         <!-- applicable sections for routes -->
         <record id="revenue_routing" model="account.routing">
             <field name="section_ids" eval="[(6,0,[ref('account_routing.ar_section_sale')])]" />

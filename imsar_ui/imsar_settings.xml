@@ -43,12 +43,16 @@
         </record>
 
         <!-- Purchase settings -->
+        <record id="base.main_company" model="res.company">
+            <field name="default_invoice_method">picking</field>
+        </record>
         <!--<record id="base.group_user" model="res.groups">-->
             <!--<field name="implied_ids" eval="[(4,ref('product.group_purchase_pricelist'))]" />-->
         <!--</record>-->
         <!--<record id="base.group_user" model="res.groups">-->
             <!--<field name="implied_ids" eval="[(4,ref('product.group_costing_method'))]" />-->
         <!--</record>-->
+
 
         <!-- Warehouse settings -->
         <record id="base.group_user" model="res.groups">

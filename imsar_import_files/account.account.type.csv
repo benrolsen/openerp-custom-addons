@@ -1,0 +1,35 @@
+id,name,code,report_type,close_method,allow_routing
+atype_services,Services,services,income,none,TRUE
+atype_product_sales,Product Sales,product_sales,income,none,TRUE
+atype_parts_sales,Parts Sales,parts_sales,income,none,TRUE
+atype_leases,Leases,leases,income,none,TRUE
+atype_other_income,Other Income,other_income,income,none,TRUE
+atype_labor,Labor,labor,expense,none,TRUE
+atype_materials,Materials,materials,expense,none,TRUE
+atype_travel,Travel,travel,expense,none,TRUE
+atype_travel_owner,Travel - Owner Per Diem,travel_owner,expense,none,TRUE
+atype_subs,Subs,subs,expense,none,TRUE
+atype_subs_interco,Subs - Interco,subs_interco,expense,none,TRUE
+atype_subs_ext,Subs - External,subs_external,expense,none,TRUE
+atype_other,Other,other,expense,none,TRUE
+atype_equipment,Equipment,equipment,expense,none,TRUE
+atype_software,Software,software,expense,none,TRUE
+atype_supplies,Supplies & Materials,supplies,expense,none,TRUE
+atype_contractors,Contractors,contractors,expense,none,TRUE
+atype_consultants,Consultants,consultants,expense,none,TRUE
+atype_fees,Fees,fees,expense,none,TRUE
+atype_bonus,Bonus,bonus,expense,none,TRUE
+atype_holiday,Holiday,holiday,expense,none,TRUE
+atype_pto,PTO,pto,expense,none,TRUE
+atype_gifts,Gifts & Awards,gifts,expense,none,TRUE
+atype_health_ins,Health Insurance,health_ins,expense,none,TRUE
+atype_hsa,HSA Contribution,hsa_contrib,expense,none,TRUE
+atype_dental_ins,Dental Insurance,dental_ins,expense,none,TRUE
+atype_vision_ins,Vision Insurance,vision_ins,expense,none,TRUE
+atype_life_ins,Life Insurance,life_ins,expense,none,TRUE
+atype_std_ins,ST Disability Insurance,st_dis_ins,expense,none,TRUE
+atype_ltd_ins,LT Disability Insurance,lt_dis_ins,expense,none,TRUE
+atype_workers_comp,Workers Comp,workers_comp,expense,none,TRUE
+atype_retirement,Retirement Contribution,ret_contrib,expense,none,TRUE
+atype_payroll_tax,Payroll Tax,payroll_tax,expense,none,TRUE
+atype_payroll_other,Other Payroll Expenses,payroll_other,expense,none,TRUE

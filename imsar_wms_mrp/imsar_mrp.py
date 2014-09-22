@@ -2,7 +2,7 @@ from openerp import models, fields, api, _
 from openerp.exceptions import Warning
 
 
-class product_template(models.Model):
+class mrp_production(models.Model):
     _inherit = 'mrp.production'
 
     account_routing_id = fields.Many2one('account.routing', 'Category', required=True, readonly=False,
@@ -15,10 +15,3 @@ class product_template(models.Model):
         self.routing_line_id = ''
         self.routing_subrouting_id = ''
 
-
-class product_template(models.Model):
-    _inherit = 'product.template'
-
-    _defaults = {
-        'type' : 'product',
-    }

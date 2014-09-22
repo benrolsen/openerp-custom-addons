@@ -28,7 +28,10 @@
     "description": """Changed to support more LDAP connection types and to automatically create an HR employee.""",
     'website': 'http://www.imsar.com',
     "depends" : ['base', "hr", "auth_ldap"],
-    "data" : ['ldap_view.xml', ],
+    "data" : [
+        'ldap_view.xml',
+        'data.xml',
+    ],
     'installable': True,
     'auto_install': False,
 }

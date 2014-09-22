@@ -31,11 +31,9 @@
     'description': "Loads demo data customized for IMSAR",
     'category': "Uncategorized",
     'data': [
-        'ldap_data.xml',
         'res.partner.csv',
         'res.users.csv',
         'hr.employee.csv',
-        'account.analytic.account.csv',
         'account.routing.csv',
         'account.routing.line.csv',
         'account.routing.subrouting.csv',
@@ -44,8 +42,9 @@
         'product.category.csv',
         'product.template.csv',
         'config_settings.xml',
+        'data.xml',
         ],
-    'installable': True,
+    'installable': False,
     'auto_install': False,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

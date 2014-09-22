@@ -24,8 +24,8 @@
                                         domain="[('type','!=','view')]"/>
                             </div>
                             <div>
-                                <label for="general_journal_id"/>
-                                <field name="general_journal_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
+                                <label for="timekeeping_journal_id"/>
+                                <field name="timekeeping_journal_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
                             </div>
                             <div>
                                 <label for="regular_worktype_id"/>

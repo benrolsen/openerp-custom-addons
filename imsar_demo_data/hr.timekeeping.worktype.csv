@@ -1,5 +1,0 @@
-id,name,active,premium_rate,nonexempt_limit,nonexempt_limit_ignore_ids/id
-worktype_regular,Regular,True,0.0,40,"imsar_accounting.pto,imsar_accounting.holiday"
-worktype_ovetime,Overtime,True,0.5,128,
-worktype_oconus,OCONUS,True,0.35,,
-worktype_danger,Danger,True,0.7,,

@@ -2,6 +2,7 @@
 <openerp>
     <data noupdate="1">
 
+        <!-- LDAP settings -->
         <record id="imsar_ldap" model="res.company.ldap">
             <field name="company" ref="base.main_company" />
             <field name="sequence">10</field>

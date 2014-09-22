@@ -34,7 +34,7 @@
     'data': [
             'res_config_view.xml',
             'analytic_view.xml',
-            'ar_section_data.xml',
+            'timekeeping_data.xml',
             'security/hr_timekeeping_security.xml',
             'security/hr_timekeeping_access.xml',
             'timekeeping_workflow.xml',

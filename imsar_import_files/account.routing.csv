@@ -1,0 +1,17 @@
+id,name,section_ids/id
+ar_revenue,Revenue,account_routing.ar_section_sale
+ar_contracts,Contracts,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_engoh,ENG OH,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_mfgdirect,MFG Direct,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_mfgoh,MFG OH,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_irad,IR&D,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_proposal,Proposal,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_sales,Sales & Marketing,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_cons,Conventions,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_media,Media,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_admin,Admin,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_mhoh,Mat Handling OH,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
+ar_benefits,Benefits,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_facilities,Facilities,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_misc_income,Misc Income,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_misc_expense,Misc Expense,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- account routing sections -->
+        <record id="ar_section_timekeeping" model="account.routing.section">
+            <field name="name">Timekeeping</field>
+        </record>
+
+        <!-- Timekeeping analytic journal -->
+        <record id="analytic_journal_timekeeping" model="account.analytic.journal">
+            <field name="code">TIME</field>
+            <field name="name">Timekeeping</field>
+            <field name="type">general</field>
+        </record>
+
+        <!-- Timekeeping journal -->
+        <record id="journal_timekeeping" model="account.journal">
+            <field name="code">TIME</field>
+            <field name="name">Timekeeping Journal</field>
+            <field name="type">general</field>
+            <field name="analytic_journal_id" ref="analytic_journal_timekeeping"/>
+        </record>
+
+        <!-- timekeeping worktypes -->
+        <record id="worktype_regular" model="hr.timekeeping.worktype">
+            <field name="name">Regular</field>
+            <field name="premium_rate">0.0</field>
+            <field name="nonexempt_limit">40</field>
+        </record>
+        <record id="worktype_ovetime" model="hr.timekeeping.worktype">
+            <field name="name">Overtime</field>
+            <field name="premium_rate">0.5</field>
+            <field name="nonexempt_limit">128</field>
+        </record>
+        <record id="worktype_oconus" model="hr.timekeeping.worktype">
+            <field name="name">OCONUS</field>
+            <field name="premium_rate">0.35</field>
+        </record>
+        <record id="worktype_danger" model="hr.timekeeping.worktype">
+            <field name="name">Danger</field>
+            <field name="premium_rate">0.7</field>
+        </record>
+
+    </data>
+</openerp>

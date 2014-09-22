@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- Sales journal -->
+        <record id="journal_sales" model="account.journal">
+            <field name="code">SALE</field>
+            <field name="name">Sales Journal</field>
+            <field name="type">sale</field>
+            <field name="analytic_journal_id" ref="account.analytic_journal_sale"/>
+        </record>
+
+        <!-- Purchases journal -->
+        <record id="journal_purchases" model="account.journal">
+            <field name="code">PURCH</field>
+            <field name="name">Purchases Journal</field>
+            <field name="type">purchase</field>
+            <field name="analytic_journal_id" ref="account.exp"/>
+        </record>
+
+    </data>
+</openerp>
