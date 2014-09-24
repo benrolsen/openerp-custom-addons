@@ -4,6 +4,7 @@ from openerp import models, fields, api, _
 class account_routing(models.Model):
     _name = 'account.routing'
     _description = 'Account Routing'
+    _order = "name"
 
     name = fields.Char('Routing Category', size=128, required=True)
     routing_lines = fields.One2many('account.routing.line', 'routing_id', 'Account Type Routes', ondelete='cascade')
@@ -17,6 +18,7 @@ class account_routing(models.Model):
 class account_routing_line(models.Model):
     _name = 'account.routing.line'
     _description = 'Account Routing Line'
+    _order = "account_type_id"
 
     name = fields.Char(related='account_type_id.name')
     routing_id = fields.Many2one('account.routing', 'Account Routing', required=True, ondelete='cascade')
@@ -32,6 +34,7 @@ class account_routing_line(models.Model):
 class account_routing_subrouting(models.Model):
     _name = 'account.routing.subrouting'
     _description = 'Account Subrouting'
+    _order = "account_analytic_id"
 
     name = fields.Char(related='account_analytic_id.name')
     routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', readonly=True)

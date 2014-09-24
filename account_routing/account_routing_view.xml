@@ -146,5 +146,25 @@
             </field>
         </record>
 
+        <!-- These are only required to allow imports for these models and should be removed when imports are no longer required -->
+        <record id="account_routing_line_view" model="ir.actions.act_window">
+            <field name="name">Account Routing Line</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.routing.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21" />
+        <record id="account_routing_subrouting_view" model="ir.actions.act_window">
+            <field name="name">Account Routing Subrouting</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.routing.subrouting</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_account_routing_subrouting_view" action="account_routing_subrouting_view" parent="account.account_account_menu" sequence="22" />
+
+
+
     </data>
 </openerp>

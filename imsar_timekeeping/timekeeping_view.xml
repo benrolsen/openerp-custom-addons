@@ -28,10 +28,10 @@
                             <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                    domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="True"
+                            <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="1"
                                     domain="[('routing_id','=',routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
                             <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                    domain="[('routing_line_id','=',routing_line_id),('timesheets_future_filter','in',sheet_state),('user_has_reviewed','=',True),
+                                    domain="[('routing_line_id','=',routing_line_id),('timesheets_future_filter','in',state),('user_has_reviewed','=',True),
                                     ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable)]" />
                             <field name="location" options="{'create': false, 'create_edit': false}"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
@@ -177,7 +177,7 @@
                             Detail page.</p>
                             <p>Note that for any entries in the future, there is a very limited set of tasks that you may choose. (Typically
                             PTO and Holiday, under the Fringe category).</p>
-                            <p>New entries are not saved until you click Validate and Save! Make a habit of clicking this button frequently
+                            <p>Entries edited in-line are not saved until you click Validate and Save! Make a habit of clicking this button frequently
                             so as not to lose data.</p>
                             <p><strong>Approvals</strong></p>
                             <p>Once your timesheet is completely filled out for a given week, click the red "Submit For Approval" button in the

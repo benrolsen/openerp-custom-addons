@@ -155,6 +155,7 @@ class hr_timesheet_preferences(models.TransientModel):
     @api.onchange('routing_id')
     def onchange_routing_id(self):
         routing_line = self.env['hr.timekeeping.line']._get_timekeeping_routing_line(self.routing_id.id)
+        self.routing_line_id = routing_line
         if self.routing_subrouting_id not in routing_line.subrouting_ids:
             self.routing_subrouting_id = ''
 

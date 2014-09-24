@@ -4,3 +4,5 @@ account.account.csv
 account.analytic.account.csv
 res.company.csv
 account.routing.csv
+account.routing.line.csv
+account.routing.subrouting.csv

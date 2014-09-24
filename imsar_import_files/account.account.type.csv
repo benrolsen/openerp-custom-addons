@@ -19,8 +19,6 @@ atype_contractors,Contractors,contractors,expense,none,TRUE
 atype_consultants,Consultants,consultants,expense,none,TRUE
 atype_fees,Fees,fees,expense,none,TRUE
 atype_bonus,Bonus,bonus,expense,none,TRUE
-atype_holiday,Holiday,holiday,expense,none,TRUE
-atype_pto,PTO,pto,expense,none,TRUE
 atype_gifts,Gifts & Awards,gifts,expense,none,TRUE
 atype_health_ins,Health Insurance,health_ins,expense,none,TRUE
 atype_hsa,HSA Contribution,hsa_contrib,expense,none,TRUE

@@ -247,13 +247,13 @@ class hr_timekeeping_sheet(models.Model):
         lines = self._make_move_lines()
         if lines:
             name = self.employee_id.name + ' - ' + self.name
-            if not self.employee_id.user_id.company_id.general_journal_id:
+            if not self.employee_id.user_id.company_id.timekeeping_journal_id:
                 raise Warning(_('You must set a timesheet journal in the Settings->HR Settings before you can approve timesheets.'))
 
             move_vals = {
                 'ref': name,
                 'line_id': lines,
-                'journal_id': self.employee_id.user_id.company_id.general_journal_id.id,
+                'journal_id': self.employee_id.user_id.company_id.timekeeping_journal_id.id,
                 'date': date.today(),
                 'narration': '',
                 'company_id': self.employee_id.user_id.company_id.id,
@@ -518,8 +518,14 @@ class hr_timekeeping_line(models.Model):
     @api.onchange('routing_id')
     def onchange_routing_id(self):
         routing_line = self._get_timekeeping_routing_line(self.routing_id.id)
-        self.routing_line_id = routing_line
-        self.routing_subrouting_id = ''
+        self.routing_line_id = routing_line or ''
+        if self.routing_id and self.routing_subrouting_id not in routing_line.subrouting_ids:
+            if self.env.user.default_account_routing == self.routing_id and self.state != 'future':
+                self.routing_subrouting_id = self.env.user.default_routing_subrouting
+            else:
+                self.routing_subrouting_id = ''
+        else:
+            self.routing_subrouting_id = ''
 
     @api.onchange('dcaa_allowable')
     def onchange_dcaa(self):
@@ -693,7 +699,7 @@ class account_analytic_account(models.Model):
 
     pm_ids = fields.Many2many('res.users', 'analytic_user_pm_rel', 'analytic_id', 'user_id', string='Project Managers')
     overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
-    timesheets_future_filter = fields.Char(store=False, compute='_dummy_func', search='_filter_future_accounts')
+    timesheets_future_filter = fields.Char(store=False, compute='_computed_fields', search='_filter_future_accounts')
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
     user_review_ids_count = fields.Integer(compute='_computed_fields', readonly=True)
     user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
@@ -705,10 +711,7 @@ class account_analytic_account(models.Model):
     @api.one
     def _computed_fields(self):
         self.user_review_ids_count = len(self.user_review_ids)
-
-    @api.one
-    def _dummy_func(self):
-        return ''
+        self.timesheets_future_filter = ''
 
     def _filter_future_accounts(self, operator, value):
         if value == 'future':
