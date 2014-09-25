@@ -13,5 +13,5 @@ ar_admin,Admin,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section
 ar_mhoh,Mat Handling OH,"account_routing.ar_section_purchase,imsar_wms_mrp.ar_section_mrp,imsar_timekeeping.ar_section_timekeeping"
 ar_benefits,Benefits,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
 ar_facilities,Facilities,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
-ar_misc_income,Misc Income,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
-ar_misc_expense,Misc Expense,"account_routing.ar_section_purchase,imsar_timekeeping.ar_section_timekeeping"
+ar_misc_income,Misc Income,account_routing.ar_section_purchase
+ar_misc_expense,Misc Expense,account_routing.ar_section_purchase

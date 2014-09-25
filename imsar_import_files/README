@@ -6,3 +6,4 @@ res.company.csv
 account.routing.csv
 account.routing.line.csv
 account.routing.subrouting.csv
+hr.timekeeping.worktype.csv

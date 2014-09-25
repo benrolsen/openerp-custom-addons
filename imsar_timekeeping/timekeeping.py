@@ -172,54 +172,67 @@ class hr_timekeeping_sheet(models.Model):
     @api.multi
     def _make_move_lines(self):
         ts_move_lines = list()
-        name = self.employee_id.name + ' - ' + self.name
         partner_id = self.employee_id.user_id.company_id.partner_id.id
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        refname = self.employee_id.name + ' - ' + self.name
 
-        # prepare move lines per timesheet entry
+        # prepare move lines per subrouting
         total_amount = 0.0
+        move_line_summary = defaultdict(float)
+        overtime_worktype_id = self.user_id.company_id.overtime_worktype_id.id
         for line in self.line_ids:
             # if this line already has a move line associated, skip it
             if(line.move_line_ids):
                 continue
-            temp_line = {
-                'type': 'dest',
-                'quantity': line.unit_amount,
-                'account_analytic_id': line.routing_subrouting_id.account_analytic_id.id,
-                'date_maturity': date.today(),
-                'ref': name,
-            }
+            category = line.routing_id.name
+            task = line.routing_subrouting_id.name
+            worktype = line.worktype.name
+            name = "{0} - {1} ({2})".format(category, task, worktype)
+            if name not in move_line_summary:
+                move_line_summary[name] = {
+                    'worktype_id': line.worktype.id,
+                    'subroute': line.routing_subrouting_id,
+                    'line_ids': list(),
+                    'sums': defaultdict(float)
+                }
+            move_line_summary[name]['sums']['quantity'] += line.unit_amount
+            move_line_summary[name]['sums']['price'] += line.amount
+            move_line_summary[name]['sums']['premium_amount'] += line.premium_amount
+            move_line_summary[name]['line_ids'].append(line.id)
+            total_amount += line.amount + line.premium_amount
+
+        for name, vals in move_line_summary.iteritems():
             # make a move line for the base amount
-            temp_line.update({
-                'name': line.name,
-                'price': line.amount,
-                'account_id': line.routing_subrouting_id.account_id.id,
-            })
+            temp_line = {
+                'name': name,
+                'price': vals['sums']['price'],
+                'account_id': vals['subroute'].account_id.id,
+                'type': 'dest',
+                'quantity': vals['sums']['quantity'],
+                'account_analytic_id': vals['subroute'].account_analytic_id.id,
+                'date_maturity': date.today(),
+                'ref': refname,
+            }
             # adding values post conversion takes an extra step
             converted_line = self.env['account.invoice'].line_get_convert(temp_line, partner_id, now)
-            converted_line.update({'timekeeping_line': line.id})
+            converted_line.update({'timekeeping_line_ids': [(6, 0, vals['line_ids'])]})
             ts_move_lines.append((0, 0, converted_line))
-            total_amount += line.amount
 
             # add another line for the premium addition, if any
-            if line.premium_amount != 0.0:
+            if vals['sums']['premium_amount'] != 0.0:
                 # some contracts don't allow overtime premiums to be charged to them, so deal with that here
-                overtime_worktype_id = self.user_id.company_id.overtime_worktype_id.id
-                contract_overtime_routing = line.routing_subrouting_id.account_analytic_id.overtime_account
-                if contract_overtime_routing and (line.worktype.id == overtime_worktype_id):
-                    final_account_id = contract_overtime_routing.id
-                else:
-                    final_account_id = line.account_id.id
+                contract_overtime_routing = vals['subroute'].account_analytic_id.overtime_account
+                if contract_overtime_routing and vals['worktype_id'] == overtime_worktype_id:
+                    temp_line.update({'account_id': contract_overtime_routing.id})
                 temp_line.update({
-                    'name': line.name + ' - ' + line.worktype.name + ' premium',
-                    'price': line.premium_amount,
-                    'account_id': final_account_id,
+                    'name': name + ' premium',
+                    'price': vals['sums']['premium_amount'],
                 })
                 converted_line = self.env['account.invoice'].line_get_convert(temp_line, partner_id, now)
-                converted_line.update({'timekeeping_line': line.id})
+                converted_line.update({'timekeeping_line_ids': [(6, 0, vals['line_ids'])]})
                 ts_move_lines.append((0, 0, converted_line))
-                total_amount += line.premium_amount
 
+        # TODO maybe add an override on employee for wage liability account, for owners
         # Get the liability account for the balancing move line
         expense_account = self.user_id.company_id.wage_account_id.id
 
@@ -227,11 +240,11 @@ class hr_timekeeping_sheet(models.Model):
             # add one move line to balance journal entry
             balance_line = {
                 'type': 'dest',
-                'name': name,
+                'name': 'Payroll entry',
                 'price': -total_amount,
                 'account_id': expense_account,
                 'date_maturity': date.today(),
-                'ref': name,
+                'ref': refname,
             }
             converted_line = self.env['account.invoice'].line_get_convert(balance_line, partner_id, now)
             ts_move_lines.append((0, 0, converted_line))
@@ -330,7 +343,8 @@ class hr_timekeeping_line(models.Model):
     sheet_state = fields.Selection(related='sheet_id.state', readonly=True)
     logging_required = fields.Boolean(compute='_check_state')
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, )
-    move_line_ids = fields.One2many('account.move.line', 'timekeeping_line', string='Journal Line Item', readonly=True, ondelete='restrict',)
+    # this timekeeping_line_move_line_rel table is going to get massive, but I don't know of another way to do it
+    move_line_ids = fields.Many2many('account.move.line', 'timekeeping_line_move_line_rel', 'timekeeping_line_id', 'move_line_id', string='Related move lines')
     dcaa_allowable = fields.Boolean("DCAA Allowable", default=True)
 
     @api.one
@@ -673,7 +687,7 @@ class hr_timesheet_worktype(models.Model):
                         help="Weekly limit of hours for this type for non-exempt employees. Enter 0 or leave blank for no limit.")
     nonexempt_limit_ignore_ids = fields.Many2many('account.analytic.account','premium_analytic_rel','limit_id','account_analytic_id','Ignore Analytic Accounts',
                         help="Enter any analytic accounts this limit should ignore when counting hours worked (like PTO).",
-                        domain="[('state','!=','closed'),('use_timesheets','=',1)]")
+                        domain="[('state','!=','closed'),('is_labor_code','=',1)]")
 
     _defaults = {
         'active': True,
@@ -769,7 +783,7 @@ class account_analytic_account(models.Model):
 class account_move_line(models.Model):
     _inherit = "account.move.line"
 
-    timekeeping_line = fields.Many2one('hr.timekeeping.line', 'Timekeeping Line', ondelete='restrict')
+    timekeeping_line_ids = fields.Many2many('hr.timekeeping.line', 'timekeeping_line_move_line_rel', 'move_line_id', 'timekeeping_line_id', string='Related timekeeping lines')
 
 
 class account_routing_subrouting(models.Model):

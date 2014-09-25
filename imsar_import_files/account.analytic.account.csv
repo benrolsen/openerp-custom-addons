@@ -341,7 +341,7 @@ aa_f569,569 - SAVINGS INCENTIVE - OWNER,Fringe Benefits,normal,569 - SAVINS INCE
 aa_f801,801 - COBRA/ NON-EMPLOYEE - UNALLOWABLE,Fringe Benefits,normal,801 - COBRA/ NON-EMPLOYEE - UNALLOWABLE,,0,
 aa_f811,811 - BONUS NON-EMPLOYEE - UNALLOWABLE,Fringe Benefits,normal,811 - BONUS NON-EMPLOYEE - UNALLOWABLE,,0,
 aa_f814,814 - BONUS EMPLOYEE - UNALLOWABLE,Fringe Benefits,normal,814 - BONUS EMPLOYEE - UNALLOWABLE,,0,
-aa_f826,826 - PTO - UNALLOWABLE,Fringe Benefits,normal,826 - PTO - UNALLOWABLE,,0,
+aa_f826,826 - PTO - UNALLOWABLE,Fringe Benefits,normal,826 - PTO - UNALLOWABLE,1,0,
 aa_f841,841 - GIFTS & AWARDS - EMPLOYEE - UNALLOWABLE,Fringe Benefits,normal,841 - GIFTS & AWARDS - EMPLOYEE - UNALLOWABLE,,0,
 aa_f844,844 - GIFTS & AWARDS - OWNER - UNALLOWABLE,Fringe Benefits,normal,844 - GIFTS & AWARDS - OWNER - UNALLOWABLE,,0,
 aa_non_op,Non-operating Income and Expenses,PnL,view,Non-operating Income and Expenses,,,
