@@ -1,56 +1,46 @@
-# -*- coding: utf-8 -*-
-##############################################################################
-#
-#    Ursa Information Systems
-#    Author: Balaji Kannan
-#    Copyright (C) 2014 (<http://www.ursainfosystems.com>).
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
+from openerp import models, fields, api, _
 
-import datetime
-
-from openerp.osv import fields, osv
-from openerp.tools import ustr
-from openerp.tools.translate import _
-
-class crossovered_budget_lines(osv.osv):
-
+class crossovered_budget_lines(models.Model):
     _inherit = 'crossovered.budget.lines'
 
-    def get_analytic_lines(self, cr, uid, ids, context=None):
-	
-        for bline in self.browse(cr, uid, ids, context=context):
-        
-            analytic_account_id = bline.analytic_account_id and  bline.analytic_account_id.id or False
-            date_from = bline.date_from
-            date_to = bline.date_to
-            acc_ids = [x.id for x in bline.general_budget_id.account_ids]
-            
-            item_ids=[]
-            
-            if analytic_account_id:
-                cr.execute("SELECT id FROM account_analytic_line WHERE account_id=%s AND (date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd')) AND general_account_id=ANY(%s)", (analytic_account_id, date_from, date_to, acc_ids,))
-                item_ids = [x[0] for x in cr.fetchall()]
-                
-            return {
-                'name': _('Analytic Account Lines'),
-                'view_type': 'form',
-                "view_mode": 'tree,form',
-                'res_model': 'account.analytic.line',
-                'type': 'ir.actions.act_window',
-                'domain': [('id','=',item_ids)],
-            }
+    date_from = fields.Date(related='crossovered_budget_id.date_from', string='Start Date', readonly=True)
+    date_to =fields.Date(related='crossovered_budget_id.date_to', string='End Date', readonly=True)
+    remaining_amount = fields.Float(string="Remaining", compute='_compute', store=False, readonly=True)
 
+    @api.one
+    def _compute(self):
+        self.remaining_amount = self.planned_amount - abs(self.practical_amount)
+
+    @api.multi
+    def _get_all_analytics(self):
+        analytics = self.analytic_account_id.get_all_children()
+        analytic_lines = self.env['account.analytic.line'].search([
+            ('account_id','in',analytics.ids),
+            ('general_account_id','in',self.general_budget_id.account_ids.ids),
+            ('date','>=',self.date_from),
+            ('date','<=',self.date_to),
+        ])
+        return analytic_lines
+
+    @api.multi
+    def get_analytic_lines(self):
+        item_ids=[]
+        if self.analytic_account_id:
+            item_ids = self._get_all_analytics().ids
+
+        return {
+            'name': _('Analytic Account Lines'),
+            'view_type': 'form',
+            "view_mode": 'tree,form',
+            'res_model': 'account.analytic.line',
+            'type': 'ir.actions.act_window',
+            'domain': [('id','=',item_ids)],
+        }
+
+    @api.multi
+    def _prac_amt(self):
+        result = 0.0
+        if self.analytic_account_id:
+            analytic_lines = self._get_all_analytics()
+            result += sum(a.amount for a in analytic_lines)
+        return {self.id: result}

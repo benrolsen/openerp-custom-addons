@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Ursa Information Systems
-#    Author: Balaji Kannan
+#    Ursa Information Systems, IMSAR LLC
+#    Author: Balaji Kannan, Ben Olsen
 #    Copyright (C) 2014 (<http://www.ursainfosystems.com>).
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@
     'website': 'http://www.ursainfosystems.com',
     "depends" : ['analytic','account','account_budget'],
     'init_xml': [],
-    'data': ['analytic_view.xml','budget_view.xml'],
+    'data': ['budget_view.xml'],
     'demo_xml': [],
     'installable': True,
     'auto_install': False,

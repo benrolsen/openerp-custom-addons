@@ -1,22 +1,16 @@
-import logging
-_logger = logging.getLogger(__name__)
+from openerp import models, fields, api, _
 
-from openerp.osv import fields, osv
-
-
-class IMSAR_Analytic(osv.Model):
+class IMSAR_Analytic(models.Model):
     _inherit = "account.analytic.account"
     _order = "parent_left"
     _parent_order = "code"
     _parent_store = True
 
-    _columns = {
-        'parent_left': fields.integer('Parent Left', select=1),
-        'parent_right': fields.integer('Parent Right', select=1),
-        'fix_price_invoices' : fields.boolean('Fixed Price Sales'),
-        'total_cost_tracking' : fields.boolean('Track Total Cost Allowance'),
-        'total_cost_allowance': fields.float('Total Cost Allowance'),
-    }
+    parent_left = fields.Integer('Parent Left', select=1)
+    parent_right = fields.Integer('Parent Right', select=1)
+    fix_price_invoices = fields.Boolean('Fixed Price Sales')
+    total_cost_tracking = fields.Boolean('Track Total Cost Allowance')
+    total_cost_allowance =  fields.Float('Total Cost Allowance')
 
     _defaults = {
         'total_cost_tracking' : True,
@@ -25,3 +19,18 @@ class IMSAR_Analytic(osv.Model):
     # Don't really love the full hierarchy display as the display name
     def _get_one_full_name(self, elmt, level=6):
         return elmt.name
+
+    def _recursive_children(self, analytic, result=[]):
+        result += [analytic.id]
+        if analytic.child_complete_ids:
+            for child in analytic.child_complete_ids:
+                self._recursive_children(child, result)
+        return result
+
+    @api.multi
+    def get_all_children(self):
+        result_list = self._recursive_children(self)
+        result = self.browse(result_list)
+        return result
+
+
