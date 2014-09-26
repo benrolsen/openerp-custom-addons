@@ -233,8 +233,11 @@ class hr_timekeeping_sheet(models.Model):
                 ts_move_lines.append((0, 0, converted_line))
 
         # TODO maybe add an override on employee for wage liability account, for owners
-        # Get the liability account for the balancing move line
+        # Get the wage liability account for the balancing move line
         expense_account = self.user_id.company_id.wage_account_id.id
+        # Get the wage liability account for owners (currently only 2, yay for random exceptions)
+        if self.employee_id.is_owner:
+            expense_account = self.employee_id.owner_wage_account_id.id
 
         if total_amount != 0.0:
             # add one move line to balance journal entry
@@ -668,10 +671,13 @@ class employee(models.Model):
     _inherit = 'hr.employee'
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
     wage_rate = fields.Float('Hourly Wage Rate', required=True,)
+    is_owner = fields.Boolean('Company Owner')
+    owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
 
     _defaults = {
         'flsa_status': 'exempt',
         'wage_rate': 0.0,
+        'is_owner': False,
     }
 
 

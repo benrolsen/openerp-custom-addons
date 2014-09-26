@@ -378,6 +378,8 @@
                 <xpath expr='//field[@name="active"]' position='after'>
                     <field name="flsa_status" />
                     <field name="wage_rate" />
+                    <field name="is_owner" />
+                    <field name="owner_wage_account_id" options="{'create': false, 'create_edit': false}" attrs="{'invisible':[('is_owner','=',False)]}"/>
                 </xpath>
             </field>
         </record>
