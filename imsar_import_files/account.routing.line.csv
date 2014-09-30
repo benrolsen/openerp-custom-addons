@@ -1,4 +1,5 @@
 id,routing_id/id,account_type_id/id,section_ids/id
+arl_assets_asset,ar_assets,account.data_account_type_asset,"account_routing.ar_section_sale,account_routing.ar_section_purchase"
 arl_revenue_services,ar_revenue,atype_services,account_routing.ar_section_sale
 arl_revenue_prod_sales,ar_revenue,atype_product_sales,account_routing.ar_section_sale
 arl_revenue_parts_sales,ar_revenue,atype_parts_sales,account_routing.ar_section_sale

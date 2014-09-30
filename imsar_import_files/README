@@ -7,3 +7,11 @@ account.routing.csv
 account.routing.line.csv
 account.routing.subrouting.csv
 hr.timekeeping.worktype.csv
+
+For testing purchasing and mrp, import these files in order:
+suppliers.csv (res.partner)
+product.product.csv (product variant)
+product.template.suppliers.csv (product template)
+mrp.bom.csv
+
+These files are still preliminary and may need tweaking after import

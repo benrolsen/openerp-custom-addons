@@ -1,5 +1,5 @@
-id,name,purchase_ok,sale_ok,rental,track_all,standard_price,list_price,categ_id/id,route_ids/id
-widget,Widget,False,True,False,True,5,10,ffp,mrp.route_warehouse0_manufacture
-resistor,resistor,True,False,False,True,0.1,0.1,components,purchase.route_warehouse0_buy
-capacitor,capacitor,True,False,False,True,0.5,0.5,components,purchase.route_warehouse0_buy
-transistor,transistor,True,False,False,True,10,10,components,purchase.route_warehouse0_buy
+id,name,purchase_ok,sale_ok,rental,track_all,standard_price,list_price,categ_id,route_ids/id
+widget,Widget,False,True,False,True,5,10,"Finished Goods",mrp.route_warehouse0_manufacture
+resistor,resistor,True,False,False,True,0.1,0.1,Raw Materials,purchase.route_warehouse0_buy
+capacitor,capacitor,True,False,False,True,0.5,0.5,Raw Materials,purchase.route_warehouse0_buy
+transistor,transistor,True,False,False,True,10,10,Raw Materials,purchase.route_warehouse0_buy

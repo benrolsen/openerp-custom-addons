@@ -1,0 +1,31 @@
+id,name,supplier,is_company,property_account_receivable/id,property_account_payable/id
+ext_supplier_1,Abracon Corporation,True,True,account_1121000,account_2111000
+ext_supplier_2,Allegro Microsystems,True,True,account_1121000,account_2111000
+ext_supplier_3,Atmel,True,True,account_1121000,account_2111000
+ext_supplier_4,Bourns Inc.,True,True,account_1121000,account_2111000
+ext_supplier_5,IXYS Integrated Circuits Division,True,True,account_1121000,account_2111000
+ext_supplier_6,Kemet,True,True,account_1121000,account_2111000
+ext_supplier_7,Linear Technologies,True,True,account_1121000,account_2111000
+ext_supplier_8,Linear Technology,True,True,account_1121000,account_2111000
+ext_supplier_9,Lite-On Inc,True,True,account_1121000,account_2111000
+ext_supplier_10,Maxim Integrated Products,True,True,account_1121000,account_2111000
+ext_supplier_11,MCMASTER-CARR,True,True,account_1121000,account_2111000
+ext_supplier_12,Mill-Max Manufacturing Corp.,True,True,account_1121000,account_2111000
+ext_supplier_13,Molex Connector Corporation,True,True,account_1121000,account_2111000
+ext_supplier_14,Murata Electronics North America,True,True,account_1121000,account_2111000
+ext_supplier_15,NXP Semiconductors,True,True,account_1121000,account_2111000
+ext_supplier_16,Ohmite,True,True,account_1121000,account_2111000
+ext_supplier_17,Omnetics,True,True,account_1121000,account_2111000
+ext_supplier_18,ON Semiconductor,True,True,account_1121000,account_2111000
+ext_supplier_19,Panasonic - ECG,True,True,account_1121000,account_2111000
+ext_supplier_20,Panasonic Electronic Components,True,True,account_1121000,account_2111000
+ext_supplier_21,Rohm Semiconductor,True,True,account_1121000,account_2111000
+ext_supplier_22,Stackpole Electronics Inc,True,True,account_1121000,account_2111000
+ext_supplier_23,Taiyo Yuden,True,True,account_1121000,account_2111000
+ext_supplier_24,TDK Corporation,True,True,account_1121000,account_2111000
+ext_supplier_25,Texas Instruments,True,True,account_1121000,account_2111000
+ext_supplier_26,TT Electronics/IRC,True,True,account_1121000,account_2111000
+ext_supplier_27,Vishay Semiconductor Diodes Division,True,True,account_1121000,account_2111000
+ext_supplier_28,Vishay/Dale,True,True,account_1121000,account_2111000
+ext_supplier_29,Wurth Electronics Inc,True,True,account_1121000,account_2111000
+ext_supplier_30,Yageo,True,True,account_1121000,account_2111000
