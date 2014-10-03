@@ -557,15 +557,15 @@ class hr_timekeeping_line(models.Model):
             return self.sheet_id.date_to
         return today_str
 
-    @api.multi
+    @api.model
     def _get_default_worktype(self):
         return self.env.user.company_id.regular_worktype_id.id
 
-    @api.multi
+    @api.model
     def _get_user_default_route(self):
         return self.env.user.default_account_routing
 
-    @api.multi
+    @api.model
     def _get_user_default_subroute(self):
         return self.env.user.default_routing_subrouting
 

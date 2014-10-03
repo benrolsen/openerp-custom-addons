@@ -34,6 +34,8 @@
         'ar_section_data.xml',
         'mrp_view.xml',
         'wms_view.xml',
+        'product_view.xml',
+        'purchase_view.xml',
         'ir_property.xml',
     ],
     'installable': True,

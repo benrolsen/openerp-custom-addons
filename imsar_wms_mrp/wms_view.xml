@@ -11,6 +11,8 @@
             <field name="qty" position="after">
                 <field name="cost"/>
                 <field name="labor_cost"/>
+                <field name="purchase_order_id"/>
+                <field name="mfg_order_id"/>
             </field>
 
         </field>
