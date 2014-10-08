@@ -180,6 +180,18 @@ class sale_order_line(models.Model):
         return res
 
 
+class account_routing_purchase_preferences(models.TransientModel):
+    # This is a temporary model that lets purchase.order.line entries "remember"
+    # the last used routing info, so that new lines auto-fill with it
+    _name = "account.routing.purchase.preferences"
+    _description = "Account routing preference for purchase order lines"
+
+    user_id = fields.Many2one('res.users', 'User', )
+    routing_id = fields.Many2one('account.routing', 'Category',)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type',)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code',)
+
+
 class purchase_order(models.Model):
     _inherit = "purchase.order"
 
@@ -251,16 +263,4 @@ class purchase_order_line(models.Model):
         'routing_line_id': _get_routing_line_id,
         'routing_subrouting_id': _get_routing_subrouting_id,
     }
-
-
-class account_routing_purchase_preferences(models.TransientModel):
-    # This is a temporary model that lets purchase.order.line entries "remember"
-    # the last used routing info, so that new lines auto-fill with it
-    _name = "account.routing.purchase.preferences"
-    _description = "Account routing preference for purchase order lines"
-
-    user_id = fields.Many2one('res.users', 'User', )
-    routing_id = fields.Many2one('account.routing', 'Category',)
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type',)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code',)
 
