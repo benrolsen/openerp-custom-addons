@@ -19,15 +19,15 @@
         </field>
     </record>
 
-    <record id="product_template_form_view" model="ir.ui.view">
-        <field name="name">product.template.common.form</field>
+    <record id="product_template_only_form_view" model="ir.ui.view">
+        <field name="name">product.template.product.form</field>
         <field name="model">product.template</field>
-        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
             <!-- Product Information -->
-            <xpath expr="//sheet/notebook//field[@name='ean13']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
+            <field name="ean13" position="attributes">
+                <attribute name="invisible">1</attribute>-->
+            </field>
             <field name="default_code" position="attributes">
                 <attribute name="string">Imsar Part #</attribute>
             </field>
