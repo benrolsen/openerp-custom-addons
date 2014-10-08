@@ -8,6 +8,9 @@
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
 
+            <xpath expr="//field[@name='order_line']//tree" position='attributes'>
+                <attribute name="editable"/>
+            </xpath>
             <xpath expr='//field[@name="order_line"]/tree//field[@name="company_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>
             </xpath>

@@ -30,7 +30,7 @@
     """,
     'website': 'http://www.imsar.com',
     "depends" : ['base', 'web_m2x_options',
-                 'imsar_default_install', 'imsar_accounting', 'imsar_sale',
+                 'imsar_default_install', 'imsar_accounting', 'imsar_sale', 'account_budget',
                  "purchase", "sale", "project",
                  'product', 'account', 'stock',
                  'mrp', 'mrp_operations',

@@ -669,6 +669,7 @@ class hr_timekeeping_approval(models.Model):
 # additional fields for employees
 class employee(models.Model):
     _inherit = 'hr.employee'
+
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
     wage_rate = fields.Float('Hourly Wage Rate', required=True,)
     is_owner = fields.Boolean('Company Owner')

@@ -1,6 +1,16 @@
 from openerp import models, fields, api, _
 
 
+class stock_move(models.Model):
+    _inherit = 'stock.move'
+
+    dest_employee = fields.Many2one('hr.employee', 'Deliver to')
+    # for now, these are informational, therefore not required
+    routing_id = fields.Many2one('account.routing', 'Category', )
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', )
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', )
+
+
 class stock_quant(models.Model):
     _inherit = 'stock.quant'
 
@@ -79,3 +89,25 @@ class procurement_order(models.Model):
             'routing_subrouting_id': procurement.orderpoint_id.routing_subrouting_id.id,
         })
         return vals
+
+
+class purchase_order(models.Model):
+    _inherit = 'purchase.order'
+
+    @api.v7
+    def _prepare_order_line_move(self, cr, uid, order, order_line, picking_id, group_id, context=None):
+        res = super(purchase_order,self)._prepare_order_line_move(cr, uid, order, order_line, picking_id, group_id, context)
+        for vals in res:
+            vals['dest_employee'] = order_line.dest_employee.id
+            vals['routing_id'] = order_line.routing_id.id
+            vals['routing_line_id'] = order_line.routing_line_id.id
+            vals['routing_subrouting_id'] = order_line.routing_subrouting_id.id
+        return res
+
+
+class purchase_order_line(models.Model):
+    _inherit = 'purchase.order.line'
+
+    shipping_method = fields.Char('Shipping Method')
+    dest_employee = fields.Many2one('hr.employee', 'Deliver to')
+

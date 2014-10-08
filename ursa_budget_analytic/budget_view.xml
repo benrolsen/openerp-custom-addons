@@ -20,6 +20,12 @@
         <field name="inherit_id" ref="account_budget.crossovered_budget_view_form" />
         <field name="priority" eval="30"/>
         <field name="arch" type="xml">
+            <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='date_from']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='date_to']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
             <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='planned_amount']" position="attributes">
                 <attribute name="string">Planned</attribute>
             </xpath>
@@ -33,6 +39,9 @@
             <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='theoritical_amount']" position="attributes">
                 <attribute name="string">Scheduled</attribute>
             </xpath>
+            <xpath expr="/form/sheet/notebook/page/field/tree/field[@name='percentage']" position="after">
+                <field name="loaded_amount" sum="Loaded Amount"/>
+            </xpath>
         </field>
     </record>
 
@@ -43,6 +52,12 @@
         <field name="inherit_id" ref="account_budget.view_budget_post_form" />
         <field name="priority" eval="35"/>
         <field name="arch" type="xml">
+            <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='date_from']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='date_to']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
             <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='planned_amount']" position="attributes">
                 <attribute name="string">Planned</attribute>
             </xpath>
@@ -56,6 +71,9 @@
             <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='theoritical_amount']" position="attributes">
                 <attribute name="string">Scheduled</attribute>
             </xpath>
+            <xpath expr="/form/notebook/page[@string='Budget Lines']/field/tree/field[@name='percentage']" position="after">
+                <field name="loaded_amount" sum="Loaded Amount"/>
+            </xpath>
         </field>
     </record>
 
@@ -66,6 +84,12 @@
         <field name="inherit_id" ref="analytic.view_account_analytic_account_form" />
         <field name="priority" eval="40"/>
         <field name="arch" type="xml">
+            <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='date_from']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='date_to']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
             <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='planned_amount']" position="attributes">
                 <attribute name="string">Planned</attribute>
             </xpath>
@@ -78,6 +102,9 @@
             </xpath>
             <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='theoritical_amount']" position="attributes">
                 <attribute name="string">Scheduled</attribute>
+            </xpath>
+            <xpath expr="/form/sheet/notebook/page[@string='Budget Lines']/field/tree/field[@name='percentage']" position="after">
+                <field name="loaded_amount" sum="Loaded Amount"/>
             </xpath>
         </field>
     </record>

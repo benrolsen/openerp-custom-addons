@@ -7,7 +7,6 @@
         <field name="model">stock.warehouse.orderpoint</field>
         <field name="inherit_id" ref="stock.view_warehouse_orderpoint_form"/>
         <field name="arch" type="xml">
-
             <xpath expr='//sheet/group' position='inside'>
                 <group string="Default Reorder Task Code">
                     <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
@@ -18,9 +17,77 @@
                             domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
                 </group>
             </xpath>
-
         </field>
     </record>
+
+    <record id="purchase_order_line_form" model="ir.ui.view">
+        <field name="name">purchase.order.line.form</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="account_routing.purchase_order_line_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date_planned']" position='after'>
+                <field name="shipping_method"/>
+                <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Stock moves on the stock move page -->
+    <record id="view_move_form" model="ir.ui.view">
+        <field name="name">stock.move.form</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_dest_id']" position='after'>
+                <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+            <xpath expr="//group[@string='Destination']" position='after'>
+                <group name="Task Code" string="Task Code">
+                    <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Stock moves on the picking page -->
+    <record id="view_move_picking_tree" model="ir.ui.view">
+        <field name="name">stock.move.tree</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_move_picking_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_dest_id']" position='after'>
+                <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_move_picking_form" model="ir.ui.view">
+        <field name="name">stock.move.form</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_move_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_dest_id']" position='after'>
+                <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+            <xpath expr="//group[@string='Locations']" position='after'>
+                <group name="Task Code" string="Task Code">
+                    <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+
 
 </data>
 </openerp>

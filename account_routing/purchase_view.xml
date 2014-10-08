@@ -23,5 +23,49 @@
         </field>
     </record>
 
+    <record id="purchase_order_line_form" model="ir.ui.view">
+        <field name="name">purchase.order.line.form</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr='/form/sheet' position='replace'>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="product_id" on_change="onchange_product_id(parent.pricelist_id,product_id,0,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)"/>
+                            <field name="name"/>
+                            <label for="product_qty"/>
+                            <div>
+                                <field name="product_qty" on_change="onchange_product_id(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
+                                <field name="product_uom" groups="product.group_uom" on_change="onchange_product_uom(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
+                            </div>
+                            <field name="price_unit"/>
+                            <field name="taxes_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>
+                        </group>
+                        <group>
+                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                            <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                            <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                            <field name="date_planned" widget="date"/>
+                            <field name="account_analytic_id" colspan="2" groups="purchase.group_analytic_accounting" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                    <page string="Invoices and Incoming Shipments">
+                        <field name="invoice_lines"/>
+                        <field name="move_ids"/>
+                    </page>
+                    </notebook>
+                </sheet>
+            </xpath>
+
+        </field>
+    </record>
+
 </data>
 </openerp>

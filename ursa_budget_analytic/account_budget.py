@@ -6,10 +6,14 @@ class crossovered_budget_lines(models.Model):
     date_from = fields.Date(related='crossovered_budget_id.date_from', string='Start Date', readonly=True)
     date_to =fields.Date(related='crossovered_budget_id.date_to', string='End Date', readonly=True)
     remaining_amount = fields.Float(string="Remaining", compute='_compute', store=False, readonly=True)
+    loaded_amount = fields.Float(string="Loaded", compute='_compute', store=False, readonly=True)
 
     @api.one
     def _compute(self):
-        self.remaining_amount = self.planned_amount - abs(self.practical_amount)
+        # Since we mostly track expenses, we're reversing the sign on debits/credits
+        # This means revenue budgets will need to be computed as negatives, but that's the CFO's preference
+        self.remaining_amount = self.planned_amount - (-1.0 * self.practical_amount)
+        self.loaded_amount = self.practical_amount + (self.practical_amount * self.general_budget_id.overhead_rate)
 
     @api.multi
     def _get_all_analytics(self):

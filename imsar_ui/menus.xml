@@ -5,6 +5,8 @@
         <!-- Main top menu -->
         <menuitem id="base.menu_reporting" name="Reporting" groups="base.group_user" sequence="1"/>
         <menuitem id="mail.mail_feeds_main" name="Messaging" groups="base.group_user" sequence="170"/>
+        <!-- Top menu item -->
+        <menuitem name="Invoicing" id="menu_invoicing" groups="account.group_account_user,account.group_account_manager,account.group_account_invoice" sequence="51"/>
 
         <!-- Settings -->
         <record id="group_hide_menu" model="res.groups">
@@ -22,9 +24,13 @@
         <menuitem id="account.menu_finance_entries" name="Journal Entries" parent="account.menu_finance" sequence="1"
                   groups="account.group_account_user,account.group_account_manager"/>
         <menuitem id="account.menu_finance_charts" name="Charts" parent="account.menu_finance" groups="account.group_account_user" sequence="3"/>
-        <menuitem id="account.menu_finance_configuration" name="Configuration" parent="account.menu_finance" sequence="5" groups="account.group_account_manager"/>
-        <menuitem id="account.menu_finance_receivables" name="Customers" parent="account.menu_finance" sequence="8"/>
-        <menuitem id="account.menu_finance_payables" name="Suppliers" parent="account.menu_finance" sequence="9"/>
+        <menuitem id="account_budget.next_id_31" name="Budgets" parent="account.menu_finance" sequence="4"/>
+        <menuitem id="account.menu_finance_reports" name="Reporting" parent="account.menu_finance" sequence="5" groups="account.group_account_user,account.group_account_manager"/>
+        <menuitem id="account.menu_finance_configuration" name="Configuration" parent="account.menu_finance" sequence="6" groups="account.group_account_manager"/>
+        <menuitem id="account_budget.menu_budget_post_form" action="account_budget.open_budget_post_form" parent="account_budget.next_id_31" sequence="2"/>
+        <record id="account_budget.next_id_pos" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[ref('group_hide_menu')])]"/>
+        </record>
         <record id="account.account_template_folder" model="ir.ui.menu">
             <field name="groups_id" eval="[(6,0,[ref('group_hide_menu')])]"/>
         </record>
@@ -41,6 +47,9 @@
         </record>
         <menuitem action="account.action_account_analytic_account_form" id="account.account_analytic_def_account"
             parent="account.menu_analytic_accounting" groups="analytic.group_analytic_accounting" sequence="1"/>
+        <!-- move customer invoicing to its own menu -->
+        <menuitem id="account.menu_finance_receivables" name="Customers" parent="menu_invoicing" sequence="8"/>
+        <menuitem id="account.menu_finance_payables" name="Suppliers" parent="menu_invoicing" sequence="9"/>
 
         <!-- Sales -->
         <record id="product.menu_product_pricelist_action" model="ir.ui.menu">
