@@ -349,6 +349,7 @@ class hr_timekeeping_line(models.Model):
     # this timekeeping_line_move_line_rel table is going to get massive, but I don't know of another way to do it
     move_line_ids = fields.Many2many('account.move.line', 'timekeeping_line_move_line_rel', 'timekeeping_line_id', 'move_line_id', string='Related move lines')
     dcaa_allowable = fields.Boolean("DCAA Allowable", default=True)
+    lot_id = fields.Many2one('stock.production.lot', string='Serial #',)
 
     @api.one
     @api.depends('date')

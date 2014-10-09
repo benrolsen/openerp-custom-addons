@@ -37,6 +37,7 @@
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="lot_id"/>
                         </group>
                     </group>
                     <group attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
