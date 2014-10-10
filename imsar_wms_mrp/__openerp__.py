@@ -37,6 +37,7 @@
         'product_view.xml',
         'purchase_view.xml',
         'ir_property.xml',
+        'security/access.xml',
     ],
     'installable': True,
     'auto_install': False,

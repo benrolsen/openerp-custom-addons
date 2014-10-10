@@ -22,7 +22,7 @@
 {
     'name': "IMSAR Accounting",
     'version': "1.0",
-    'depends': ['account_accountant', 'analytic', 'l10n_us','account_routing'],
+    'depends': ['account_accountant', 'analytic', 'l10n_us', 'account_budget', 'account_routing'],
     'author': "Ben Olsen",
     'description': "Customized IMSAR accounts and analytics",
     'category': "Uncategorized",

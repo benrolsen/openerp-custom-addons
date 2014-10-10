@@ -1,13 +1,34 @@
-id,name,parent_id/id,user_id/id,wage_rate,flsa_status,company_id/id
-employee_adam_robertson,Adam Robertson,hr.employee,users_adam_robertson,50,Exempt,base.main_company
-employee_andy_may,Andy May,employee_adam_robertson,users_andy_may,40,Non-exempt,base.main_company
-employee_ben_olsen,Ben Olsen,employee_adam_robertson,users_ben_olsen,30,Non-exempt,base.main_company
-employee_jeny_grierson,Jeny Grierson,employee_adam_robertson,users_jeny_grierson,35,Exempt,base.main_company
-employee_aarons,Aaron Swan,employee_adam_robertson,users_aarons,30,Exempt,base.main_company
-employee_ashley_werner,Ashley Werner,employee_adam_robertson,users_ashley_werner,30,Exempt,base.main_company
-employee_brycer,Bryce Ready,employee_adam_robertson,users_brycer,30,Exempt,base.main_company
-employee_chad_kidder,Chad Kidder,employee_adam_robertson,users_chad_kidder,30,Exempt,base.main_company
-employee_dyarrington,Doug Yarrington,employee_adam_robertson,users_dyarrington,30,Exempt,base.main_company
-employee_michaeld,Michael Duersch,employee_adam_robertson,users_michaeld,30,Exempt,base.main_company
-employee_nathan_hardy,Nathan Hardy,employee_adam_robertson,users_nathan_hardy,30,Exempt,base.main_company
-employee_pweir,Peter Weir,employee_adam_robertson,users_pweir,30,Exempt,base.main_company
+name,parent_id,user_id,wage_rate,flsa_status
+Ryan Smith,,Ryan Smith,50,Exempt
+Joshua Hintze,Ryan Smith,Joshua Hintze,50,Exempt
+Adam Robertson,Ryan Smith,Adam Robertson,50,Exempt
+Lisa Quist,Adam Robertson,Lisa Quist,40,Exempt
+Jeny Grierson,Adam Robertson,Jeny Grierson,40,Exempt
+Michael Duersch,Joshua Hintze,Michael Duersch,40,Exempt
+Curtis Thomas,Adam Robertson,Curtis Thomas,30,Exempt
+David Trent,Joshua Hintze,David Trent,30,Exempt
+Gordon Jacobs,Joshua Hintze,Gordon Jacobs,30,Exempt
+Andy May,Joshua Hintze,Andy May,30,Exempt
+Riley Hansen,Joshua Hintze,Riley Hansen,30,Exempt
+Ann Dalton,Joshua Hintze,Ann Dalton,30,Non-exempt
+Ashley Werner,Joshua Hintze,Ashley Werner,30,Non-exempt
+Brittany Sievers,Joshua Hintze,Brittany Sievers,30,Exempt
+Britton Quist,Joshua Hintze,Britton Quist,30,Exempt
+Bryce Ready,Joshua Hintze,Bryce Ready,30,Exempt
+Chris Wynn,Joshua Hintze,Chris Wynn,30,Exempt
+Larry Moore,Joshua Hintze,Larry Moore,30,Exempt
+Don Nielsen,David Trent,Don Nielsen,30,Non-exempt
+Donna Breckenridge,Joshua Hintze,Donna Breckenridge,30,Non-exempt
+Gus German,Joshua Hintze,Gus German,30,Exempt
+Andrew Talley,David Trent,Andrew Talley,30,Non-exempt
+Luke Kunz,Michael Duersch,Luke Kunz,30,Exempt
+Mark Catanzaro,Michael Duersch,Mark Catanzaro,30,Exempt
+McKay Christensen,Gus German,McKay Christensen,30,Exempt
+Nathan Hardy,Michael Duersch,Nathan Hardy,30,Non-exempt
+Peter Weir,Joshua Hintze,Peter Weir,30,Exempt
+Aaron Swan,Michael Duersch,Aaron Swan,30,Exempt
+Sam Brand,Curtis Thomas,Sam Brand,30,Non-exempt
+Sandra Geiger,David Trent,Sandra Geiger,30,Non-exempt
+Thomas Lerman,Joshua Hintze,Thomas Lerman,30,Exempt
+Will Rogers,Gordon Jacobs,Will Rogers,30,Non-exempt
+Ben Olsen,Adam Robertson,Ben Olsen,30,Exempt

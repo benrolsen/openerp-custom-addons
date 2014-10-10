@@ -14,4 +14,9 @@ product.product.csv (product variant)
 product.template.suppliers.csv (product template)
 mrp.bom.csv
 
+Users for the timekeeping test:
+res.users.csv
+hr.employee.csv
+analytic_pms.csv (analytic accounts)
+
 These files are still preliminary and may need tweaking after import

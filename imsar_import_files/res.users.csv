@@ -1,13 +1,34 @@
-id,name,login,partner_id/id,password,company_id/id,tz
-users_ben_olsen,Ben Olsen,ben.olsen,partner_ben_olsen,test,base.main_company,America/Denver
-users_adam_robertson,Adam,adamr,partner_adam_robertson,test,base.main_company,America/Denver
-users_andy_may,Andy May,andy.may,partner_andy_may,test,base.main_company,America/Denver
-users_jeny_grierson,Jeny Grierson,jenylyng,partner_jeny_grierson,test,base.main_company,America/Denver
-users_aarons,Aaron Swan,aarons,partner_aarons,test,base.main_company,America/Denver
-users_ashley_werner,Ashley Werner,ashley.werner,partner_ashley_werner,test,base.main_company,America/Denver
-users_brycer,Bryce Ready,brycer,partner_brycer,test,base.main_company,America/Denver
-users_chad_kidder,Chad Kidder,chad.kidder,partner_chad_kidder,test,base.main_company,America/Denver
-users_dyarrington,Doug Yarrington,dyarrington,partner_dyarrington,test,base.main_company,America/Denver
-users_michaeld,Michael Duersch,michaeld,partner_michaeld,test,base.main_company,America/Denver
-users_nathan_hardy,Nathan Hardy,nathan.hardy,partner_nathan_hardy,test,base.main_company,America/Denver
-users_pweir,Peter Weir,pweir,partner_pweir,test,base.main_company,America/Denver
+name,login,password,tz
+Aaron Swan,aarons@imsar.com,test,America/Denver
+Adam Robertson,adamr@imsar.com,test,America/Denver
+Andrew Talley,andrew.talley@imsar.com,test,America/Denver
+Andy May,andy.may@imsar.com,test,America/Denver
+Ann Dalton,ann.dalton@imsar.com,test,America/Denver
+Ashley Werner,ashley.werner@imsar.com,test,America/Denver
+Ben Olsen,ben.olsen@imsar.com,test,America/Denver
+Brittany Sievers,brittany.sievers@imsar.com,test,America/Denver
+Britton Quist,brittonq@imsar.com,test,America/Denver
+Bryce Ready,brycer@imsar.com,test,America/Denver
+Chris Wynn,chris.wynn@imsar.com,test,America/Denver
+Curtis Thomas,curtis.thomas@imsar.com,test,America/Denver
+David Trent,david.trent@imsar.com,test,America/Denver
+Don Nielsen,don.nielsen@imsar.com,test,America/Denver
+Donna Breckenridge,donna.breckenridge@imsar.com,test,America/Denver
+Gordon Jacobs,gordon.jacobs@imsar.com,test,America/Denver
+Gus German,gus@imsar.com,test,America/Denver
+Jeny Grierson,jenylyng@imsar.com,test,America/Denver
+Joshua Hintze,joshh@imsar.com,test,America/Denver
+Larry Moore,larrym@imsar.com,test,America/Denver
+Lisa Quist,lisa.quist@imsar.com,test,America/Denver
+Luke Kunz,luke.kunz@imsar.com,test,America/Denver
+Mark Catanzaro,markc@imsar.com,test,America/Denver
+McKay Christensen,mckay.christensen@imsar.com,test,America/Denver
+Michael Duersch,michaeld@imsar.com,test,America/Denver
+Nathan Hardy,nathan.hardy@imsar.com,test,America/Denver
+Peter Weir,pweir@imsar.com,test,America/Denver
+Riley Hansen,riley.hansen@imsar.com,test,America/Denver
+Ryan Smith,ryan@imsar.com,test,America/Denver
+Sam Brand,sam.brand@imsar.com,test,America/Denver
+Sandra Geiger,sandra.geiger@imsar.com,test,America/Denver
+Thomas Lerman,thomasl@imsar.com,test,America/Denver
+Will Rogers,will.rogers@imsar.com,test,America/Denver
