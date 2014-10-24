@@ -2,7 +2,7 @@ from openerp import models, fields, api, _
 
 class IMSAR_Analytic(models.Model):
     _inherit = "account.analytic.account"
-    _order = "parent_left"
+    _order = "parent_left,name"
     _parent_order = "code"
     _parent_store = True
 

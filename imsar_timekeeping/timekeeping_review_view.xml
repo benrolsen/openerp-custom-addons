@@ -7,11 +7,24 @@
             <field name="name">hr.timekeeping.review.tree</field>
             <field name="model">account.analytic.account</field>
             <field name="arch" type="xml">
-                <tree string="Analytics to review" create="false" edit="false" delete="false">
-                    <field name="name" />
-                    <field name="type" />
+                <!-- This was technically much faster than creating a new tree widget that simply gets a line's color -->
+                <!-- from one of the fields, but I still feel a little silly doing it -->
+                <tree string="Analytics to review" create="false" edit="false" delete="false"
+                        colors="black:display_color=='black';
+                                gray:display_color=='gray';
+                                maroon:display_color=='maroon';
+                                red:display_color=='red';
+                                purple:display_color=='purple';
+                                green:display_color=='green';
+                                olive:display_color=='olive';
+                                navy:display_color=='navy';
+                                teal:display_color=='teal';" >
+                    <field name="name" string="Task Code"/>
+                    <field name="parent_id" string="Parent"/>
+                    <field name="type" invisible="1"/>
+                    <field name="display_color" invisible="1"/>
                     <!--<field name="user_review_ids" />-->
-                    <field name="user_has_reviewed" />
+                    <!--<field name="user_has_reviewed" />-->
                     <button name="button_reviewed_users" class="oe_inline oe_stat_button" type="object"
                             groups="base.group_hr_user" string="View Users Reviewed"/>
                 </tree>
@@ -27,10 +40,19 @@
                     <group>
                         <field name="name"/>
                         <field name="description"/>
+                        <field name="hide_from_uid" invisible="True"/>
                         <field name="user_has_reviewed" invisible="True"/>
                     </group>
+                    <group attrs="{'invisible':['|',('hide_from_uid','=',True),('user_has_reviewed','=',False)]}">
+                        <label for="action_button_hide" string="Hide from my timesheets?"/>
+                        <button name="action_button_hide" string="Hide" type="object" class="oe_inline"/>
+                    </group>
+                    <group attrs="{'invisible':['|',('hide_from_uid','=',False),('user_has_reviewed','=',False)]}">
+                        <label for="action_button_show" string="Currently hidden from timesheets. Show?"/>
+                        <button name="action_button_show" string="Show" type="object" class="oe_inline"/>
+                    </group>
                     <group attrs="{'invisible':[('user_has_reviewed','=',True)]}">
-                        <label for="button_sign" string="I have read and understand the scope of this task"/>
+                        <label for="action_button_sign" string="I have read and understand the scope of this task"/>
                         <button name="action_button_sign" string="Sign" type="object" class="oe_inline"/>
                     </group>
                 </form>
@@ -38,23 +60,37 @@
         </record>
 
         <!-- Menus -->
-        <record id="analytic_review_view" model="ir.actions.act_window">
-            <field name="name">Task S.O.W. Reviews</field>
+        <record id="analytic_to_review_view" model="ir.actions.act_window">
+            <field name="name">Task S.O.W. Not Reviewed</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.analytic.account</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="analytic_review_form"/>
-            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True)]</field>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',False)]</field>
         </record>
-        <record id="action_analytic_review_tree" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
+        <record id="action_analytic_to_review_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>
             <field name="view_id" ref="analytic_review_tree"/>
-            <field name="act_window_id" ref="analytic_review_view"/>
+            <field name="act_window_id" ref="analytic_to_review_view"/>
         </record>
+        <menuitem id="menu_analytic_to_review_view" action="analytic_to_review_view" parent="menu_hr_timekeeping" sequence="30" />
 
-        <menuitem id="menu_analytic_review_view" action="analytic_review_view" parent="menu_hr_timekeeping" sequence="30" />
+        <record id="analytic_reviewed_view" model="ir.actions.act_window">
+            <field name="name">Task S.O.W. Reviewed</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="analytic_review_form"/>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',True)]</field>
+        </record>
+        <record id="action_analytic_reviewed_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="analytic_review_tree"/>
+            <field name="act_window_id" ref="analytic_reviewed_view"/>
+        </record>
+        <menuitem id="menu_analytic_reviewed_view" action="analytic_reviewed_view" parent="menu_hr_timekeeping" sequence="31" />
 
         <!-- Users who have reviewed an account -->
         <!--<record id="users_analytic_review_tree" model="ir.ui.view">-->

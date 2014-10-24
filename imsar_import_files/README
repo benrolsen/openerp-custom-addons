@@ -3,6 +3,7 @@ account.account.type.csv
 account.account.csv
 account.analytic.account.csv
 res.company.csv
+ir.property.csv
 account.routing.csv
 account.routing.line.csv
 account.routing.subrouting.csv

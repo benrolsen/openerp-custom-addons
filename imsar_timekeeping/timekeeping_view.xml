@@ -14,6 +14,8 @@
                             <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"/>
                             <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
                                     attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="start_time" widget="time"/>
+                            <field name="end_time" widget="time"/>
                             <field name="dcaa_allowable"/>
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
@@ -31,8 +33,8 @@
                             <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="1"
                                     domain="[('routing_id','=',routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
                             <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                    domain="[('routing_line_id','=',routing_line_id),('timesheets_future_filter','in',state),('user_has_reviewed','=',True),
-                                    ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable)]" />
+                                    domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True),('hide_from_uid','=',False),
+                                    ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
                             <field name="location" options="{'create': false, 'create_edit': false}"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"
@@ -83,6 +85,7 @@
                             <field name="name"/>
                             <label for="date_from" string="Timesheet Period"/>
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
+                            <button type="object" string="Previous Timesheet" name="button_previous_timesheet" />
                         </group>
                         <group>
                             <field name="employee_flsa_status" readonly="True"/>
@@ -96,11 +99,25 @@
                     <notebook>
                         <!-- page for editable time entries -->
                         <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}">
-                            <button name="write" type="object" string="Validate &amp; Save"
+                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
+                            <button name="write" type="object" string="Validate &amp; Save" class="oe_right"
+                                    attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
+                            <div style="display: inline-block; width: 100px;"/>
+                            <button name="button_oneclick_add" type="object" string="Add One-Click Tasks" class="oe_bounce_container"
                                     attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
                             <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
-                                <tree string="Timesheet Activities" editable="top" create="false" delete="false">
-                                    <field name="date_mirror" />
+                                <tree string="Timesheet Activities" editable="top" create="false" delete="false"
+                                    colors="black:display_color=='black';
+                                            gray:display_color=='gray';
+                                            maroon:display_color=='maroon';
+                                            red:display_color=='red';
+                                            purple:display_color=='purple';
+                                            green:display_color=='green';
+                                            olive:display_color=='olive';
+                                            navy:display_color=='navy';
+                                            teal:display_color=='teal';" >
+                                    <field name="display_color" invisible="True"/>
+                                    <field name="date" readonly="True"/>
                                     <field name="day_name" attrs="{'required':['|',('unit_amount','>',0.0)]}"/>
                                     <field name="routing_id" widget="selection" options="{'create': false, 'create_edit': false}"
                                            attrs="{'readonly':[('state','!=','open')]}"
@@ -110,13 +127,15 @@
                                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
                                     <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                            attrs="{'readonly':[('state','!=','open')]}"
-                                           domain="[('routing_line_id','=',routing_line_id),('timesheets_future_filter','in',sheet_state),('user_has_reviewed','=',True),('type','!=','view')]" />
+                                           domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True),('hide_from_uid','=',False),
+                                            ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
                                     <field name="name" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
                                     <button name="button_details" string="Details" type="object"
                                             attrs="{'invisible':['|',('sheet_state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
                                     <!-- invisible fields -->
+                                    <field name="dcaa_allowable" invisible="True"/>
                                     <field name="worktype" invisible="True" />
                                     <field name="state" invisible="True"/>
                                     <field name="sheet_state" invisible="True"/>
@@ -134,8 +153,18 @@
                         <!-- page for readonly time entries -->
                         <page string="Entries" attrs="{'invisible':[('state','=','draft'),('uid_is_user_id','=',True)]}">
                             <field name="view_line_ids" nolabel="1" readonly="True">
-                                <tree string="Timesheet Activities" create="false" edit="false" delete="false">
-                                    <field name="date_mirror" />
+                                <tree string="Timesheet Activities" create="false" edit="false" delete="false"
+                                    colors="black:display_color=='black';
+                                            gray:display_color=='gray';
+                                            maroon:display_color=='maroon';
+                                            red:display_color=='red';
+                                            purple:display_color=='purple';
+                                            green:display_color=='green';
+                                            olive:display_color=='olive';
+                                            navy:display_color=='navy';
+                                            teal:display_color=='teal';" >
+                                    <field name="display_color" invisible="True"/>
+                                    <field name="date" />
                                     <field name="day_name"/>
                                     <field name="routing_id"/>
                                     <field name="routing_line_id" invisible="True"/>
@@ -156,6 +185,7 @@
                                 <tree editable="False">
                                     <field name="type"/>
                                     <field name="account_analytic_id"/>
+                                    <field name="relevant_time" widget="float_time"/>
                                     <field name="state"/>
                                     <field name="uid_can_approve" invisible="True"/>
                                     <button name="button_reject" string="Reject" class="oe_inline" type="object"
@@ -197,7 +227,6 @@
                             with positive hours on the correct task. The approval process for addendums is the same as for regular timesheets.</p>
                             <p>If an addendum is submitted with non-zero total hours, please notify HR so they can make the appropriate
                             payroll adjustments!</p>
-
                         </page>
                     </notebook>
                     <group>
@@ -294,7 +323,7 @@
                 <tree string="Timesheets" create="false" edit="false" delete="false">
                     <field name="employee_id" />
                     <field name="name" />
-                    <field name="total_time"/>
+                    <field name="total_time" widget="float_time" />
                     <field name="type" />
                     <field name="state" />
                 </tree>
@@ -340,9 +369,9 @@
             <field name="name">timekeeping.preferences.form</field>
             <field name="model">hr.timekeeping.preferences</field>
             <field name="arch" type="xml">
-                <form string="Timesheet" create="false" delete="false" edit="false">
+                <form string="Timesheet" create="false" delete="false">
                     <sheet>
-                        <group>
+                        <group string="Default Category/Task">
                             <field name="routing_id" widget="selection" options="{'create': false, 'create_edit': false}"
                                    domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]" />
                             <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="1"
@@ -350,25 +379,40 @@
                             <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                    domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True)]" />
                         </group>
-                        <group>
-                            <button string="Save" name="save" type="object" class="oe_highlight"/>
+
+                        <group string="One-Click Tasks">
+                            <field name="oneclick_tasks" nolabel="1" domain="[('oneclick_filter','=',True)]"
+                                   options="{'create': false, 'create_edit': false}" >
+                                <tree colors="black:display_color=='black';
+                                            gray:display_color=='gray';
+                                            maroon:display_color=='maroon';
+                                            red:display_color=='red';
+                                            purple:display_color=='purple';
+                                            green:display_color=='green';
+                                            olive:display_color=='olive';
+                                            navy:display_color=='navy';
+                                            teal:display_color=='teal';" >
+                                    <field name="display_color" invisible="True"/>
+                                    <field name="routing_id" string="Category"/>
+                                    <field name="name" string="Task Code"/>
+                                </tree>
+                            </field>
                         </group>
+
                     </sheet>
                 </form>
             </field>
         </record>
-        <record id="action_user_preferences_form" model="ir.actions.act_window">
+        <record id="action_user_preferences_form" model="ir.actions.server">
+            <field name="sequence" eval="5"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_hr_timekeeping_current_open"/>
+            <field name="code">action = pool.get('hr.timekeeping.current.open').open_preferences(cr, uid, None, context)</field>
+            <field name="condition">True</field>
             <field name="name">Preferences</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">hr.timekeeping.preferences</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" eval="user_preferences_form"/>
-            <field name="target">inline</field>
         </record>
         <menuitem id="menu_user_preferences_form" action="action_user_preferences_form" parent="menu_hr_timekeeping" sequence="7"/>
-
-
 
         <!--Employee form view, add new fields -->
         <record id="imsar_view_employee_form" model="ir.ui.view">
@@ -407,6 +451,9 @@
                 </xpath>
                 <xpath expr='//field[@name="manager_id"]' position='replace'>
                     <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                </xpath>
+                <xpath expr='//field[@name="pm_ids"]' position='after'>
+                    <field name="color" />
                 </xpath>
                 <xpath expr='//group[@name="main"]' position='after'>
                     <separator string="Description" name="description"/>

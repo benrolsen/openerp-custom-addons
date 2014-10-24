@@ -15,7 +15,7 @@
                 <th class="oe_timekeeping_summary">Total</th>
             </tr>
             <tr t-foreach="widget.grid" t-as="line">
-                <td class="oe_timesheet_weekly_account"><t t-esc="line.task"/></td>
+                <td class="oe_timesheet_weekly_account" t-att-style="style"><t t-esc="line.task"/></td>
                 <t t-foreach="widget.dates" t-as="date">
                     <t t-set="day" t-value="date.toString('yyyy-MM-dd')"/>
                     <td><span class="oe_timesheet_weekly_account"><t t-esc="line.days[day]"/></span></td>

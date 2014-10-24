@@ -1,0 +1,3 @@
+id,fields_id/id,name,res_id,type,value_text,value_float,value_datetime,value_binary,value_reference,value_integer
+imsar_accounting.imsar_account_receivable,account.field_res_partner_property_account_receivable,property_account_receivable,,Many2One,,,,,"account.account,592",
+imsar_accounting.imsar_account_payable,account.field_res_partner_property_account_payable,property_account_payable,,Many2One,,,,,"account.account,665",

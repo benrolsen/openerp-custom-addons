@@ -101,6 +101,17 @@
         </record>
         <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
 
+        <record id="account_routing_subrouting_tree" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.tree</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="routing_id" string="Category"/>
+                    <field name="routing_line_id" string="Type"/>
+                    <field name="name" string="Task Code"/>
+                </tree>
+            </field>
+        </record>
 
         <!-- allow routing checkbox on account types -->
         <record id="view_account_type_routing_form" model="ir.ui.view">

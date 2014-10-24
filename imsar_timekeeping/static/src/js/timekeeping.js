@@ -55,7 +55,7 @@ openerp.imsar_timekeeping = function (instance) {
                 _(sum_line).map(function(day_total, index) {
                     sum_line[index] = instance.web.format_value(day_total, { type:"float_time" });
                 });
-                grid.push({'task':key, 'days':sum_line, 'total':sum_line.total});
+                grid.push({'task':key, 'days':sum_line, 'total':sum_line.total, 'style':'color:' + task_line[0].display_color});
             });
             _(totals).map(function(day_total, index) {
                 totals[index] = instance.web.format_value(day_total, { type:"float_time" });
@@ -98,4 +98,114 @@ openerp.imsar_timekeeping = function (instance) {
         },
     });
 
+    // custom time picker for timekeeping, copied from instance.web.DateTimeWidget
+    instance.web.TimeWidget = instance.web.Widget.extend({
+        template: "web.datepicker",
+        jqueryui_object: 'timepicker',
+        type_of_date: "time",
+
+        events: {
+            'change .oe_datepicker_master': 'change_datetime',
+            'keypress .oe_datepicker_master': 'change_datetime',
+        },
+        init: function(parent) {
+            this._super(parent);
+            this.name = parent.name;
+        },
+        start: function() {
+            var self = this;
+            this.$input = this.$el.find('input.oe_datepicker_master');
+            this.$input_picker = this.$el.find('input.oe_datepicker_container');
+            $.timepicker.setDefaults({
+                timeOnlyTitle: _t('Choose Time'),
+                timeText: _t('Time'),
+                hourText: _t('Hour'),
+                minuteText: _t('Minute'),
+                secondText: _t('Second'),
+                currentText: _t('Now'),
+                stepMinute: 15,
+                timeFormat: 'hh:mm',
+                closeText: _t('Done')
+            });
+            this.picker({
+                onClose: this.on_picker_select,
+                onSelect: this.on_picker_select,
+            });
+            // Some clicks in the datepicker dialog are not stopped by the
+            // datepicker and "bubble through", unexpectedly triggering the bus's
+            // click event. Prevent that.
+            this.picker('widget').click(function (e) { e.stopPropagation(); });
+
+            this.$el.find('img.oe_datepicker_trigger').click(function() {
+                if (self.get("effective_readonly") || self.picker('widget').is(':visible')) {
+                    self.$input.focus();
+                    return;
+                }
+                self.picker('setDate', self.get('value') ? instance.web.auto_str_to_date(self.get('value')) : new Date());
+                self.$input_picker.show();
+                self.picker('show');
+                self.$input_picker.hide();
+            });
+            this.set_readonly(false);
+            this.set({'value': false});
+        },
+        picker: function() {
+            return $.fn[this.jqueryui_object].apply(this.$input_picker, arguments);
+        },
+        on_picker_select: function(text, instance_) {
+            var date = this.picker('getDate');
+            text = text + ":00";
+            this.$input.val(text ? this.format_client(text) : '').change().focus();
+        },
+        set_value: function(value_) {
+            this.set({'value': value_});
+            this.$input.val(value_ ? this.format_client(value_) : '');
+        },
+        get_value: function() {
+            return this.get('value');
+        },
+        set_value_from_ui_: function() {
+            var value_ = this.$input.val() || false;
+            this.set({'value': this.parse_client(value_)});
+        },
+        set_readonly: function(readonly) {
+            this.readonly = readonly;
+            this.$input.prop('readonly', this.readonly);
+            this.$el.find('img.oe_datepicker_trigger').toggleClass('oe_input_icon_disabled', readonly);
+        },
+        is_valid_: function() {
+            var value_ = this.$input.val();
+            if (value_ === "") {
+                return true;
+            } else {
+                try {
+                    this.parse_client(value_);
+                    return true;
+                } catch(e) {
+                    return false;
+                }
+            }
+        },
+        parse_client: function(v) {
+            return instance.web.parse_value(v, {"widget": this.type_of_date});
+        },
+        format_client: function(v) {
+            return instance.web.format_value(v, {"widget": this.type_of_date});
+        },
+        change_datetime: function(e) {
+            if ((e.type !== "keypress" || e.which === 13) && this.is_valid_()) {
+                this.set_value_from_ui_();
+                this.trigger("datetime_changed");
+            }
+        },
+        commit_value: function () {
+            this.change_datetime();
+        },
+    });
+    instance.web.form.FieldTime = instance.web.form.FieldDatetime.extend({
+        build_widget: function() {
+            return new instance.web.TimeWidget(this);
+        }
+    });
+    instance.web.form.widgets.add('time', 'instance.web.form.FieldTime');
 };

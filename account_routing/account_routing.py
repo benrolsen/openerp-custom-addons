@@ -1,6 +1,30 @@
 from openerp import models, fields, api, _
 
 
+class account_analytic_account(models.Model):
+    _inherit = "account.analytic.account"
+
+    account_routing_subrouting_ids = fields.One2many('account.routing.subrouting', 'account_analytic_id', 'Routing Subroutes')
+    color = fields.Selection([('black','Black'),('gray','Gray'),('maroon','Maroon'),('red','Red'),('purple','Purple'),('green','Green'),('olive','Olive'),('navy','Navy'),('teal','Teal'),],
+                             string='Color', default='black')
+    display_color = fields.Selection([('black','Black'),('gray','Gray'),('maroon','Maroon'),('red','Red'),('purple','Purple'),('green','Green'),('olive','Olive'),('navy','Navy'),('teal','Teal'),],
+                             string='Display Color', store=False, compute='_computed_color')
+
+    @api.one
+    def _computed_color(self):
+        # set row color for tree view
+        self.display_color = 'black'
+        if self.color:
+            self.display_color = self.color
+        else:
+            parent = self.parent_id
+            while parent:
+                if parent.color:
+                    self.display_color = parent.color
+                    break
+                parent = parent.parent_id
+
+
 class account_routing(models.Model):
     _name = 'account.routing'
     _description = 'Account Routing'
@@ -37,6 +61,7 @@ class account_routing_subrouting(models.Model):
     _order = "account_analytic_id"
 
     name = fields.Char(related='account_analytic_id.name')
+    fullname = fields.Char(string="Full Name", compute='_fullname', readonly=True,)
     routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', readonly=True)
     routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True)
     account_type_id = fields.Many2one('account.account.type', related='routing_line_id.account_type_id', readonly=True)
@@ -44,6 +69,11 @@ class account_routing_subrouting(models.Model):
     account_id = fields.Many2one('account.account', 'Real Account', required=True, select=True)
     from_parent = fields.Boolean('Added by parent', readonly=True, default=False)
     type = fields.Selection(related='account_analytic_id.type', readonly=True)
+    display_color = fields.Selection(related='account_analytic_id.display_color', readonly=True)
+
+    @api.one
+    def _fullname(self):
+        self.fullname = self.routing_id.name + ' / ' + self.routing_line_id.name + ' / ' + self.name
 
     @api.model
     def create(self, vals):
@@ -111,11 +141,6 @@ class account_routing_section(models.Model):
 
     name = fields.Char('Section', size=64, required=True)
 
-
-class account_analytic_account(models.Model):
-    _inherit = "account.analytic.account"
-
-    account_routing_subrouting_ids = fields.One2many('account.routing.subrouting', 'account_analytic_id', 'Routing Subroutes')
 
 class account_account_type(models.Model):
     _inherit = "account.account.type"

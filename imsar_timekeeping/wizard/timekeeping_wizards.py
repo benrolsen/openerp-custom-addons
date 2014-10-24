@@ -9,8 +9,10 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
     _description = 'hr.timekeeping.current.open'
 
     @api.model
-    def open_timesheet(self):
-        today = date.today()
+    def open_timesheet(self, context=None): # leave the unused kwarg in there, just... trust me
+        today = self._context.get('date_override')
+        if not today:
+            today = date.today()
         thisyear = today.isocalendar()[0]
         week_number = today.isocalendar()[1]
 
@@ -45,6 +47,25 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
             'type': 'ir.actions.act_window',
             'target': 'inline',
             'res_id': sheet_ids[0].id,
+        }
+        return view
+
+    @api.model
+    def open_preferences(self, context=None): # leave the unused kwarg in there, just... trust me
+        prefs = self.env['hr.timekeeping.preferences'].search([('user_id','=',self._uid),])
+        if len(prefs) < 1:
+            values = dict()
+            values['user_id'] = self._uid
+            prefs = self.env['hr.timekeeping.preferences'].sudo().create(values)
+
+        view = {
+            'name': _('Open Preferences'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.preferences',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'res_id': prefs[0].id,
         }
         return view
 
@@ -143,43 +164,6 @@ class filter_timesheets_need_my_approval(models.TransientModel):
         return view
 
 
-class hr_timesheet_preferences(models.TransientModel):
-    _name = "hr.timekeeping.preferences"
-    _description = "hr.timekeeping.preferences"
-
-    user_id = fields.Many2one('res.users', 'User', )
-    routing_id = fields.Many2one('account.routing', 'Category',)
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type',)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code',)
-
-    @api.onchange('routing_id')
-    def onchange_routing_id(self):
-        routing_line = self.env['hr.timekeeping.line']._get_timekeeping_routing_line(self.routing_id.id)
-        self.routing_line_id = routing_line
-        if self.routing_subrouting_id not in routing_line.subrouting_ids:
-            self.routing_subrouting_id = ''
-
-    @api.multi
-    def save(self):
-        user = self.env.user
-        user.default_account_routing = self.routing_id
-        user.default_routing_subrouting = self.routing_subrouting_id
-        return True
-
-    @api.multi
-    def _get_user_default_route(self):
-        return self.env.user.default_account_routing
-
-    @api.multi
-    def _get_user_default_subroute(self):
-        return self.env.user.default_routing_subrouting
-
-    _defaults = {
-        'routing_id': _get_user_default_route,
-        'routing_subrouting_id': _get_user_default_subroute,
-    }
-
-
 class hr_timesheet_comment(models.TransientModel):
     _name = 'hr.timekeeping.comment'
     _description = 'hr.timekeeping.comment'
@@ -209,4 +193,5 @@ class hr_timesheet_comment(models.TransientModel):
         approval = self.env[model].browse(id)
         approval.log_rejection(comment=self.comment)
         return { 'type': 'ir.actions.client', 'tag': 'reload' }
+
 
