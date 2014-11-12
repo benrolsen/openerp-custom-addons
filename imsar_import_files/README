@@ -7,7 +7,7 @@ ir.property.csv
 account.routing.csv
 account.routing.line.csv
 account.routing.subrouting.csv
-hr.timekeeping.worktype.csv
+pay.period.csv
 
 For testing purchasing and mrp, import these files in order:
 suppliers.csv (res.partner)
@@ -21,3 +21,8 @@ hr.employee.csv
 analytic_pms.csv (analytic accounts)
 
 These files are still preliminary and may need tweaking after import
+
+This SQL query will create links so that all users will have "signed" all SOWs:
+insert into analytic_user_review_rel select aa.id, u.id from res_users u, account_analytic_account aa;
+
+Also, make sure to uninstall im_odoo_support, im_chat, bus, and portal

@@ -60,6 +60,13 @@
             <field name="perm_write">1</field>
         </record>
 
+        <record id="access_timekeeping_payperiod_user" model="ir.model.access">
+            <field name="name">hr.timekeeping.payperiod</field>
+            <field name="model_id" ref="model_hr_timekeeping_payperiod"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
         <!-- HR Officer access rights (inherits all HR Employee rights) -->
         <record id="access_timekeeping_sheet_officer" model="ir.model.access">
             <field name="name">hr.timekeeping.sheet.officer</field>
@@ -83,6 +90,16 @@
         <record id="access_timekeeping_worktype_manager" model="ir.model.access">
             <field name="name">hr.timekeeping.worktype.manager</field>
             <field name="model_id" ref="model_hr_timekeeping_worktype"/>
+            <field name="group_id" ref="base.group_hr_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+        <record id="access_timekeeping_payperiod_manager" model="ir.model.access">
+            <field name="name">hr.timekeeping.payperiod</field>
+            <field name="model_id" ref="model_hr_timekeeping_payperiod"/>
             <field name="group_id" ref="base.group_hr_manager"/>
             <field name="perm_read">1</field>
             <field name="perm_write">1</field>

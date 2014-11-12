@@ -9,10 +9,9 @@
                 <tree string="Timekeeping Work types">
                     <field name="name" />
                     <field name="active" />
+                    <field name="limited_use" />
                     <field name="premium_rate" />
                     <field name="nonexempt_limit" />
-                    <field name="nonexempt_limit_ignore_ids" widget='many2many_tags' string="Limit Ignores These:"
-                            options="{'create': false, 'create_edit': false}"/>
                 </tree>
             </field>
         </record>
@@ -28,9 +27,10 @@
                                 <field name="active" />
                                 <field name="premium_rate" />
                                 <field name="nonexempt_limit" />
+                                <field name="limited_use" />
                             </group>
-                            <group>
-                                <field name="nonexempt_limit_ignore_ids" string="Limit Ignores These:">
+                            <group attrs="{'invisible':[('limited_use','=',False)]}">
+                                <field name="linked_analytic_ids" string="Linked Analytics" widget="many2many" domain="[('is_labor_code','=',True)]">
                                     <tree>
                                         <field name="name" string="Analytic Account" />
                                     </tree>

@@ -84,19 +84,6 @@ openerp.imsar_timekeeping = function (instance) {
 
     instance.web.form.custom_widgets.add('timekeeping_weekly_summary', 'instance.imsar_timekeeping.WeeklySummary');
 
-    // this sets the date/datetime widgets to use ISO weeks
-    instance.web.DateTimeWidget = instance.web.DateTimeWidget.extend({
-        start: function() {
-            Date.CultureInfo.firstDayOfWeek = 1;
-            this._super();
-        },
-    });
-    instance.web.DateWidget = instance.web.DateWidget.extend({
-        start: function() {
-            Date.CultureInfo.firstDayOfWeek = 1;
-            this._super();
-        },
-    });
 
     // custom time picker for timekeeping, copied from instance.web.DateTimeWidget
     instance.web.TimeWidget = instance.web.Widget.extend({

@@ -33,13 +33,25 @@
             <field name="premium_rate">0.5</field>
             <field name="nonexempt_limit">128</field>
         </record>
+        <record id="worktype_pto" model="hr.timekeeping.worktype">
+            <field name="name">PTO</field>
+            <field name="premium_rate">0.0</field>
+            <field name="limited_use">1</field>
+        </record>
+        <record id="worktype_holiday" model="hr.timekeeping.worktype">
+            <field name="name">Holiday</field>
+            <field name="premium_rate">0.0</field>
+            <field name="limited_use">1</field>
+        </record>
         <record id="worktype_oconus" model="hr.timekeeping.worktype">
             <field name="name">OCONUS</field>
             <field name="premium_rate">0.35</field>
+            <field name="limited_use">1</field>
         </record>
         <record id="worktype_danger" model="hr.timekeeping.worktype">
             <field name="name">Danger</field>
             <field name="premium_rate">0.7</field>
+            <field name="limited_use">1</field>
         </record>
 
     </data>

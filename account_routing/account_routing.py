@@ -60,7 +60,7 @@ class account_routing_subrouting(models.Model):
     _description = 'Account Subrouting'
     _order = "account_analytic_id"
 
-    name = fields.Char(related='account_analytic_id.name')
+    name = fields.Char(string='Task Code', related='account_analytic_id.name')
     fullname = fields.Char(string="Full Name", compute='_fullname', readonly=True,)
     routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', readonly=True)
     routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True)
@@ -70,6 +70,12 @@ class account_routing_subrouting(models.Model):
     from_parent = fields.Boolean('Added by parent', readonly=True, default=False)
     type = fields.Selection(related='account_analytic_id.type', readonly=True)
     display_color = fields.Selection(related='account_analytic_id.display_color', readonly=True)
+    # the following are only for Quickbooks integration, and should be removed once Quickbooks is no longer used
+    old_task_code = fields.Char('Old Task Code')
+    qb_company_job = fields.Char('QB Company Job')
+    qb_service_item = fields.Char('QB Service Item')
+    qb_payroll_item_st = fields.Char('QB ST Payroll Item')
+    qb_payroll_item_ot = fields.Char('QB OT Payroll Item')
 
     @api.one
     def _fullname(self):
@@ -162,7 +168,7 @@ class account_invoice_line(models.Model):
         self.account_id = ''
 
     @api.onchange('routing_line_id')
-    def onchange_account_type_id(self):
+    def onchange_routing_line_id(self):
         self.routing_subrouting_id = ''
         self.account_id = ''
 
@@ -190,8 +196,8 @@ class sale_order_line(models.Model):
         self.routing_line_id = ''
         self.routing_subrouting_id = ''
 
-    @api.onchange('account_type_id')
-    def onchange_account_type_id(self):
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
         self.routing_subrouting_id = ''
 
     @api.v7

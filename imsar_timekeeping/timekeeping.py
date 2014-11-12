@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
-from collections import defaultdict
+from dateutil.relativedelta import *
 import dateutil.parser
+from collections import defaultdict
 import pytz
 import json
 
@@ -9,19 +10,6 @@ from openerp.exceptions import Warning
 import openerp.addons.decimal_precision as dp
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 
-# helper function since sheets are primarily based off week number
-def week_start_date(year, week):
-    if not year:
-        year = date.today().year
-    if not week:
-        week = date.today().isocalendar()[1]
-    d = date(year, 1, 1)
-    delta_days = d.isoweekday() - 1
-    delta_weeks = week
-    if year == d.isocalendar()[0]:
-        delta_weeks -= 1
-    delta = timedelta(days=-delta_days, weeks=delta_weeks)
-    return d + delta
 
 # helper function to get now in the correct timezone
 def get_now_tz(user, config):
@@ -42,17 +30,20 @@ class hr_timekeeping_sheet(models.Model):
     _name = 'hr.timekeeping.sheet'
     _inherit = ['mail.thread']
     _description = 'Timekeeping Sheet'
-    _order = 'year,week_number desc'
+    _order = 'name desc'
 
     # model columns
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
     type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
-    year = fields.Integer(string="Year")
-    week_number = fields.Integer(string="Week Number")
-    date_from = fields.Date(compute='_computed_fields', readonly=True)
-    date_to = fields.Date(compute='_computed_fields', readonly=True)
+    payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', required=True)
+    week_ab = fields.Char('Pay Period Week A/B', required=True)
+    date_from = fields.Date('Start Date', readonly=True, required=True)
+    date_to = fields.Date('End Date', readonly=True, required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
-                             'Status', select=True, required=True, readonly=True,)
+                             'Status', index=True, required=True, readonly=True,)
+    payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt')],
+                             'Payroll Status', default="draft", index=True, required=True, readonly=True,)
+    payroll_comment = fields.Char('Payroll Comment')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
     employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
@@ -64,6 +55,7 @@ class hr_timekeeping_sheet(models.Model):
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
     approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
+    adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
 
     @api.one
     @api.depends('line_ids')
@@ -74,8 +66,7 @@ class hr_timekeeping_sheet(models.Model):
         for line in self.line_ids:
             worktype = self.env['hr.timekeeping.worktype'].browse(line.worktype.id)
             worktype_names[line.worktype.id] = worktype.name
-            if line.routing_subrouting_id.account_analytic_id not in worktype.nonexempt_limit_ignore_ids:
-                totals[line.worktype.id] += line.unit_amount
+            totals[line.worktype.id] += line.unit_amount
             total_time += line.unit_amount
         self.subtotal_line = ", ".join(["%s: %s" % (worktype_names[key], val) for key, val in totals.items()])
         self.subtotal_json = json.dumps(totals)
@@ -107,12 +98,28 @@ class hr_timekeeping_sheet(models.Model):
                 raise Warning(_("Exempt employees are not eligible for overtime."))
 
     @api.one
-    @api.depends('week_number', 'year', 'user_id')
+    @api.depends('payperiod_id', 'user_id')
     def _computed_fields(self):
-        self.name = "Week {} of {}".format(self.week_number, self.year)
-        self.date_from = week_start_date(self.year, self.week_number)
-        self.date_to = week_start_date(self.year, self.week_number) + timedelta(days=6)
+        self.name = "{}-{}".format(self.payperiod_id.name, self.week_ab)
         self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
+        self.adv_search = ''
+
+    def _adv_search(self, operator, value):
+        today = date.today()
+        this_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(today)
+        prev_payperiod_date = datetime.strptime(this_payperiod.start_date, DATE_FORMAT) + timedelta(days=-1)
+        prev_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_payperiod_date)
+        week_ab = this_payperiod.get_week_ab(today)
+
+        if value == 'this_week':
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id), ('week_ab','=',week_ab)])
+        elif value == 'this_payperiod':
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id)])
+        elif value == 'prev_payperiod':
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',prev_payperiod.id)])
+        else:
+            sheets = self.env['hr.timekeeping.sheet'].search([])
+        return [('id','in',sheets.ids)]
 
     @api.multi
     def button_confirm(self):
@@ -181,6 +188,15 @@ class hr_timekeeping_sheet(models.Model):
                     'change_explanation': '',
                 }
                 id = self.env['hr.timekeeping.line'].create(vals)
+
+    @api.multi
+    def button_retry_payroll(self):
+        self.payroll_state = 'pending'
+        self.payroll_comment = ''
+
+    @api.multi
+    def button_process_addendum(self):
+        self.payroll_state = 'submitted'
 
     @api.multi
     def button_create_line(self):
@@ -259,7 +275,6 @@ class hr_timekeeping_sheet(models.Model):
                 converted_line.update({'timekeeping_line_ids': [(6, 0, vals['line_ids'])]})
                 ts_move_lines.append((0, 0, converted_line))
 
-        # TODO maybe add an override on employee for wage liability account, for owners
         # Get the wage liability account for the balancing move line
         expense_account = self.user_id.company_id.wage_account_id.id
         # Get the wage liability account for owners (currently only 2, yay for random exceptions)
@@ -382,6 +397,7 @@ class hr_timekeeping_line(models.Model):
     start_time = fields.Char("Start time")
     end_time = fields.Char("End time")
     display_color = fields.Selection(related='routing_subrouting_id.account_analytic_id.display_color', readonly=True)
+    old_task_code = fields.Char("Old Task Code", related="routing_subrouting_id.old_task_code", readonly=True)
 
     @api.one
     @api.depends('date')
@@ -392,7 +408,6 @@ class hr_timekeeping_line(models.Model):
     @api.depends('date', 'previous_date')
     def _check_state(self):
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-
         # if editing an existing record and the old date not within open window, require logging regardless
         self.logging_required = False
         if self.previous_date:
@@ -400,7 +415,6 @@ class hr_timekeeping_line(models.Model):
             prev_deadline = prev_date + timedelta(days=1, hours=11)
             if not (prev_date < now < prev_deadline):
                 self.logging_required = True
-
         # see if the selected date is within the open window
         check_date = datetime.strptime(self.date, '%Y-%m-%d')
         if check_date > now:
@@ -424,10 +438,14 @@ class hr_timekeeping_line(models.Model):
         self.sheet_id._check_subtotals()
 
     @api.one
-    @api.constrains('routing_id', 'routing_line_id', 'routing_subrouting_id')
+    @api.constrains('routing_id', 'routing_line_id', 'routing_subrouting_id', 'worktype')
     def _check_routing(self):
         if (self.routing_line_id not in self.routing_id.routing_lines) or (self.routing_subrouting_id not in self.routing_line_id.subrouting_ids):
             raise Warning(_("You have an invalid task code. Please fix before saving."))
+        if self.routing_subrouting_id.account_analytic_id.linked_worktype and (self.worktype != self.routing_subrouting_id.account_analytic_id.linked_worktype):
+            raise Warning(_("You cannot have that task with that work type. Please fix before saving."))
+        if self.worktype.id == 2 and not self.routing_subrouting_id.qb_payroll_item_ot:
+            raise Warning(_("This task code doesn't have an overtime mapping to Quickbooks. Please contact accounting."))
 
     @api.multi
     def _log_changes(self, vals, new_record=False):
@@ -603,6 +621,15 @@ class hr_timekeeping_line(models.Model):
         if not (routing_line and self.routing_subrouting_id in routing_line.subrouting_ids and self.state != 'future'):
             self.routing_subrouting_id = ''
 
+    @api.onchange('routing_subrouting_id')
+    def onchange_subrouting_id(self):
+        if self.routing_subrouting_id.account_analytic_id.linked_worktype:
+            self.worktype = self.routing_subrouting_id.account_analytic_id.linked_worktype
+        else:
+            general_worktypes = self.env['hr.timekeeping.worktype'].search([('limited_use','=',False)])
+            if self.worktype not in general_worktypes.ids:
+                self.worktype = general_worktypes[0].id
+
     @api.onchange('dcaa_allowable')
     def onchange_dcaa(self):
         if self.dcaa_allowable != self.routing_subrouting_id.account_analytic_id.dcaa_allowable:
@@ -614,11 +641,11 @@ class hr_timekeeping_line(models.Model):
 
     @api.model
     def _get_user_default_route(self):
-        return self.env.user.timesheet_prefs.routing_id
+        return self.env.user.timesheet_prefs.routing_id or ''
 
     @api.model
     def _get_user_default_subroute(self):
-        return self.env.user.timesheet_prefs.routing_subrouting_id
+        return self.env.user.timesheet_prefs.routing_subrouting_id or ''
 
 
 class hr_timekeeping_approval(models.Model):
@@ -628,7 +655,7 @@ class hr_timekeeping_approval(models.Model):
     type = fields.Selection([('hr','HR'),('manager','Manager'),('project','PM'),], string="Approval Source", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
-                             'Status', select=True, required=True, readonly=True,)
+                             'Status', index=True, required=True, readonly=True,)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
     uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
     relevant_time = fields.Float(compute='_computed_fields', readonly=True)
@@ -661,6 +688,7 @@ class hr_timekeeping_approval(models.Model):
                     self.uid_can_approve = True
                     break
                 manager = manager.parent_id
+            self.relevant_time = self.sheet_id.total_time
         # check if the user has global approval rights
         if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
             self.uid_can_approve = True
@@ -695,7 +723,7 @@ class hr_timekeeping_approval(models.Model):
         # log approval line approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submission approved"
-        body = "{} approved timesheet on {}".format(self.env.user.name, now.strftime('%c'))
+        body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
         self.sheet_id.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
         # if everything is approved, signal done for the whole sheet
@@ -708,43 +736,35 @@ class hr_timekeeping_approval(models.Model):
             return self.sheet_id.sudo().button_done()
 
 
-# additional fields for employees
-class employee(models.Model):
-    _inherit = 'hr.employee'
-
-    flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', required=True)
-    wage_rate = fields.Float('Hourly Wage Rate', required=True,)
-    is_owner = fields.Boolean('Company Owner')
-    owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
-
-    _defaults = {
-        'flsa_status': 'exempt',
-        'wage_rate': 0.0,
-        'is_owner': False,
-    }
-
-
 # new model to deal with premium pay rates (overtime, danger, etc)
-class hr_timesheet_worktype(models.Model):
+class hr_timekeeping_worktype(models.Model):
     _name = 'hr.timekeeping.worktype'
 
     name = fields.Char('Name', required=True)
-    active = fields.Boolean('Active')
-    premium_rate = fields.Float('Additional Premium Rate', required=True,
+    active = fields.Boolean('Active', default=True)
+    premium_rate = fields.Float('Additional Premium Rate', required=True, default=0.0,
                         help="The additional multiplier to be added on top of the base pay. For example, overtime would be 0.5, for a 50% premium.")
     nonexempt_limit = fields.Integer('Non-exempt Limit (Hours)',
                         help="Weekly limit of hours for this type for non-exempt employees. Enter 0 or leave blank for no limit.")
-    nonexempt_limit_ignore_ids = fields.Many2many('account.analytic.account','premium_analytic_rel','limit_id','account_analytic_id','Ignore Analytic Accounts',
-                        help="Enter any analytic accounts this limit should ignore when counting hours worked (like PTO).",
-                        domain="[('state','!=','closed'),('is_labor_code','=',1)]")
+    limited_use = fields.Boolean('Limit To Specific Analytic Accounts', default=False)
+    linked_analytic_ids = fields.One2many('account.analytic.account', 'linked_worktype', string='Linked Analytics')
+    task_worktype_search = fields.Boolean(compute='_computed_fields', search='_task_worktype_search', readonly=True, store=False)
 
-    _defaults = {
-        'active': True,
-        'premium_rate': 0.0,
-    }
+    @api.one
+    def _computed_fields(self):
+        self.task_worktype_search = False
+
+    def _task_worktype_search(self, operator, value):
+        worktypes = self.env['hr.timekeeping.worktype'].search([])
+        subroute = self.env['account.routing.subrouting'].browse([value])
+        if subroute.account_analytic_id.linked_worktype:
+            worktypes = subroute.account_analytic_id.linked_worktype
+        else:
+            worktypes = self.env['hr.timekeeping.worktype'].search([('limited_use','=',False)])
+        return [('id','in',worktypes.ids)]
 
 
-class hr_timesheet_preferences(models.Model):
+class hr_timekeeping_preferences(models.Model):
     _name = "hr.timekeeping.preferences"
     _description = "hr.timekeeping.preferences"
 
@@ -759,7 +779,7 @@ class hr_timesheet_preferences(models.Model):
     def _computed_fields(self):
         self.name = self.user_id.name + ' Timesheet Preferences'
 
-    @api.onchange('tempthing')
+    @api.onchange('routing_id')
     def onchange_routing_id_pref(self):
         routing_line = self.env['hr.timekeeping.line']._get_timekeeping_routing_line(self.routing_id.id)
         self.routing_line_id = routing_line
@@ -767,145 +787,37 @@ class hr_timesheet_preferences(models.Model):
             self.routing_subrouting_id = ''
 
 
+class hr_timekeeping_payperiod(models.Model):
+    _name = "hr.timekeeping.payperiod"
+    _description = "hr.timekeeping.payperiod"
+    _order = 'year,period_num'
 
-# additional fields for res.users
-class res_users(models.Model):
-    _inherit = "res.users"
-
-    analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
-    auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
-    pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
-    hide_analytics = fields.Many2many('account.analytic.account', 'analytic_user_hide_rel', 'user_id', 'analytic_id', string='Tasks hidden from timesheets')
-    timesheet_prefs = fields.One2many('hr.timekeeping.preferences', 'user_id', string='Preferences')
-
-
-# I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
-# the whole thing more straightforward. Either way, it takes a lot of customization of analytics.
-class account_analytic_account(models.Model):
-    _inherit = "account.analytic.account"
-
-    pm_ids = fields.Many2many('res.users', 'analytic_user_pm_rel', 'analytic_id', 'user_id', string='Project Managers')
-    overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
-    timesheets_future_filter = fields.Char(store=False, compute='_computed_fields', search='_filter_future_accounts')
-    user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
-    user_review_ids_count = fields.Integer(compute='_computed_fields', readonly=True)
-    user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
-    is_labor_code = fields.Boolean(string="Is a labor code", default=False)
-    dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
-    limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
-    auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
-    hide_from_users = fields.Many2many('res.users', 'analytic_user_hide_rel', 'analytic_id', 'user_id', string='Hide from Users')
-    hide_from_uid = fields.Boolean(compute='_computed_fields', search='_search_hidden_ids', string="Hide from my timesheet", readonly=True, store=False)
+    name = fields.Char('Pay Period', compute='_computed_fields', readonly=True)
+    year = fields.Integer('Year', default=lambda self: datetime.now().year)
+    period_num = fields.Integer('Pay Period Number')
+    start_date = fields.Date('Start Date', index=True)
+    end_date = fields.Date('End Date', index=True)
+    pay_date = fields.Date('Pay Date', index=True)
+    sheet_ids = fields.One2many('hr.timekeeping.sheet', 'payperiod_id', 'Timesheets')
 
     @api.one
-    @api.depends('user_review_ids','hide_from_users')
     def _computed_fields(self):
-        self.user_review_ids_count = len(self.user_review_ids)
-        self.timesheets_future_filter = ''
-        # set hide_from_uid
-        if self.env.user and self.hide_from_users and (self.env.user in self.hide_from_users):
-            self.hide_from_uid = True
-        else:
-            self.hide_from_uid = False
+        self.name = "{}-{}".format(self.year, self.period_num)
 
-    def _filter_future_accounts(self, operator, value):
-        if value == 'future':
-            valid_accounts = self.env.user.company_id.future_analytic_ids
-        else:
-            valid_accounts = self.env['account.analytic.account'].search([('state', '!=', 'close'),])
-        return [('id','in',valid_accounts.ids)]
+    @api.model
+    def get_payperiod(self, search_date):
+        # try fuzzy parse on date if str?
+        pp = self.search([('start_date','<=',search_date),('end_date','>=',search_date)])
+        return pp
 
-    @api.one
-    @api.depends('user_review_ids')
-    def _user_has_reviewed(self):
-        if self.env.user and self.user_review_ids and (self.env.user in self.user_review_ids):
-            self.user_has_reviewed = True
-        else:
-            self.user_has_reviewed = False
-
-    def _search_user_has_reviewed(self, operator, value):
-        if value == False:
-            reviewed_ids = self.search([('user_review_ids','not in',self._uid)])
-        elif value == True:
-            reviewed_ids = self.search([('user_review_ids','in',self._uid)])
-        else:
-            reviewed_ids = self.search([])
-        # this next filter actually depends on auth users, not reviewed users, but I didn't want to make yet another
-        # field and search just for one line, and auth_users always applies in this case
-        auth_ids = reviewed_ids.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
-        intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
-        return [('id','in', list(intersection))]
-
-    def _search_hidden_ids(self, operator, value):
-        if value == False:
-            shown_ids = self.search([('hide_from_users','not in',self._uid)])
-        elif value == True:
-            shown_ids = self.search([('hide_from_users','in',self._uid)])
-        else:
-            shown_ids = self.search([])
-        return [('id','in', shown_ids.ids)]
+    @api.model
+    def get_first_day_of_week(self, search_date):
+        return search_date + relativedelta(weekday=SU(-1))
 
     @api.multi
-    def action_button_hide(self):
-        self.sudo().write({'hide_from_users': [(4,self.env.user.id)]})
-
-    @api.multi
-    def action_button_show(self):
-        self.sudo().write({'hide_from_users': [(3,self.env.user.id)]})
-
-    @api.multi
-    def action_button_sign(self):
-        # this would take you back to the tree view, but the header breadcrumbs get ridiculous
-        # resource = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.analytic_review_view',raise_if_not_found=True)
-        # res = self.pool.get('ir.actions.act_window.view').read(self._cr, self._uid, [resource], context=self._context)[0]
-        # this is a useful way to reload the page that I didn't end up needing
-        # res = { 'type': 'ir.actions.client', 'tag': 'reload' }
-        self.sudo().write({'user_review_ids': [(4,self.env.user.id)]})
-        return True
-
-    @api.multi
-    def button_reviewed_users(self):
-        view = {
-            'name': _('Users reviewed'),
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'res_model': 'res.users',
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            # 'target': 'inline',
-            'domain': [('analytic_review_ids','in',self.ids)],
-        }
-        return view
-
-
-class account_move_line(models.Model):
-    _inherit = "account.move.line"
-
-    timekeeping_line_ids = fields.Many2many('hr.timekeeping.line', 'timekeeping_line_move_line_rel', 'move_line_id', 'timekeeping_line_id', string='Related timekeeping lines')
-
-
-class account_routing_subrouting(models.Model):
-    _inherit = "account.routing.subrouting"
-
-    # these are part of the analytic but need to be exposed for the subroute
-    timesheets_future_filter = fields.Char(related='account_analytic_id.timesheets_future_filter', readonly=True)
-    user_has_reviewed = fields.Boolean(related='account_analytic_id.user_has_reviewed', readonly=True)
-    dcaa_allowable = fields.Boolean(related='account_analytic_id.dcaa_allowable', readonly=True)
-    hide_from_uid = fields.Boolean(related='account_analytic_id.hide_from_uid', readonly=True)
-    oneclick_filter = fields.Boolean(store=False, compute='_oneclick', search='_filter_oneclick')
-    oneclick_prefs = fields.Many2many('hr.timekeeping.preferences', 'user_pref_subroute_rel', 'subrouting_id', 'user_pref', string='One Click Prefs')
-
-    @api.one
-    def _oneclick(self):
-        self.oneclick_filter = True
-
-    def _filter_oneclick(self, operator, value):
-        timekeeping_id = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.ar_section_timekeeping')
-        routing_ids = self.env['account.routing'].search([('section_ids','in',[timekeeping_id]),])
-        routing_line_ids = self.env['account.routing.line'].search([
-            ('routing_id','in',routing_ids.ids),('section_ids','in',[timekeeping_id]),
-        ])
-        subrouting_ids = self.env['account.routing.subrouting'].search([
-            ('routing_line_id','in',routing_line_ids.ids),('user_has_reviewed','=',True),('hide_from_uid','=',False),
-        ])
-        return [('id','in', subrouting_ids.ids)]
+    def get_week_ab(self, search_date):
+        mid_date = datetime.strptime(self.start_date, DATE_FORMAT) + timedelta(days=7)
+        search_date = datetime(search_date.year, search_date.month, search_date.day)
+        if search_date < mid_date:
+            return 'A'
+        return 'B'

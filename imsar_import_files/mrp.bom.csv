@@ -1,5 +1,5 @@
 id,product_tmpl_id/id,type,bom_line_ids/product_id/id,bom_line_ids/product_qty
-bom_acb0,prod_prod_PCA-ACB0_product_template,Normal,prod_prod_175-0088-11,1
+bom_acb0,PCA-ACB0,Normal,prod_prod_175-0088-11,1
 ,,,prod_prod_200-0100,7
 ,,,prod_prod_200-0103,1
 ,,,prod_prod_200-0105,6

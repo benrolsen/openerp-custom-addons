@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--Employee form view, add new fields -->
+        <record id="imsar_view_employee_form" model="ir.ui.view">
+            <field name="name">imsar.hr.employee.form</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//field[@name="image_medium"]' position='replace'>
+                    <group>
+                        <group>
+                            <field name="first_name"/>
+                            <field name="last_name"/>
+                        </group>
+                        <group>
+                            <field name="middle_name"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//sheet/div[1]" position="replace">
+                    <group>
+                        <field name="category_ids" widget="many2many_tags" placeholder="e.g. Part Time" groups="base.group_hr_user"/>
+                    </group>
+                </xpath>
+                <xpath expr='//field[@name="mobile_phone"]' position='before'>
+                    <field name="work_email" widget="email"/>
+                    <field name="work_phone"/>
+                </xpath>
+                <xpath expr='//page[@string="HR Settings"]' position='replace'>
+                    <page string="HR Settings" groups="base.group_hr_user">
+                        <group>
+                            <group name="active_group">
+                                <field name="active"/>
+                                <field name="full_time"/>
+                                <field name="full_time_hours" attrs="{'invisible':[('full_time','=',False)]}"/>
+                                <field name="flsa_status" />
+                            </group>
+                            <group>
+                                <field name="wage_rate" />
+                                <field name="pto_accrual_rate" />
+                            </group>
+                            <group>
+                                <field name="is_owner" />
+                                <field name="owner_wage_account_id" options="{'create': false, 'create_edit': false}" attrs="{'invisible':[('is_owner','=',False)]}"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="hr.open_view_employee_list_my" model="ir.actions.act_window">
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+        <!-- Analytic Account view, add override account routing for overtime premiums on contracts, add allowable/unallowable -->
+        <record id="account_analytic_account_overtime_override_form" model="ir.ui.view">
+            <field name="name">account.analytic.account.overtime.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/sheet" position='before'>
+                    <header>
+                        <button name="set_pending" string="To Renew" type="object" states="open" />
+                        <button name="set_close" string="Close Contract" type="object" states="open,pending" />
+                        <button name="set_open" string="Set In Progress" type="object" states="pending,close,cancelled,draft" />
+                        <button name="set_cancel" string="Cancel Contract" type="object" states="open,pending"/>
+                        <field name="state" readonly="1" widget="statusbar"
+                            statusbar_visible="open,pending,close" statusbar_colors='{"pending":"red", "template":"blue"}'/>
+                    </header>
+                </xpath>
+                <xpath expr='//div[@name="project"]' position='after'>
+                    <div>
+                        <field name="is_labor_code" class="oe_inline"/>
+                        <label for="is_labor_code" class="oe_inline"/>
+                    </div>
+                    <div attrs="{'invisible':[('is_labor_code','=',False)]}">
+                        <label for="linked_worktype" class="oe_inline" string="Restrict to single worktype (optional)"/>
+                        <field name="linked_worktype" widget="selection" class="oe_inline"/>
+                    </div>
+                    <div>
+                        <field name="dcaa_allowable" class="oe_inline"/>
+                        <label for="dcaa_allowable" class="oe_inline"/>
+                    </div>
+                    <div attrs="{'invisible':[('type','!=','contract')]}">
+                        <label for="overtime_account" class="oe_inline" string="Overtime Premium Routing Account (leave blank if none)"/>
+                        <field name="overtime_account" widget="selection" class="oe_inline"/>
+                    </div>
+                </xpath>
+                <xpath expr='//field[@name="manager_id"]' position='replace'>
+                    <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                </xpath>
+                <xpath expr='//field[@name="pm_ids"]' position='after'>
+                    <field name="color" />
+                </xpath>
+                <xpath expr='//group[@name="main"]' position='after'>
+                    <separator string="Description" name="description"/>
+                    <field name="description" attrs="{'required':[('is_labor_code','=',True)]}"/>
+                </xpath>
+                <xpath expr='//notebook/page/group[@name="contract"]' position='before'>
+                    <group name="authorization" string="Authorization">
+                        <field name="limit_to_auth"/>
+                        <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                    </group>
+                </xpath>
+
+                <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
+                <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
+
+            </field>
+        </record>
+
+    </data>
+</openerp>

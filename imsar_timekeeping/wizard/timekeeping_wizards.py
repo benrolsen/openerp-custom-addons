@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta, SU
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
@@ -13,8 +14,12 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
         today = self._context.get('date_override')
         if not today:
             today = date.today()
-        thisyear = today.isocalendar()[0]
-        week_number = today.isocalendar()[1]
+        # get the pay period for the given date
+        this_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(today)
+        week_ab = this_payperiod.get_week_ab(today)
+        sunday = today + relativedelta(weekday=SU(-1))
+        saturday = sunday + timedelta(days=6)
+
 
         employee = self.env['hr.employee'].search([('user_id','=',self._uid)])
         if not employee:
@@ -23,15 +28,17 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
             raise Warning(_('Error!'), _("This user has multiple employees and I haven't dealt with that yet."))
         sheet_ids = self.env['hr.timekeeping.sheet'].search([
             ('employee_id','=',employee.id),
-            ('year','=',thisyear),
-            ('week_number','=',week_number),
+            ('payperiod_id','=',this_payperiod.id),
+            ('week_ab','=',week_ab),
             ('type','=','regular'),
             ])
 
         if len(sheet_ids) < 1:
             values = dict()
-            values['year'] = today.year
-            values['week_number'] = week_number
+            values['payperiod_id'] = this_payperiod.id
+            values['week_ab'] = week_ab
+            values['date_from'] = sunday
+            values['date_to'] = saturday
             values['type'] = 'regular'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
@@ -109,15 +116,17 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
 
         sheet_ids = self.env['hr.timekeeping.sheet'].search([
             ('employee_id','=',employee.id),
-            ('year','=',regular_timesheet.year),
-            ('week_number','=',regular_timesheet.week_number),
+            ('payperiod_id','=',regular_timesheet.payperiod_id.id),
+            ('week_ab','=',regular_timesheet.week_ab),
             ('type','=','addendum'),
             ('state','!=','done'),
             ])
         if len(sheet_ids) < 1:
             values = dict()
-            values['year'] = regular_timesheet.year
-            values['week_number'] = regular_timesheet.week_number
+            values['payperiod_id'] = regular_timesheet.payperiod_id.id
+            values['week_ab'] = regular_timesheet.week_ab
+            values['date_from'] = regular_timesheet.date_from
+            values['date_to'] = regular_timesheet.date_to
             values['type'] = 'addendum'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
@@ -144,9 +153,7 @@ class filter_timesheets_need_my_approval(models.TransientModel):
     @api.model
     def my_approval_filter(self):
         sheet_ids = set()
-        for sheet in self.env['hr.timekeeping.sheet'].search([]):
-            if sheet.state != 'confirm':
-                continue
+        for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
             for approval_line in sheet.approval_line_ids:
                 if approval_line.state == 'confirm' and approval_line.uid_can_approve:
                     sheet_ids.add(sheet.id)
@@ -158,7 +165,6 @@ class filter_timesheets_need_my_approval(models.TransientModel):
             'res_model': 'hr.timekeeping.sheet',
             'view_id': False,
             'type': 'ir.actions.act_window',
-            # 'target': 'inline',
             'domain': [('id','in',list(sheet_ids))],
         }
         return view
@@ -194,4 +200,18 @@ class hr_timesheet_comment(models.TransientModel):
         approval.log_rejection(comment=self.comment)
         return { 'type': 'ir.actions.client', 'tag': 'reload' }
 
+
+class hr_timekeeping_sheet_payroll_confirm(models.TransientModel):
+    _name = "hr.timekeeping.sheet.payroll.confirm"
+    _description = "Confirm payroll submission"
+
+    @api.multi
+    def submit_confirm(self):
+        ids = self._context['active_ids']
+        sheets = self.env['hr.timekeeping.sheet'].browse(ids)
+        # just using a pseudo-workflow for payroll_state
+        for sheet in sheets:
+            if sheet.state == 'done' and sheet.payroll_state == 'draft' and sheet.type == 'regular':
+                sheet.payroll_state = 'pending'
+        return {'type': 'ir.actions.act_window_close'}
 
