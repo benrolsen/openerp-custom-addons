@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from openerp import models, fields, api, _
 from openerp import SUPERUSER_ID
 
@@ -106,15 +107,16 @@ class employee(models.Model):
     _inherit = 'hr.employee'
 
     first_name = fields.Char('First Name', default='', required=True)
-    middle_name = fields.Char('Middle Name')
+    middle_name = fields.Char('Middle Name', default='')
     last_name = fields.Char('Last Name', default='', required=True)
     name = fields.Char('Name', compute='_computed_fields', store=True, required=False)
     name_related = fields.Char('Name', compute='_computed_fields', store=True, required=False)
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', default='exempt', required=True)
-    full_time = fields.Boolean('Full Time', default=True, required=True)
-    full_time_hours = fields.Integer('Full Time Hours (pay period)')
+    full_time = fields.Boolean('Full Time', default=True)
+    full_time_hours = fields.Integer('Full Time Hours (pay period)', default=80)
     wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0)
-    pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)', required=True, default=0.0)
+    pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)', required=True, default=0.0, digits=(1,4))
+    accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
 
@@ -123,6 +125,55 @@ class employee(models.Model):
     def _computed_fields(self):
         self.name = "{}, {} {}".format(self.last_name, self.first_name, self.middle_name)
         self.name_related = self.name
+
+    @api.multi
+    def accrue_pto(self, hours):
+        self.accrued_pto += hours
+        # credit pto liability, debit pto expense
+        amount = hours * self.wage_rate
+        liability_account = self.user_id.company_id.pto_liability_account_id.id
+        expense_account = self.user_id.company_id.pto_expense_account_id.id
+        if not liability_account or not expense_account:
+            raise Warning(_("You must set PTO liability and expense accounts in Timekeeping settings."))
+        move_lines = list()
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        partner_id = self.user_id.company_id.partner_id.id
+        refname = self.name + ' - PTO Accrual'
+
+        liability_line = {
+            'type': 'dest',
+            'name': 'PTO Accrual',
+            'price': -amount,
+            'account_id': liability_account,
+            'date_maturity': date.today(),
+            'ref': refname,
+        }
+        converted_line = self.env['account.invoice'].line_get_convert(liability_line, partner_id, now)
+        move_lines.append((0, 0, converted_line))
+
+        expense_line = {
+            'type': 'dest',
+            'name': 'PTO Accrual',
+            'price': amount,
+            'account_id': expense_account,
+            'date_maturity': date.today(),
+            'ref': refname,
+        }
+        converted_line = self.env['account.invoice'].line_get_convert(expense_line, partner_id, now)
+        move_lines.append((0, 0, converted_line))
+
+        # post the move lines
+        move_vals = {
+            'ref': refname,
+            'line_id': move_lines,
+            'journal_id': self.user_id.company_id.timekeeping_journal_id.id,
+            'date': date.today(),
+            'narration': '',
+            'company_id': self.user_id.company_id.id,
+        }
+        move = self.env['account.move'].with_context(self._context).create(move_vals)
+        move.post()
+
 
 
 class resource(models.Model):

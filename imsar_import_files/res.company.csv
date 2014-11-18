@@ -1,2 +1,2 @@
-id,wage_account_id/id,timekeeping_journal_id/id,regular_worktype_id/id,overtime_worktype_id/id,future_analytic_ids/id
-base.main_company,account_2131010,imsar_timekeeping.journal_timekeeping,imsar_timekeeping.worktype_regular,imsar_timekeeping.worktype_ovetime,"aa_f326,aa_f324"
+id,wage_account_id/id,timekeeping_journal_id/id,regular_worktype_id/id,overtime_worktype_id/id,pto_analytic_id/id,future_analytic_ids/id
+base.main_company,account_2131010,imsar_timekeeping.journal_timekeeping,imsar_timekeeping.worktype_regular,imsar_timekeeping.worktype_ovetime,aa_f326,"aa_f326,aa_f324"

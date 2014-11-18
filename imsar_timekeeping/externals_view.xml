@@ -40,6 +40,7 @@
                             <group>
                                 <field name="wage_rate" />
                                 <field name="pto_accrual_rate" />
+                                <field name="accrued_pto" />
                             </group>
                             <group>
                                 <field name="is_owner" />

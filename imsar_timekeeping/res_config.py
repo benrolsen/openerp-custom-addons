@@ -28,6 +28,9 @@ class timekeeping_settings(models.TransientModel):
     timekeeping_journal_id = fields.Many2one('account.journal', 'Timekeeping Journal')
     regular_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Regular Work Type")
     overtime_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Overtime Work Type")
+    pto_analytic_id = fields.Many2one('account.analytic.account', string="PTO Analytic")
+    pto_liability_account_id = fields.Many2one('account.account', 'PTO Liability Account')
+    pto_expense_account_id = fields.Many2one('account.account', 'PTO Expense Account')
     future_analytic_ids = fields.Many2many('account.analytic.account', 'config_future_analytic_rel', 'config_id', 'analytic_id', string="Analytics allowed for future dates")
     global_approval_user_ids = fields.Many2many('res.users', 'config_global_approval_user_rel', 'config_id', 'user_id', string="Users with global approval rights")
 
@@ -39,6 +42,9 @@ class timekeeping_settings(models.TransientModel):
         res['timekeeping_journal_id'] = user.company_id.timekeeping_journal_id.id
         res['regular_worktype_id'] = user.company_id.regular_worktype_id.id
         res['overtime_worktype_id'] = user.company_id.overtime_worktype_id.id
+        res['pto_analytic_id'] = user.company_id.pto_analytic_id.id
+        res['pto_liability_account_id'] = user.company_id.pto_liability_account_id.id
+        res['pto_expense_account_id'] = user.company_id.pto_expense_account_id.id
         res['future_analytic_ids'] = user.company_id.future_analytic_ids.ids
         res['global_approval_user_ids'] = user.company_id.global_approval_user_ids.ids
         return res
@@ -50,6 +56,9 @@ class timekeeping_settings(models.TransientModel):
             'timekeeping_journal_id': self.timekeeping_journal_id.id,
             'regular_worktype_id': self.regular_worktype_id.id,
             'overtime_worktype_id': self.overtime_worktype_id.id,
+            'pto_analytic_id': self.pto_analytic_id.id,
+            'pto_liability_account_id': self.pto_liability_account_id.id,
+            'pto_expense_account_id': self.pto_expense_account_id.id,
             'future_analytic_ids': [(6,0, self.future_analytic_ids.ids)],
             'global_approval_user_ids': [(6,0, self.global_approval_user_ids.ids)],
         })
@@ -63,5 +72,8 @@ class res_company(models.Model):
     overtime_worktype_id = fields.Many2one('hr.timekeeping.worktype', string="Overtime Work Type")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'company_future_analytic_rel', 'company_id', 'analytic_id', string="Analytics allowed for future dates")
     global_approval_user_ids = fields.Many2many('res.users', 'company_global_approval_user_rel', 'company_id', 'user_id', string="Users with global approval rights")
+    pto_analytic_id = fields.Many2one('account.analytic.account', string="PTO Analytic")
+    pto_liability_account_id = fields.Many2one('account.account', 'PTO Liability Account')
+    pto_expense_account_id = fields.Many2one('account.account', 'PTO Expense Account')
 
 

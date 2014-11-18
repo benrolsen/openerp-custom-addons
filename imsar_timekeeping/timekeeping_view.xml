@@ -103,7 +103,7 @@
                     <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
-                    <group attrs="{'invisible':['|',('type','!=','addendum'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
+                    <group attrs="{'invisible':['|',('type','!=','addendum'),'|',('state','!=','done'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Mark as Submitted to Payroll" name="button_process_addendum" />
                     </group>
                     <notebook>
@@ -197,6 +197,7 @@
                                     <field name="account_analytic_id"/>
                                     <field name="relevant_time" widget="float_time"/>
                                     <field name="state"/>
+                                    <field name="approved_by" readonly="True"/>
                                     <field name="uid_can_approve" invisible="True"/>
                                     <button name="button_reject" string="Reject" class="oe_inline" type="object"
                                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>

@@ -2,11 +2,12 @@ These files need to be imported in this order:
 account.account.type.csv
 account.account.csv
 account.analytic.account.csv
-res.company.csv
-ir.property.csv
 account.routing.csv
 account.routing.line.csv
 account.routing.subrouting.csv
+subrouting_qb_map.csv (only while still using Quickbooks)
+res.company.csv
+ir.property.csv
 pay.period.csv
 
 For testing purchasing and mrp, import these files in order:
@@ -25,4 +26,4 @@ These files are still preliminary and may need tweaking after import
 This SQL query will create links so that all users will have "signed" all SOWs:
 insert into analytic_user_review_rel select aa.id, u.id from res_users u, account_analytic_account aa;
 
-Also, make sure to uninstall im_odoo_support, im_chat, bus, and portal
+Also, make sure to uninstall im_odoo_support, im_chat, and portal

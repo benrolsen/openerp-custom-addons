@@ -36,6 +36,18 @@
                                 <field name="overtime_worktype_id" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="selection"/>
                             </div>
                             <div>
+                                <label for="pto_analytic_id"/>
+                                <field name="pto_analytic_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pto_liability_account_id"/>
+                                <field name="pto_liability_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pto_expense_account_id"/>
+                                <field name="pto_expense_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
                                 <label for="future_analytic_ids"/>
                                 <field name="future_analytic_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>

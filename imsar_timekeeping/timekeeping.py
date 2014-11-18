@@ -10,6 +10,8 @@ from openerp.exceptions import Warning
 import openerp.addons.decimal_precision as dp
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 
+import logging
+_logger = logging.getLogger(__name__)
 
 # helper function to get now in the correct timezone
 def get_now_tz(user, config):
@@ -36,7 +38,7 @@ class hr_timekeeping_sheet(models.Model):
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
     type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
     payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', required=True)
-    week_ab = fields.Char('Pay Period Week A/B', required=True)
+    week_ab = fields.Selection([('A','A'),('B','B'),], 'Pay Period Week A/B', required=True)
     date_from = fields.Date('Start Date', readonly=True, required=True)
     date_to = fields.Date('End Date', readonly=True, required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
@@ -141,6 +143,7 @@ class hr_timekeeping_sheet(models.Model):
         self.signal_workflow('cancel')
         # mark all approval lines as open status
         for appr_line in self.approval_line_ids:
+            appr_line.approved_by = ''
             if appr_line.state == 'confirm':
                 appr_line.signal_workflow('cancel')
             elif appr_line.state == 'done':
@@ -212,6 +215,17 @@ class hr_timekeeping_sheet(models.Model):
         }
         return view
 
+    def accrue_pto(self, pp_total):
+        # all full-time employees can accrue PTO from a maximum of 80 hours per pay period
+        overage = pp_total - 80
+        if overage > 0:
+            accrue_hours = self.total_time - overage
+        else:
+            accrue_hours = self.total_time
+        if accrue_hours > 0:
+            accrued_pto = accrue_hours * self.employee_id.pto_accrual_rate
+            self.employee_id.accrue_pto(accrued_pto)
+
     @api.multi
     def _make_move_lines(self):
         ts_move_lines = list()
@@ -276,10 +290,10 @@ class hr_timekeeping_sheet(models.Model):
                 ts_move_lines.append((0, 0, converted_line))
 
         # Get the wage liability account for the balancing move line
-        expense_account = self.user_id.company_id.wage_account_id.id
+        liability_account = self.user_id.company_id.wage_account_id.id
         # Get the wage liability account for owners (currently only 2, yay for random exceptions)
         if self.employee_id.is_owner:
-            expense_account = self.employee_id.owner_wage_account_id.id
+            liability_account = self.employee_id.owner_wage_account_id.id
 
         if total_amount != 0.0:
             # add one move line to balance journal entry
@@ -287,7 +301,7 @@ class hr_timekeeping_sheet(models.Model):
                 'type': 'dest',
                 'name': 'Payroll entry',
                 'price': -total_amount,
-                'account_id': expense_account,
+                'account_id': liability_account,
                 'date_maturity': date.today(),
                 'ref': refname,
             }
@@ -303,11 +317,10 @@ class hr_timekeeping_sheet(models.Model):
     def button_done(self):
         # this is called (with sudo) once all approval lines are done
         lines = self._make_move_lines()
-        if lines:
+        if lines and not self.move_id:
             name = self.employee_id.name + ' - ' + self.name
             if not self.employee_id.user_id.company_id.timekeeping_journal_id:
                 raise Warning(_('You must set a timesheet journal in the Settings->HR Settings before you can approve timesheets.'))
-
             move_vals = {
                 'ref': name,
                 'line_id': lines,
@@ -316,7 +329,6 @@ class hr_timekeeping_sheet(models.Model):
                 'narration': '',
                 'company_id': self.employee_id.user_id.company_id.id,
             }
-
             move = self.env['account.move'].with_context(self._context).create(move_vals)
             # mark this move on this timesheet, post the journal entry, go to 'done' workflow
             self.move_id = move.id
@@ -326,8 +338,57 @@ class hr_timekeeping_sheet(models.Model):
         body = "All approvals met on {}".format(now.strftime('%c'))
         self.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
+        # Check both weeks of the payroll period, if they exist. If they're both 'done' and this employee is
+        # full time, check the total hours against this employee's expected full time hours. If the total hours
+        # don't add up to the expected hours, we add PTO to make up the difference, which honestly seems like
+        # pure douchebaggery to me, but the higher-ups here act like it's perfectly natural.
+        # I have NEVER heard of a tech company having the audacity to insist on a policy like this for salaried
+        # employees, but the above-mentioned higher-ups seem flabbergasted that anyone would question it, so
+        # here's my passive-aggressive note of protest, left where no one will ever find it.
+        if self.employee_id.full_time:
+            pp_total = 0
+            # trying to figure out if it's even time to do checks like this is a pain
+            reg_week_a_exists = reg_week_b_exists = False
+            open_sheet_exists = False
+            for sheet in self.payperiod_id.sheet_ids.search([('employee_id','=',self.employee_id.id)]):
+                # first, both regular A/B timesheets must exist
+                if sheet.type == 'regular' and sheet.week_ab == 'A':
+                    reg_week_a_exists = True
+                if sheet.type == 'regular' and sheet.week_ab == 'B':
+                    reg_week_b_exists = True
+                if sheet.id != self.id and sheet.state != 'done':
+                    # if there are any open timesheets/addendums for this pay period, don't force the PTO addition
+                    open_sheet_exists = True
+                # only count total hours for approved timesheets
+                else:
+                    pp_total += sheet.total_time
+            exp_total = self.employee_id.full_time_hours
+            diff = exp_total - pp_total
+            if diff > 0 and not open_sheet_exists and reg_week_a_exists and reg_week_b_exists:
+                pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id
+                task = self.env['account.routing.subrouting'].search([('account_analytic_id','=',pto_analytic_id.id)])
+                if not task:
+                    raise Warning(_("You must define a PTO Analytic for this employee's company in Settings."))
+                if not task.account_analytic_id.linked_worktype:
+                    raise Warning(_("The PTO Analytic must have a linked worktype."))
+                if len(task) > 1:
+                    task = task[0]
+                vals = {
+                    'sheet_id': self.id,
+                    'routing_id': task.routing_id.id,
+                    'routing_line_id': task.routing_line_id.id,
+                    'routing_subrouting_id': task.id,
+                    'worktype': task.account_analytic_id.linked_worktype.id,
+                    'date': self.date_to,
+                    'name': "Automatic PTO addition to reach full-time hours in pay period",
+                    'unit_amount': diff,
+                    'change_explanation': '',
+                }
+                newid = self.env['hr.timekeeping.line'].create(vals, override=True)
+            # full-time employees accrue PTO
+            self.accrue_pto(pp_total)
         # refresh the page
-        return { 'type': 'ir.actions.client', 'tag': 'reload' }
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     @api.model
     def create(self, vals):
@@ -347,16 +408,20 @@ class hr_timekeeping_sheet(models.Model):
             if approval_line.account_analytic_id:
                 existing_approval_project_ids.add(approval_line.account_analytic_id.id)
         existing_project_ids = set()
+        # add approval lines for contracts that have non-zero hours
+        time_sum = defaultdict(float)
         for line in self.line_ids:
             analytic = line.routing_subrouting_id.account_analytic_id
             existing_project_ids.add(analytic.id)
-            if analytic.type == 'contract' and analytic.id not in existing_approval_project_ids:
+            time_sum[analytic.id] += line.unit_amount
+            if analytic.type == 'contract' and analytic.id not in existing_approval_project_ids and time_sum[analytic.id] > 0:
                 approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'account_analytic_id': analytic.id}
                 self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
                 existing_approval_project_ids.add(analytic.id)
-        # remove approval lines if no timesheet lines exist for those projects
+        # remove approval lines if no timesheet lines exist for those projects, or total time for it is 0
         for approval_line in self.approval_line_ids:
-            if approval_line.account_analytic_id.type == 'contract' and approval_line.account_analytic_id.id not in existing_project_ids:
+            analytic = approval_line.account_analytic_id
+            if approval_line.account_analytic_id.type == 'contract' and (approval_line.account_analytic_id.id not in existing_project_ids or time_sum[analytic.id] == 0):
                 approval_line.sudo().unlink()
         return res
 
@@ -373,8 +438,8 @@ class hr_timekeeping_line(models.Model):
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
-    amount = fields.Float('Amount', required=True, default=0.0, digits_compute=dp.get_precision('Account'))
-    premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits_compute=dp.get_precision('Account'))
+    amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
+    premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
     # NOTE: when using a functional default, make sure to use a lambda, or else the default will be a static value from the server start
     date = fields.Date(string='Date', required=True, default=lambda self: date.today().strftime(DATE_FORMAT))
     previous_date = fields.Date(string='Previous Date', invisible=True)
@@ -507,7 +572,7 @@ class hr_timekeeping_line(models.Model):
         return super(hr_timekeeping_line, self).write(vals)
 
     @api.model
-    def create(self, vals):
+    def create(self, vals, override=False):
         vals['previous_date'] = vals['date']
         vals['change_explanation_log'] = vals['change_explanation']
         vals['change_explanation'] = ''
@@ -516,7 +581,8 @@ class hr_timekeeping_line(models.Model):
         worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
         sheet_id = vals.get('sheet_id')
         sheet = self.env['hr.timekeeping.sheet'].browse(sheet_id)
-        self._safety_checks(sheet)
+        if not override:
+            self._safety_checks(sheet)
         vals['amount'] = sheet.employee_id.wage_rate * unit_amount
         vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         vals['id'] = super(hr_timekeeping_line, self).create(vals)
@@ -659,6 +725,7 @@ class hr_timekeeping_approval(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
     uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
     relevant_time = fields.Float(compute='_computed_fields', readonly=True)
+    approved_by = fields.Many2one('res.users', 'Approved By')
 
     @api.one
     def _computed_fields(self):
@@ -701,6 +768,11 @@ class hr_timekeeping_approval(models.Model):
         if comment:
             body += "<br><strong>Comment:</strong> {}".format(comment)
         self.sheet_id.message_post(subject=subject, body=body,)
+        # send email
+        template = self.pool.get('ir.model.data').get_object(self._cr, self._uid, 'imsar_timekeeping', 'reject_timesheet_email')
+        ctx = self._context.copy()
+        ctx.update({'body': body, 'comment': comment})
+        self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True, context=ctx)
         return self.sheet_id.button_cancel()
 
     @api.multi
@@ -726,6 +798,7 @@ class hr_timekeeping_approval(models.Model):
         body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
         self.sheet_id.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
+        self.approved_by = self.env.user
         # if everything is approved, signal done for the whole sheet
         all_done = True
         for approval_line in self.sheet_id.approval_line_ids:
