@@ -146,30 +146,6 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
         return view
 
 
-class filter_timesheets_need_my_approval(models.TransientModel):
-    _name = 'hr.timekeeping.my_approval_filter'
-    _description = 'hr.timekeeping.my_approval_filter'
-
-    @api.model
-    def my_approval_filter(self):
-        sheet_ids = set()
-        for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
-            for approval_line in sheet.approval_line_ids:
-                if approval_line.state == 'confirm' and approval_line.uid_can_approve:
-                    sheet_ids.add(sheet.id)
-
-        view = {
-            'name': _('Waiting for my approval'),
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'res_model': 'hr.timekeeping.sheet',
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'domain': [('id','in',list(sheet_ids))],
-        }
-        return view
-
-
 class hr_timesheet_comment(models.TransientModel):
     _name = 'hr.timekeeping.comment'
     _description = 'hr.timekeeping.comment'

@@ -76,3 +76,32 @@ class timekeeping_payroll_report(models.Model):
                     tl.date, tl.user_id, tl.worktype, ts.state, task_code
             )
         """)
+
+
+class timekeeping_inventory_wizard(models.TransientModel):
+    _name = "hr.timekeeping.inventory.wizard"
+    _description = "Timekeeping Inventory List"
+
+    date_from = fields.Date('Start Date', required=True, default=lambda self: self.default_date_from())
+    date_to = fields.Date('End Date', required=True, default=lambda self: self.default_date_to())
+
+    @api.model
+    def default_date_from(self):
+        return datetime.today() - timedelta(days=7)
+
+    @api.model
+    def default_date_to(self):
+        return datetime.today()
+
+    @api.multi
+    def open_report(self):
+        report_view = self.env.ref('imsar_timekeeping.timesheet_inventory_report_tree', False)
+        return {
+            'name': _('Inventory Report'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.timekeeping.line',
+            'view_id': report_view.id,
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'domain': "[('date', '>=', '{}'),('date','<=','{}'),('serial_reference','!=','')]".format(self.date_from, self.date_to),
+        }

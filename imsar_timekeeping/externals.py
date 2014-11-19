@@ -1,6 +1,5 @@
 from datetime import datetime, date
 from openerp import models, fields, api, _
-from openerp import SUPERUSER_ID
 
 
 # I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
@@ -175,11 +174,11 @@ class employee(models.Model):
         move.post()
 
 
-
 class resource(models.Model):
     _inherit = 'resource.resource'
 
     name = fields.Char('Name', default='', required=False)
+
 
 class res_users(models.Model):
     _inherit = "res.users"
@@ -222,3 +221,19 @@ class account_routing_subrouting(models.Model):
             ('routing_line_id','in',routing_line_ids.ids),('user_has_reviewed','=',True),('hide_from_uid','=',False),
         ])
         return [('id','in', subrouting_ids.ids)]
+
+
+class employee_adjust_pto(models.TransientModel):
+    _name = "hr.timekeeping.adjust_pto"
+    _description = "Adjust accrued PTO"
+
+    adjustment = fields.Float('Adjustment', required=True)
+
+    @api.multi
+    def submit_confirm(self):
+        employee = self.env[self._context['active_model']].browse(self._context['active_id'])
+        if not employee:
+            raise Warning(_("Lost target employee, please contact system admin for bug report!"))
+        employee.accrue_pto(self.adjustment)
+        return {'type': 'ir.actions.act_window_close'}
+

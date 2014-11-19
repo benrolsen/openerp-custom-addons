@@ -37,7 +37,7 @@ class hr_timekeeping_sheet(models.Model):
     # model columns
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
     type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
-    payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', required=True)
+    payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', index=True, required=True)
     week_ab = fields.Selection([('A','A'),('B','B'),], 'Pay Period Week A/B', required=True)
     date_from = fields.Date('Start Date', readonly=True, required=True)
     date_to = fields.Date('End Date', readonly=True, required=True)
@@ -47,8 +47,8 @@ class hr_timekeeping_sheet(models.Model):
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
-    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
-    employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
+    user_id = fields.Many2one('res.users', string='User', index=True, readonly=True, default=lambda self: self.env.user)
+    employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
     view_line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
@@ -114,14 +114,28 @@ class hr_timekeeping_sheet(models.Model):
         week_ab = this_payperiod.get_week_ab(today)
 
         if value == 'this_week':
-            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id), ('week_ab','=',week_ab)])
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id), ('week_ab','=',week_ab)]).ids
         elif value == 'this_payperiod':
-            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id)])
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id)]).ids
         elif value == 'prev_payperiod':
-            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',prev_payperiod.id)])
+            sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',prev_payperiod.id)]).ids
+        elif value == 'my_approvals':
+            sheets = set()
+            for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
+                for approval_line in sheet.approval_line_ids:
+                    if approval_line.state == 'confirm' and approval_line.uid_can_approve:
+                        sheets.add(sheet.id)
+            sheets = list(sheets)
+        elif value == 'my_direct_approvals':
+            sheets = set()
+            for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
+                for approval_line in sheet.approval_line_ids:
+                    if approval_line.state == 'confirm' and approval_line.uid_can_approve and sheet.employee_id.parent_id.user_id.id == self._uid:
+                        sheets.add(sheet.id)
+            sheets = list(sheets)
         else:
-            sheets = self.env['hr.timekeeping.sheet'].search([])
-        return [('id','in',sheets.ids)]
+            sheets = self.env['hr.timekeeping.sheet'].search([]).ids
+        return [('id','in',sheets)]
 
     @api.multi
     def button_confirm(self):
@@ -440,6 +454,7 @@ class hr_timekeeping_line(models.Model):
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
     premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
+    full_amount = fields.Float(string='Final Amount', digits=dp.get_precision('Account'), compute='_computed_fields', readonly=True, store=True)
     # NOTE: when using a functional default, make sure to use a lambda, or else the default will be a static value from the server start
     date = fields.Date(string='Date', required=True, default=lambda self: date.today().strftime(DATE_FORMAT))
     previous_date = fields.Date(string='Previous Date', invisible=True)
@@ -456,8 +471,10 @@ class hr_timekeeping_line(models.Model):
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, default=lambda self: self._get_default_worktype())
     # this timekeeping_line_move_line_rel table is going to get massive, but I don't know of another way to do it
     move_line_ids = fields.Many2many('account.move.line', 'timekeeping_line_move_line_rel', 'timekeeping_line_id', 'move_line_id', string='Related move lines')
-    dcaa_allowable = fields.Boolean("DCAA Allowable", default=True)
-    lot_id = fields.Many2one('stock.production.lot', string='Serial #',)
+    dcaa_allowable = fields.Boolean("FAR 31.2 Allowable", default=True)
+    # At some point this will need to directly link to quant (serial) for direct MFG, warranty repair for repair order, and sales order for customer support
+    # for now, we'll just leave a comment and get a report for accounting to record the expense
+    serial_reference = fields.Char(string='Serial/Repair #')
     # this would be much easier with a fields.Time
     start_time = fields.Char("Start time")
     end_time = fields.Char("End time")
@@ -540,11 +557,12 @@ class hr_timekeeping_line(models.Model):
         sheet.message_post(subject=subject, body=body,)
 
     @api.one
-    @api.depends('user_id')
+    @api.depends('user_id', 'amount', 'premium_amount')
     def _computed_fields(self):
         # You'd think you could just use a related field to self.sheet.uid_is_user_id, right?
         # Guess again! Related field to computed field loses the self._uid of the function call
         self.uid_is_user_id = (self.user_id.id == self._uid)
+        self.full_amount = self.amount + self.premium_amount
 
     @api.model
     def _safety_checks(self, sheet):
@@ -690,10 +708,10 @@ class hr_timekeeping_line(models.Model):
     @api.onchange('routing_subrouting_id')
     def onchange_subrouting_id(self):
         if self.routing_subrouting_id.account_analytic_id.linked_worktype:
-            self.worktype = self.routing_subrouting_id.account_analytic_id.linked_worktype
+            self.worktype = self.routing_subrouting_id.account_analytic_id.linked_worktype.id
         else:
             general_worktypes = self.env['hr.timekeeping.worktype'].search([('limited_use','=',False)])
-            if self.worktype not in general_worktypes.ids:
+            if self.worktype.id not in general_worktypes.ids:
                 self.worktype = general_worktypes[0].id
 
     @api.onchange('dcaa_allowable')
@@ -718,7 +736,7 @@ class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
 
-    type = fields.Selection([('hr','HR'),('manager','Manager'),('project','PM'),], string="Approval Source", required=True, readonly=True)
+    type = fields.Selection([('hr','HR'),('manager','Manager'),('project','PM'),], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)

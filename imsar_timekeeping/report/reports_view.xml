@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_payroll_report_search" model="ir.ui.view">
+            <field name="name">hr.timekeeping.payroll.report.search</field>
+            <field name="model">hr.timekeeping.payroll.report</field>
+            <field name="arch" type="xml">
+                <search string="Timekeeping Entries Analysis">
+                    <field name="date"/>
+                    <field name="user_id"/>
+                    <field name="state"/>
+                    <filter string="Approved" domain="[('state','=','done')]"/>
+                    <filter string="Not Approved" domain="[('state','!=','done')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="User" name="User" context="{'group_by':'user_id'}"/>
+                        <filter string="Week" name="Week" context="{'group_by':'date:week'}"/>
+                        <filter string="Task Code" name="Task Code" context="{'group_by':'task_code'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        <record id="view_account_analytic_entries_search" model="ir.ui.view">
+             <field name="name">hr.timekeeping.payroll.graph</field>
+             <field name="model">hr.timekeeping.payroll.report</field>
+             <field name="arch" type="xml">
+                 <graph string="Timekeeping Entries Analysis" type="pivot">
+                    <field name="user_id" type="row"/>
+                    <field name="worktype" type="col"/>
+                    <field name="unit_amount" type="measure"/>
+                    <field name="amount" type="measure"/>
+                 </graph>
+             </field>
+        </record>
+
+        <record id="view_account_analytic_entries_wizard" model="ir.ui.view">
+             <field name="name">hr.timekeeping.payroll.wizard</field>
+             <field name="model">hr.timekeeping.payroll.report.wizard</field>
+             <field name="arch" type="xml">
+                <form string="Choose date range">
+                    <group>
+                        <field name="year"/>
+                        <field name="payperiod_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('year','=',year)]"/>
+                    </group>
+                    <footer>
+                        <button name="open_report" string="Get Report" type="object"  class="oe_highlight"  />
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />
+                    </footer>
+                </form>
+             </field>
+        </record>
+        <record id="action_account_analytic_entries_wizard" model="ir.actions.act_window">
+            <field name="name">Payroll Wizard</field>
+            <field name="res_model">hr.timekeeping.payroll.report.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_account_analytic_entries_wizard"/>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="menu_action_account_analytic_entries_wizard" action="action_account_analytic_entries_wizard" parent="menu_hr_timekeeping_reports" sequence="1"/>
+
+        <!-- Inventory report -->
+        <record id="view_timekeeping_inventory_wizard" model="ir.ui.view">
+             <field name="name">hr.timekeeping.inventory.wizard</field>
+             <field name="model">hr.timekeeping.inventory.wizard</field>
+             <field name="arch" type="xml">
+                <form string="Choose date range">
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <footer>
+                        <button name="open_report" string="Get Report" type="object"  class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />
+                    </footer>
+                </form>
+             </field>
+        </record>
+        <record id="action_timekeeping_inventory_wizard" model="ir.actions.act_window">
+            <field name="name">Inventory Report</field>
+            <field name="res_model">hr.timekeeping.inventory.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_timekeeping_inventory_wizard"/>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="menu_action_timekeeping_inventory_wizard" action="action_timekeeping_inventory_wizard" parent="menu_hr_timekeeping_reports" sequence="5"/>
+
+        <!-- Timesheet Approval report -->
+        <report
+            id="action_report_timekeeping_sheet_approval"
+            model="hr.timekeeping.sheet"
+            string="Timesheet Approval report"
+            report_type="qweb-pdf"
+            name="imsar_timekeeping.tk_approval_report"
+            file="tk_approval_report"
+        />
+        <template id="tk_approval_report">
+            <t t-call="report.html_container">
+                <t t-set="data_report_margin_top" t-value="8"/>
+                <t t-set="data_report_header_spacing" t-value="8"/>
+                <t t-foreach="docs" t-as="sheet">
+                    <t t-call="imsar_timekeeping.timesheet_layout">
+                        <div class="page">
+                            <div class="row">
+                                <div class="col-xs-3"><h1 t-esc="sheet.name"/></div>
+                                <div class="col-xs-6 col-xs-offset-3 text-right"><h1 t-esc="sheet.employee_id.name"/></div>
+                            </div>
+
+                            <div class="row mt32">
+                                <div class="col-xs-3">
+                                    <strong>Dates:</strong>
+                                    <p><span t-esc="sheet.date_from"/> to <span t-esc="sheet.date_to"/></p>
+                                </div>
+                                <div class="col-xs-3">
+                                    <strong>Total Time:</strong>
+                                    <p t-esc="sheet.total_time"/>
+                                </div>
+                                <div class="col-xs-3">
+                                    <strong>Type:</strong>
+                                    <p t-esc="sheet.type"/>
+                                </div>
+                                <div class="col-xs-3">
+                                    <strong>Status:</strong>
+                                    <p t-esc="sheet.state"/>
+                                </div>
+                            </div>
+
+                            <h3>Task Lines</h3>
+                            <table class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Task Code</th>
+                                        <th>Description</th>
+                                        <th>Hours</th>
+                                        <th>Work Type</th>
+                                        <th>Location</th>
+                                    </tr>
+                                </thead>
+                                <tr t-foreach="sheet.line_ids" t-as="line">
+                                    <td><span t-field="line.date"/></td>
+                                    <td><span t-field="line.routing_id"/></td>
+                                    <td><span t-field="line.routing_subrouting_id"/></td>
+                                    <td><span t-field="line.name"/></td>
+                                    <td><span t-field="line.unit_amount"/></td>
+                                    <td><span t-field="line.worktype"/></td>
+                                    <td><span t-field="line.location"/></td>
+                                </tr>
+                            </table>
+
+                            <h3>Approval Lines</h3>
+                            <table class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Approval Type</th>
+                                        <th>Contract/Project</th>
+                                        <!--<th>Relevant Time</th>-->
+                                        <th>Status</th>
+                                        <th>Approved By</th>
+                                    </tr>
+                                </thead>
+                                <tr t-foreach="sheet.approval_line_ids" t-as="appr">
+                                    <td><span t-field="appr.type"/></td>
+                                    <td><span t-field="appr.account_analytic_id"/></td>
+                                    <!--<td><span t-field="appr.relevant_time"/></td>-->
+                                    <td><span t-field="appr.state"/></td>
+                                    <td><span t-field="appr.approved_by"/></td>
+                                </tr>
+                            </table>
+
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <!-- footer layout for printed timesheets -->
+        <template id="imsar_timekeeping.timesheet_layout">
+            <!-- Multicompany -->
+            <t t-if="o and 'company_id' in o">
+                <t t-set="company" t-value="o.company_id"></t>
+            </t>
+            <t t-if="not o or not 'company_id' in o">
+                <t t-set="company" t-value="res_company"></t>
+            </t>
+
+            <t t-raw="0" />
+            <div class="footer">
+                <div class="row">
+                    <div class="col-xs-3">
+                        <span>Printed on: </span>
+                        <span t-esc="time.strftime('%Y-%m-%d')"/>
+                        <span t-esc="time.strftime('%H:%M')"/>
+                    </div>
+                    <div class="col-xs-2 col-xs-offset-2 text-center">
+                        <span t-esc="company.name"/>
+                    </div>
+                    <div class="col-xs-2 col-xs-offset-2 text-right">
+                        <ul class="list-inline">
+                            <li><span class="page"/></li>
+                            <li>/</li>
+                            <li><span class="topage"/></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+    </data>
+</openerp>

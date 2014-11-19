@@ -41,6 +41,7 @@
                                 <field name="wage_rate" />
                                 <field name="pto_accrual_rate" />
                                 <field name="accrued_pto" />
+                                <button name="%(action_adjust_pto)d" string="Adjust PTO" type="action"/>
                             </group>
                             <group>
                                 <field name="is_owner" />
@@ -110,9 +111,36 @@
 
                 <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
                 <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
-
             </field>
         </record>
+
+        <!-- Form for PTO adjustment on employee view-->
+        <record id="adjust_pto_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.adjust_pto.form</field>
+            <field name="model">hr.timekeeping.adjust_pto</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet Activities">
+                    <group>
+                        <field name="adjustment"/>
+                    </group>
+                    <footer>
+                        <button string="Submit" name="submit_confirm" type="object" default_focus="1" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <!-- Action for button of PTO adjustment on employee view-->
+        <record id="action_adjust_pto" model="ir.actions.act_window">
+            <field name="name">Adjust PTO</field>
+            <field name="res_model">hr.timekeeping.adjust_pto</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="adjust_pto_form"/>
+            <field name="target">new</field>
+        </record>
+
 
     </data>
 </openerp>

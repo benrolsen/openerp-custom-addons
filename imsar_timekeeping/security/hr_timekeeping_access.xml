@@ -107,5 +107,15 @@
             <field name="perm_unlink">1</field>
         </record>
 
+        <record id="access_timekeeping_payroll_report" model="ir.model.access">
+            <field name="name">hr.timekeeping.payroll.report</field>
+            <field name="model_id" ref="model_hr_timekeeping_payroll_report"/>
+            <field name="group_id" ref="base.group_hr_manager"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
     </data>
 </openerp>

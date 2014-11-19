@@ -42,7 +42,7 @@
             'timekeeping_view.xml',
             'timekeeping_review_view.xml',
             'views/imsar_timekeeping.xml',
-            'report/payroll_report_view.xml',
+            'report/reports_view.xml',
             ],
     'qweb': ['static/src/xml/timekeeping_templates.xml',],
     'installable': True,

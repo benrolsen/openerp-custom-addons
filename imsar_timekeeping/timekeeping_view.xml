@@ -12,11 +12,11 @@
                         <group>
                             <field name="date" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"/>
+                            <field name="serial_reference" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
                                     attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="start_time" widget="time"/>
-                            <field name="end_time" widget="time"/>
-                            <field name="dcaa_allowable"/>
+                            <field name="start_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="end_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
                             <field name="amount" invisible="True" />
@@ -27,6 +27,7 @@
                             <field name="sheet_state" invisible="1"/>
                         </group>
                         <group>
+                            <field name="dcaa_allowable" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                    domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
@@ -36,12 +37,11 @@
                                     domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True),('hide_from_uid','=',False),
                                     ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
                             <field name="old_task_code" readonly="True" />
-                            <field name="location" options="{'create': false, 'create_edit': false}"
-                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"
                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"
                                     domain="[('task_worktype_search','=',routing_subrouting_id)]"/>
-                            <field name="lot_id"/>
+                            <field name="location" options="{'create': false, 'create_edit': false}"
+                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                         </group>
                     </group>
                     <group attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
@@ -290,15 +290,17 @@
                 <search string="Search Timesheet">
                     <filter name="draft" string="In Draft" domain="[('state','=','draft')]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state','=','confirm')]"/>
+                    <filter name="my_approvals" string="My Approvals" domain="[('adv_search','=','my_approvals')]"/>
+                    <filter name="my_direct_approvals" string="My Direct Approvals" domain="[('adv_search','=','my_direct_approvals')]"/>
                     <filter name="my_user_id" string="My Timesheets" domain="[('user_id','=',uid)]"/>
                     <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
                     <filter name="this_payperiod" string="This Payperiod" domain="[('adv_search','=','this_payperiod')]"/>
                     <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
                     <filter name="pending_payroll" string="Pending Payroll" domain="[('state','=','done'),('payroll_state','!=','submitted')]"/>
                     <group expand="0" string="Group By">
-                        <filter string="Employees" icon="terp-personal" context="{'group_by':'employee_id'}"/>
-                        <filter string="Sheet Name" icon="terp-personal" context="{'group_by':'name'}"/>
-                        <filter string="Pay Period" icon="terp-personal" context="{'group_by':'payperiod_id'}"/>
+                        <filter name="group_by_employee" string="Employees" icon="terp-personal" context="{'group_by':'employee_id'}"/>
+                        <filter name="group_by_name" string="Sheet Name" icon="terp-personal" context="{'group_by':'name'}"/>
+                        <filter name="group_by_payperiod" string="Pay Period" icon="terp-personal" context="{'group_by':'payperiod_id'}"/>
                     </group>
                 </search>
             </field>
@@ -360,7 +362,6 @@
             <field name="domain">[('user_id','=',uid)]</field>
         </record>
         <record id="action_past_timesheets_tree" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="past_timesheet_tree"/>
             <field name="act_window_id" ref="past_timesheets_view_form"/>
@@ -372,9 +373,9 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="hr_timekeeping_sheet_form"/>
+            <field name="context">{'search_default_group_by_name':1}</field>
         </record>
         <record id="action_all_timesheets_tree" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="past_timesheet_tree"/>
             <field name="act_window_id" ref="all_timesheets_view_form"/>
@@ -383,16 +384,21 @@
         <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" name="All Timesheets" sequence="2"/>
 
         <!-- Need My Approval -->
-        <record id="action_hr_timekeeping_my_approval_filter" model="ir.actions.server">
-            <field name="sequence" eval="6"/>
-            <field name="state">code</field>
-            <field name="type">ir.actions.server</field>
-            <field name="model_id" ref="model_hr_timekeeping_my_approval_filter"/>
-            <field name="code">action = pool.get('hr.timekeeping.my_approval_filter').my_approval_filter(cr, uid, context)</field>
-            <field name="condition">True</field>
+        <record id="timesheets_approvals_view_form" model="ir.actions.act_window">
             <field name="name">My Approvals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('adv_search','=','my_approvals')]</field>
+            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
         </record>
-        <menuitem id="menu_act_hr_timekeeping_my_approval_filter" action="action_hr_timekeeping_my_approval_filter" parent="menu_hr_timekeeping" sequence="3"/>
+        <record id="action_timesheets_approvals_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="past_timesheet_tree"/>
+            <field name="act_window_id" ref="timesheets_approvals_view_form"/>
+        </record>
+        <menuitem id="menu_act_hr_timekeeping_my_approval_filter" action="timesheets_approvals_view_form" parent="menu_hr_timekeeping" sequence="3"/>
 
         <!-- Timekeeping user preferences -->
         <record id="user_preferences_form" model="ir.ui.view">
@@ -514,6 +520,24 @@
             </field>
         </record>
         <menuitem id="menu_payperiod_view" action="payperiod_view" parent="hr.menu_hr_configuration" name="Pay Periods" sequence="5"/>
+
+        <!-- Timesheet lines for inventory report -->
+        <record id="timesheet_inventory_report_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.line.inventory.tree</field>
+            <field name="model">hr.timekeeping.line</field>
+            <field name="arch" type="xml">
+                <tree string="Timesheet lines" >
+                    <field name="user_id" />
+                    <field name="date" />
+                    <field name="name" />
+                    <field name="serial_reference" />
+                    <field name="routing_id" />
+                    <field name="routing_subrouting_id" />
+                    <field name="unit_amount" string="Hours"/>
+                    <field name="full_amount" />
+                </tree>
+            </field>
+        </record>
 
 
     </data>
