@@ -407,9 +407,9 @@ class hr_timekeeping_sheet(models.Model):
     @api.model
     def create(self, vals):
         new_id = super(hr_timekeeping_sheet, self).create(vals)
-        approval_vars = {'type': 'hr', 'state': 'draft', 'sheet_id': new_id[0].id,}
+        approval_vars = {'type': 'HR', 'state': 'draft', 'sheet_id': new_id[0].id,}
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
-        approval_vars.update({'type': 'manager'})
+        approval_vars.update({'type': 'Manager'})
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
         return new_id
 
@@ -429,7 +429,7 @@ class hr_timekeeping_sheet(models.Model):
             existing_project_ids.add(analytic.id)
             time_sum[analytic.id] += line.unit_amount
             if analytic.type == 'contract' and analytic.id not in existing_approval_project_ids and time_sum[analytic.id] > 0:
-                approval_vars = {'type': 'project', 'state': 'draft', 'sheet_id': self.id, 'account_analytic_id': analytic.id}
+                approval_vars = {'type': 'Project', 'state': 'draft', 'sheet_id': self.id, 'account_analytic_id': analytic.id}
                 self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
                 existing_approval_project_ids.add(analytic.id)
         # remove approval lines if no timesheet lines exist for those projects, or total time for it is 0
@@ -460,8 +460,8 @@ class hr_timekeeping_line(models.Model):
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
     routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route())
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True, default=lambda self: self._get_user_default_subroute())
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
+    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True, default=lambda self: self._get_user_default_subroute())
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
     change_explanation = fields.Char(string='Change Explanation')
@@ -736,7 +736,7 @@ class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
 
-    type = fields.Selection([('hr','HR'),('manager','Manager'),('project','PM'),], string="Approval Type", required=True, readonly=True)
+    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','PM'),], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)
@@ -753,20 +753,20 @@ class hr_timekeeping_approval(models.Model):
 
         user = self.env.user
         # check to see if user is HR Officer (should include HR Manager automatically)
-        if self.type == 'hr':
+        if self.type == 'HR':
             hr_category = self.env['ir.module.category'].search([('name','=','Human Resources')])
             hr_officer = self.env['res.groups'].search([('name','=','Officer'),('category_id','=',hr_category.id)])
             if hr_officer in user.groups_id:
                 self.uid_can_approve = True
             self.relevant_time = self.sheet_id.total_time
         # check to see if user is PM on this project
-        elif self.type == 'project':
+        elif self.type == 'Project':
             if user in self.account_analytic_id.pm_ids:
                 self.uid_can_approve = True
             lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('account_analytic_id','=',self.account_analytic_id.id),])
             self.relevant_time = sum(line.unit_amount for line in lines)
         # check to see if user is manager for the timesheet's owner
-        elif self.type == 'manager':
+        elif self.type == 'Manager':
             manager = self.sheet_id.employee_id.parent_id
             while manager:
                 if user == manager.resource_id.user_id:

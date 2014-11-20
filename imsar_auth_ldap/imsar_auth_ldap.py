@@ -52,7 +52,8 @@ class IMSARLDAP(osv.Model):
         empl_list = empl_obj.search(cr, uid, [('user_id','=',user_id)])
         if not empl_list:
             values = dict()
-            values['name'] = user_values['name']
+            values['last_name'] = user_values['name'].split(' ', 1)[1]
+            values['first_name'] = user_values['name'].split(' ', 1)[0]
             values['user_id'] = user_id
             values['notes'] = user_values['description']
             values['work_email'] = user_values['email']
@@ -92,3 +93,19 @@ class IMSARLDAP(osv.Model):
         return connection
 
 
+class res_users(osv.Model):
+    _name = 'res.users'
+    _inherit = ['res.users']
+
+    _defaults = {
+        'display_groups_suggestions': False,
+        'display_employees_suggestions': False,
+    }
+
+class res_partner(osv.Model):
+    _name = "res.partner"
+    _inherit = ['res.partner']
+
+    _defaults = {
+        'notify_email': lambda *args: 'none'
+    }
