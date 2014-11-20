@@ -23,9 +23,9 @@ class IMSARLDAP(osv.Model):
 
     def map_ldap_attributes(self, cr, uid, conf, login, ldap_entry):
         values = super(IMSARLDAP, self).map_ldap_attributes(cr, uid, conf, login, ldap_entry)
-        values['telephoneNumber'] = ldap_entry[1]['telephoneNumber'][0] or ''
-        values['description'] = ldap_entry[1]['description'][0] or ''
-        values['email'] = ldap_entry[1]['mail'][0] or ''
+        values['telephoneNumber'] = ldap_entry[1].get('telephoneNumber',['',])[0] or ''
+        values['description'] = ldap_entry[1].get('description',['',])[0] or ''
+        values['email'] = ldap_entry[1].get('mail',['',])[0] or ''
         return values
 
     def get_ldap_dicts(self, cr, ids=None):
@@ -61,7 +61,7 @@ class IMSARLDAP(osv.Model):
             empl_id = empl_obj.create(cr, SUPERUSER_ID, values)
 
     def get_or_create_user(self, cr, uid, conf, login, ldap_entry, context=None):
-        user_id = super(IMSARLDAP, self).get_or_create_user(cr, uid, conf, login, ldap_entry, context=None)
+        user_id = super(IMSARLDAP, self).get_or_create_user(cr, uid, conf, login, ldap_entry, context)
         user = self.pool.get('res.users').browse(cr, uid, user_id)
         default_tz_res = self.pool.get('ir.config_parameter').search(cr, uid, [('key','=','user.default_tz')])
         default_tz_id = default_tz_res and default_tz_res[0]
@@ -101,6 +101,15 @@ class res_users(osv.Model):
         'display_groups_suggestions': False,
         'display_employees_suggestions': False,
     }
+
+    def create(self, cr, uid, values, context=None):
+        if context is None:
+            ctx = {}
+        else:
+            ctx = context.copy()
+        ctx.update({'no_reset_password': True})
+        user_id = super(res_users, self).create(cr, uid, values, context=ctx)
+        return user_id
 
 class res_partner(osv.Model):
     _name = "res.partner"

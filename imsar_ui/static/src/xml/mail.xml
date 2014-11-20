@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Remove the stupid "Following" options -->
+    <t t-extend="mail.followers">
+        <t t-jquery=".oe_actions" t-operation="replace" />
+        <t t-jquery=".oe_follower_title_box" t-operation="replace" />
+        <t t-jquery=".oe_follower_list" t-operation="replace" />
+    </t>
+
+</templates>

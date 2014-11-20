@@ -16,7 +16,7 @@
             <field name="country_id" ref="base.us"/>
             <field name="phone">801.798.8440</field>
             <field name="fax">801.798.2814</field>
-            <field name="email">sales@imsar.com</field>
+            <field name="email">admin@imsar.com</field>
             <field name="website">www.imsar.com</field>
         </record>
 

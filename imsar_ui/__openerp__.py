@@ -29,7 +29,7 @@
     Interface customizations:
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', 'web_m2x_options',
+    "depends" : ['base', 'web_m2x_options', 'mail',
                  'imsar_default_install', 'imsar_accounting', 'imsar_sale', 'account_budget',
                  "purchase", "sale", "project",
                  'product', 'account', 'stock',
@@ -45,6 +45,7 @@
         'menus.xml',
         'imsar_settings.xml',
     ],
+    'qweb': ['static/src/xml/mail.xml'],
     'installable': True,
     'auto_install': False,
 }
