@@ -359,7 +359,7 @@ class hr_timekeeping_sheet(models.Model):
         # I have NEVER heard of a tech company having the audacity to insist on a policy like this for salaried
         # employees, but the above-mentioned higher-ups seem flabbergasted that anyone would question it, so
         # here's my passive-aggressive note of protest, left where no one will ever find it.
-        if self.employee_id.full_time:
+        if self.employee_id.full_time and not self.employee_id.is_owner:
             pp_total = 0
             # trying to figure out if it's even time to do checks like this is a pain
             reg_week_a_exists = reg_week_b_exists = False

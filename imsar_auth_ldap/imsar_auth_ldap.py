@@ -6,7 +6,7 @@ from openerp.osv import fields, osv
 from openerp import SUPERUSER_ID
 
 
-class IMSARLDAP(osv.Model):
+class imsar_auth_ldap(osv.Model):
     _inherit = "res.company.ldap"
 
     _columns = {
@@ -15,14 +15,13 @@ class IMSARLDAP(osv.Model):
         'ldap_ssl': fields.boolean('Use SSL',
             help="Connect over LDAPS, using SSL (default port 636)."),
     }
-
     _defaults = {
         'create_employee': True,
         'ldap_ssl': False,
     }
 
     def map_ldap_attributes(self, cr, uid, conf, login, ldap_entry):
-        values = super(IMSARLDAP, self).map_ldap_attributes(cr, uid, conf, login, ldap_entry)
+        values = super(imsar_auth_ldap, self).map_ldap_attributes(cr, uid, conf, login, ldap_entry)
         values['telephoneNumber'] = ldap_entry[1].get('telephoneNumber',['',])[0] or ''
         values['description'] = ldap_entry[1].get('description',['',])[0] or ''
         values['email'] = ldap_entry[1].get('mail',['',])[0] or ''
@@ -61,7 +60,7 @@ class IMSARLDAP(osv.Model):
             empl_id = empl_obj.create(cr, SUPERUSER_ID, values)
 
     def get_or_create_user(self, cr, uid, conf, login, ldap_entry, context=None):
-        user_id = super(IMSARLDAP, self).get_or_create_user(cr, uid, conf, login, ldap_entry, context)
+        user_id = super(imsar_auth_ldap, self).get_or_create_user(cr, uid, conf, login, ldap_entry, context)
         user = self.pool.get('res.users').browse(cr, uid, user_id)
         default_tz_res = self.pool.get('ir.config_parameter').search(cr, uid, [('key','=','user.default_tz')])
         default_tz_id = default_tz_res and default_tz_res[0]

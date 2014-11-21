@@ -89,6 +89,34 @@
         </record>
         <menuitem id="menu_action_timekeeping_inventory_wizard" action="action_timekeeping_inventory_wizard" parent="menu_hr_timekeeping_reports" sequence="5"/>
 
+        <!-- Sheets by week/task report -->
+        <record id="view_timekeeping_by_task_wizard" model="ir.ui.view">
+             <field name="name">hr.timekeeping.by_task.wizard</field>
+             <field name="model">hr.timekeeping.by_task.wizard</field>
+             <field name="arch" type="xml">
+                <form string="Search by week and project">
+                    <group>
+                        <field name="week"/>
+                        <field name="analytic" options="{'create': false, 'create_edit': false}" autofocus="1"/>
+                    </group>
+                    <footer>
+                        <button name="open_report" string="Get Report" type="object"  class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />
+                    </footer>
+                </form>
+             </field>
+        </record>
+        <record id="action_timekeeping_by_task_wizard" model="ir.actions.act_window">
+            <field name="name">Timesheets By Task Report</field>
+            <field name="res_model">hr.timekeeping.by_task.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_timekeeping_by_task_wizard"/>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="menu_action_timekeeping_by_task_wizard" action="action_timekeeping_by_task_wizard" parent="menu_hr_timekeeping_reports" sequence="6"/>
+
         <!-- Timesheet Approval report -->
         <report
             id="action_report_timekeeping_sheet_approval"

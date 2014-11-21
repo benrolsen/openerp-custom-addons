@@ -20,7 +20,6 @@ class payroll_report_wizard(models.TransientModel):
         last_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_day)
         return last_payperiod or ''
 
-
     @api.multi
     def open_report(self):
         ctx = {}
@@ -105,3 +104,42 @@ class timekeeping_inventory_wizard(models.TransientModel):
             'view_mode': 'tree',
             'domain': "[('date', '>=', '{}'),('date','<=','{}'),('serial_reference','!=','')]".format(self.date_from, self.date_to),
         }
+
+
+class timekeeping_search_sheets_by_task(models.TransientModel):
+    _name = "hr.timekeeping.by_task.wizard"
+    _description = "Timesheets by Task"
+
+    week = fields.Char('Week', default=lambda self: self._get_last_week())
+    analytic = fields.Many2one('account.analytic.account', string="Contract/Project")
+
+    @api.model
+    def _get_last_week(self):
+        last_week = date.today() - timedelta(days=7)
+        this_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(last_week)
+        week_ab = this_payperiod.get_week_ab(last_week)
+        week = "{}-{}".format(this_payperiod.name, week_ab)
+        return week
+
+    @api.multi
+    def open_report(self):
+        ids = set()
+        timesheets = self.env['hr.timekeeping.sheet'].search([('name','=',self.week)])
+        child_accounts = self.analytic.get_all_children()
+        for sheet in timesheets:
+            if self.analytic:
+                for line in sheet.line_ids:
+                    if line.account_analytic_id.id in child_accounts.ids:
+                        ids.add(sheet.id)
+            else:
+                ids.add(sheet.id)
+        return {
+            'name': _('Timesheets by Task'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.timekeeping.sheet',
+            'view_id': False,
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': [('id','in',list(ids))],
+        }
+

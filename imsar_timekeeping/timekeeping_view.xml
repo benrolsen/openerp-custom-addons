@@ -281,7 +281,6 @@
             <field name="target">new</field>
         </record>
 
-
         <!-- search filters -->
         <record id="view_hr_timekeeping_sheet_filter" model="ir.ui.view">
             <field name="name">hr.timekeeping.sheet.filter</field>
@@ -415,7 +414,6 @@
                             <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                    domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True)]" />
                         </group>
-
                         <group string="One-Click Tasks">
                             <field name="oneclick_tasks" nolabel="1" domain="[('oneclick_filter','=',True)]"
                                    options="{'create': false, 'create_edit': false}" >

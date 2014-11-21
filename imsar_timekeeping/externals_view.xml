@@ -43,6 +43,7 @@
                         </group>
                         <group>
                             <field name="middle_name"/>
+                            <field name="qb_name"/>
                         </group>
                     </group>
                 </xpath>

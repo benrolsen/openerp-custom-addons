@@ -108,6 +108,8 @@ class employee(models.Model):
     first_name = fields.Char('First Name', default='', required=True)
     middle_name = fields.Char('Middle Name', default='')
     last_name = fields.Char('Last Name', default='', required=True)
+    # only needed until we're off quickbooks
+    qb_name = fields.Char('Quickbooks Name', default='', required=True)
     name = fields.Char('Name', compute='_computed_fields', store=True, required=False)
     name_related = fields.Char('Name', compute='_computed_fields', store=True, required=False)
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', default='exempt', required=True)
@@ -127,6 +129,9 @@ class employee(models.Model):
 
     @api.multi
     def accrue_pto(self, hours):
+        # owners can't accrue PTO
+        if self.is_owner:
+            return None
         self.accrued_pto += hours
         # credit pto liability, debit pto expense
         amount = hours * self.wage_rate

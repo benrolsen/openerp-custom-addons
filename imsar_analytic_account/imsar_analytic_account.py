@@ -29,7 +29,7 @@ class IMSAR_Analytic(models.Model):
 
     @api.multi
     def get_all_children(self):
-        result_list = self._recursive_children(self)
+        result_list = self._recursive_children(self, [])
         result = self.browse(result_list)
         return result
 
