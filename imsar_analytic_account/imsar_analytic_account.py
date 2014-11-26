@@ -33,4 +33,19 @@ class IMSAR_Analytic(models.Model):
         result = self.browse(result_list)
         return result
 
+    @api.multi
+    def set_close(self):
+        return self.write({'state': 'close'})
+
+    @api.multi
+    def set_cancel(self):
+        return self.write({'state': 'cancelled'})
+
+    @api.multi
+    def set_open(self):
+        return self.write({'state': 'open'})
+
+    @api.multi
+    def set_pending(self):
+        return self.write({'state': 'pending'})
 

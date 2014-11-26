@@ -191,6 +191,14 @@ class hr_timekeeping_sheet(models.Model):
         return action_server_obj.run(self._cr, self._uid, action_id, context=ctx)
 
     @api.multi
+    def button_next_timesheet(self):
+        ctx = {'date_override': datetime.strptime(self.date_from, DATE_FORMAT) + timedelta(days=7)}
+        ctx.update(self._context)
+        action_server_obj = self.pool.get('ir.actions.server')
+        action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_current_open').id
+        return action_server_obj.run(self._cr, self._uid, action_id, context=ctx)
+
+    @api.multi
     def button_oneclick_add(self):
         today_lines = self.line_ids.search([('date','=',date.today().strftime(DATE_FORMAT))])
         today_tasks = [line.routing_subrouting_id for line in today_lines]
@@ -645,6 +653,8 @@ class hr_timekeeping_line(models.Model):
             new_end_time_str = new_end_time.strftime('%H:%M:00')
             if self.end_time != new_end_time_str:
                 self.end_time = new_end_time_str
+        if self.unit_amount % 0.25 != 0:
+            return {'warning': {'title': 'Invalid time entry', 'message': 'You may only submit time in quarter-hour increments.'}}
 
     @api.onchange('start_time')
     def onchange_start_time(self):
@@ -736,7 +746,7 @@ class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
 
-    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','PM'),], string="Approval Type", required=True, readonly=True)
+    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','Project'),], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)

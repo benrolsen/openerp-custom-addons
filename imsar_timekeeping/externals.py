@@ -120,6 +120,10 @@ class employee(models.Model):
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
+    employee_number = fields.Integer('Employee Number', default=0)
+    hire_date = fields.Date('Hire Date')
+    personal_email = fields.Char('Personal Email')
+    personal_phone = fields.Char('Personal Phone')
 
     @api.one
     @api.depends('first_name','middle_name','last_name')

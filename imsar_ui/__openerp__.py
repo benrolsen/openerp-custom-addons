@@ -44,6 +44,7 @@
         'purchase_view.xml',
         'menus.xml',
         'imsar_settings.xml',
+        'views/imsar_ui.xml',
     ],
     'qweb': ['static/src/xml/mail.xml'],
     'installable': True,

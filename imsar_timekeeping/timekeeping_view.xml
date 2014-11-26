@@ -11,12 +11,13 @@
                     <group>
                         <group>
                             <field name="date" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"/>
-                            <field name="serial_reference" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"
+                                    autofocus="autofocus"/>
                             <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
                                     attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="start_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="end_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="serial_reference" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
                             <field name="amount" invisible="True" />
@@ -84,10 +85,11 @@
                     </div>
                     <group>
                         <group>
+                            <button type="object" string="Previous Timesheet" name="button_previous_timesheet"/>
+                            <button type="object" string="Next Timesheet" name="button_next_timesheet" class="oe_inline"/>
                             <field name="name"/>
                             <label for="date_from" string="Timesheet Period"/>
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
-                            <button type="object" string="Previous Timesheet" name="button_previous_timesheet" />
                         </group>
                         <group>
                             <field name="employee_flsa_status" readonly="True"/>
@@ -208,15 +210,16 @@
                         </page>
                         <page string="Instructions" attrs="{'invisible':[('state','!=','draft')]}">
                             <p><strong>How to keep time</strong></p>
-                            <p>Timesheets are intended to be filled out every day, on the day  that work is done. You may edit entries for other days,
-                            but you will typically be required to provide an explanation for the change. You may not create work entries for days
+                            <p>Timesheets are intended to be filled out every day, on the day that work is done. You may edit entries for other days,
+                            but you will be required to provide an explanation for the change. You may not create work entries for days
                             outside of this timesheet's work week.</p>
                             <p>First, you must review the Statement of Work for any task that you want to work on. The link to review task S.O.W.s is
                             on the left menu. Please read the description before clicking the acknowledgement button. Note that on the S.O.W. review page,
                             you may click the left and right buttons in the upper right corner to go to the previous/next S.O.W. page.</p>
-                            <p>On the timesheet page, you may add new work entries with the "Add an item" link. You can set a default Billing Category
-                            and/or Task on the Preferences page (left menu link). Additionally, you may only delete an entry from a line entry
-                            Detail page.</p>
+                            <p>On the timesheet page, you may add new work entries with the "Add Entry" button. You can set a default Billing Category
+                            and/or Task on the Preferences page (left menu link). Also in the Preferences page, you can set "One-click Tasks" which
+                            are typically tasks you work on every day. After setting these, you can click the "Add One-click Tasks" button on the timesheet,
+                            which will add those tasks for the current day. Additionally, you may only delete an entry from a line entry Detail page.</p>
                             <p>Note that for any entries in the future, there is a very limited set of tasks that you may choose. (Typically
                             PTO and Holiday, under the Benefits category).</p>
                             <p>Entries edited in-line are not saved until you click Validate and Save! Make a habit of clicking this button frequently
@@ -339,7 +342,7 @@
             <field name="model">hr.timekeeping.sheet</field>
             <field name="arch" type="xml">
                 <tree string="Timesheets" create="false" edit="false" delete="false"
-                      colors="red:payroll_state=='failed';red:type=='addendum';">
+                      colors="red:payroll_state=='failed';purple:type=='addendum';">
                     <field name="employee_id" />
                     <field name="name" />
                     <field name="date_from" />
@@ -347,7 +350,7 @@
                     <field name="total_time" widget="float_time" />
                     <field name="type" />
                     <field name="state" />
-                    <field name="payroll_state"/>
+                    <field name="payroll_state" groups="base.group_hr_user"/>
                 </tree>
             </field>
         </record>

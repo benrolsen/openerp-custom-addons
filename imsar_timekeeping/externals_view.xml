@@ -56,6 +56,19 @@
                     <field name="work_email" widget="email"/>
                     <field name="work_phone"/>
                 </xpath>
+                <xpath expr='//page[@string="Personal Information"]//group[@string="Citizenship &amp; Other Info"]' position='replace'>
+                </xpath>
+                <xpath expr='//page[@string="Personal Information"]//group[@string="Birth"]' position='replace'>
+                </xpath>
+                <xpath expr='//page[@string="Personal Information"]//group[@string="Contact Information"]' position='inside'>
+                    <field name="personal_email" widget="email"/>
+                    <field name="personal_phone"/>
+                    <field name="employee_number"/>
+                    <field name="hire_date"/>
+                </xpath>
+                <xpath expr='//page[@string="Personal Information"]//group[@string="Status"]' position='inside'>
+                    <field name="birthday"/>
+                </xpath>
                 <xpath expr='//page[@string="HR Settings"]' position='replace'>
                     <page string="HR Settings" groups="base.group_hr_user">
                         <group>
@@ -92,16 +105,6 @@
             <field name="model">account.analytic.account</field>
             <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
-                <xpath expr="/form/sheet" position='before'>
-                    <header>
-                        <button name="set_pending" string="To Renew" type="object" states="open" />
-                        <button name="set_close" string="Close Contract" type="object" states="open,pending" />
-                        <button name="set_open" string="Set In Progress" type="object" states="pending,close,cancelled,draft" />
-                        <button name="set_cancel" string="Cancel Contract" type="object" states="open,pending"/>
-                        <field name="state" readonly="1" widget="statusbar"
-                            statusbar_visible="open,pending,close" statusbar_colors='{"pending":"red", "template":"blue"}'/>
-                    </header>
-                </xpath>
                 <xpath expr='//div[@name="project"]' position='after'>
                     <div>
                         <field name="is_labor_code" class="oe_inline"/>
