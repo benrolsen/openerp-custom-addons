@@ -107,7 +107,7 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
         if regular_timesheet.state != 'done':
             raise Warning(_('Error!'), _("You cannot create an addendum on an unapproved timesheet."))
 
-        employee = self.env['hr.employee'].search([('user_id','=',self._uid)])
+        employee = self.env['hr.employee'].search([('user_id','=',regular_timesheet.user_id.id)])
         if not employee:
             raise Warning(_('Error!'), _("Please create an employee and associate it with this user."))
         if len(employee.ids) > 1:
@@ -129,7 +129,7 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
             values['type'] = 'addendum'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
-            values['user_id'] = regular_timesheet.user_id
+            values['user_id'] = regular_timesheet.user_id.id
             sheet_ids = self.env['hr.timekeeping.sheet'].sudo().create(values)
 
         view = {

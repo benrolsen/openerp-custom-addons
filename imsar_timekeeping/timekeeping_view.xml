@@ -134,6 +134,7 @@
                         </group>
                         <group>
                             <field name="employee_flsa_status" readonly="True"/>
+                            <field name="employee_full_time" invisible="True"/>
                             <field name="type" string="Timesheet Type"/>
                             <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
                             <field name="payroll_state" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user"/>
@@ -235,8 +236,7 @@
                             <widget type="timekeeping_weekly_summary"/>
                         </page>
                         <!-- page for approvals -->
-                        <!--<page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">-->
-                        <page string="Approvals">
+                        <page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">
                             <field name="approval_line_ids" nolabel="1" readonly="True">
                                 <tree editable="False">
                                     <field name="type"/>
@@ -290,6 +290,7 @@
                     <group>
                         <!--<field name="subtotal_line" attrs="{'invisible':[('employee_flsa_status','=','exempt')]}"/>-->
                         <field name="subtotal_line"/>
+                        <field name="pp_total_time_display" attrs="{'invisible':[('employee_full_time','=','False')]}"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">

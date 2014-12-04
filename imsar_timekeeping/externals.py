@@ -143,18 +143,21 @@ class employee(models.Model):
     wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0)
     pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)', required=True, default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
+    accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
     employee_number = fields.Integer('Employee Number', default=0)
     hire_date = fields.Date('Hire Date')
     personal_email = fields.Char('Personal Email')
     personal_phone = fields.Char('Personal Phone')
+    uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
 
     @api.one
     @api.depends('first_name','middle_name','last_name')
     def _computed_fields(self):
         self.name = "{}, {} {}".format(self.last_name, self.first_name, self.middle_name)
         self.name_related = self.name
+        self.uid_is_user_id = (self.user_id.id == self.env.user.id)
 
     @api.multi
     def accrue_pto(self, hours):

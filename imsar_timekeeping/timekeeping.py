@@ -51,12 +51,14 @@ class hr_timekeeping_sheet(models.Model):
     user_id = fields.Many2one('res.users', string='User', index=True, readonly=True, default=lambda self: self.env.user)
     employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
+    employee_full_time = fields.Boolean(related='employee_id.full_time', string='Full Time', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
     view_line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
     subtotal_line = fields.Char(string="Subtotals: ", compute='_compute_subtotals')
     subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
     pp_total_time = fields.Float(string="Pay Period Total Time", compute='_compute_subtotals')
+    pp_total_time_display = fields.Char(string="Pay Period:", compute='_compute_subtotals')
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
     approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
@@ -76,8 +78,9 @@ class hr_timekeeping_sheet(models.Model):
         self.subtotal_json = json.dumps(totals)
         self.total_time = total_time
         self.pp_total_time = 0
-        for sheet in self.payperiod_id.sheet_ids.search([('employee_id','=',self.employee_id.id), ('state','=','done')]):
+        for sheet in self.search([('payperiod_id','=',self.payperiod_id.id), ('employee_id','=',self.employee_id.id)]):
             self.pp_total_time += sheet.total_time
+        self.pp_total_time_display = "Total time this pay period: {} (of {} for full time)".format(self.pp_total_time, self.employee_id.full_time_hours)
 
     @api.one
     @api.constrains('line_ids')
@@ -378,55 +381,14 @@ class hr_timekeeping_sheet(models.Model):
         body = "All approvals met on {}".format(now.strftime('%c'))
         self.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
-        # Check both weeks of the payroll period, if they exist. If they're both 'done' and this employee is
-        # full time, check the total hours against this employee's expected full time hours. If the total hours
-        # don't add up to the expected hours, we add PTO to make up the difference, which honestly seems like
-        # pure douchebaggery to me, but the higher-ups here act like it's perfectly natural.
-        # I have NEVER heard of a tech company having the audacity to insist on a policy like this for salaried
-        # employees, but the above-mentioned higher-ups seem flabbergasted that anyone would question it, so
-        # here's my passive-aggressive note of protest, left where no one will ever find it.
+
         if self.employee_id.full_time and not self.employee_id.is_owner:
             pp_total = 0
-            # trying to figure out if it's even time to do checks like this is a pain
-            reg_week_a_exists = reg_week_b_exists = False
-            open_sheet_exists = False
-            for sheet in self.payperiod_id.sheet_ids.search([('employee_id','=',self.employee_id.id)]):
-                # first, both regular A/B timesheets must exist
-                if sheet.type == 'regular' and sheet.week_ab == 'A':
-                    reg_week_a_exists = True
-                if sheet.type == 'regular' and sheet.week_ab == 'B':
-                    reg_week_b_exists = True
-                if sheet.id != self.id and sheet.state != 'done':
-                    # if there are any open timesheets/addendums for this pay period, don't force the PTO addition
-                    open_sheet_exists = True
-                # only count total hours for approved timesheets
-                else:
-                    pp_total += sheet.total_time
+            for sheet in self.search([('payperiod_id','=',self.payperiod_id.id), ('employee_id','=',self.employee_id.id), ('state','=','done')]):
+                pp_total += sheet.total_time
             # full-time employees accrue PTO
             self.accrue_pto(pp_total)
             exp_total = self.employee_id.full_time_hours
-            diff = exp_total - pp_total
-            # if diff > 0 and not open_sheet_exists and reg_week_a_exists and reg_week_b_exists:
-            #     pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id
-            #     task = self.env['account.routing.subrouting'].search([('account_analytic_id','=',pto_analytic_id.id)])
-            #     if not task:
-            #         raise Warning(_("You must define a PTO Analytic for this employee's company in Settings."))
-            #     if not task.account_analytic_id.linked_worktype:
-            #         raise Warning(_("The PTO Analytic must have a linked worktype."))
-            #     if len(task) > 1:
-            #         task = task[0]
-            #     vals = {
-            #         'sheet_id': self.id,
-            #         'routing_id': task.routing_id.id,
-            #         'routing_line_id': task.routing_line_id.id,
-            #         'routing_subrouting_id': task.id,
-            #         'worktype': task.account_analytic_id.linked_worktype.id,
-            #         'date': self.date_to,
-            #         'name': "Automatic PTO addition to reach full-time hours in pay period",
-            #         'unit_amount': diff,
-            #         'change_explanation': '',
-            #     }
-            #     newid = self.env['hr.timekeeping.line'].create(vals, override=True)
         # refresh the page
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
