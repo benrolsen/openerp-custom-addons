@@ -97,7 +97,7 @@
                 <form string="Search by week and project">
                     <group>
                         <field name="week"/>
-                        <field name="analytic" options="{'create': false, 'create_edit': false}" autofocus="1"/>
+                        <field name="analytic" options="{'create': false, 'create_edit': false}" widget="selection"/>
                     </group>
                     <footer>
                         <button name="open_report" string="Get Report" type="object"  class="oe_highlight"/>

@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-        <!-- The time entry detail form -->
+        <!-- The time entry detail form, readonly -->
         <record id="hr_timekeeping_line_form" model="ir.ui.view">
             <field name="name">hr.timekeeping.line.form</field>
             <field name="model">hr.timekeeping.line</field>
@@ -10,14 +10,12 @@
                 <form string="Timesheet Activities">
                     <group>
                         <group>
-                            <field name="date" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="name" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')], 'required':['|',('unit_amount','!=',0.0)]}"
-                                    autofocus="autofocus"/>
-                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
-                                    attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="start_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="end_time" widget="time" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
-                            <field name="serial_reference" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="date" readonly="1"/>
+                            <field name="name" readonly="1"/>
+                            <field name="unit_amount" widget="float_time" readonly="1"/>
+                            <field name="start_time" widget="time" readonly="1"/>
+                            <field name="end_time" widget="time" readonly="1"/>
+                            <field name="serial_reference" readonly="1"/>
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
                             <field name="amount" invisible="True" />
@@ -28,27 +26,67 @@
                             <field name="sheet_state" invisible="1"/>
                         </group>
                         <group>
-                            <field name="dcaa_allowable" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                            <field name="dcaa_allowable" readonly="1"/>
+                            <field name="routing_id" readonly="1"/>
+                            <field name="routing_line_id" invisible="1"/>
+                            <field name="routing_subrouting_id" readonly="1"/>
+                            <field name="old_task_code" readonly="True" />
+                            <field name="worktype" readonly="1"/>
+                            <field name="location" readonly="1"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+        <!-- The time entry detail form, editable -->
+        <record id="hr_timekeeping_line_form_editable" model="ir.ui.view">
+            <field name="name">hr.timekeeping.line.form</field>
+            <field name="model">hr.timekeeping.line</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <form string="Timesheet Activities">
+                    <group>
+                        <group>
+                            <field name="date" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="name" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('unit_amount','!=',0.0)]}"
+                                    autofocus="autofocus"/>
+                            <field name="unit_amount" widget="float_time" string="Hours" sum="Hours" help="Time (1:30) or float (1.5) format"
+                                    attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="start_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="end_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="state" invisible="True"/>
+                            <field name="logging_required" invisible="True"/>
+                            <field name="amount" invisible="True" />
+                            <field name="premium_amount" invisible="True" />
+                            <field name="sheet_id" invisible="1"/>
+                            <field name="user_id" invisible="1"/>
+                            <field name="uid_is_user_id" invisible="1"/>
+                            <field name="sheet_state" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="dcaa_allowable" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                    domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"
-                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                                   attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection" invisible="1"
                                     domain="[('routing_id','=',routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
                             <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                    domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True),('hide_from_uid','=',False),
-                                    ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
+                                   attrs="{'readonly':[('sheet_state','!=','draft')]}"
+                                   domain="[('routing_line_id','=',routing_line_id),('view_on_timesheet','=',sheet_id),
+                                            ('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
                             <field name="old_task_code" readonly="True" />
                             <field name="worktype" widget="selection" options="{'create': false, 'create_edit': false}"
-                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"
-                                    domain="[('task_worktype_search','=',routing_subrouting_id)]"/>
+                                   attrs="{'readonly':[('sheet_state','!=','draft')]}"
+                                   domain="[('task_worktype_search','=',routing_subrouting_id)]"/>
                             <field name="location" options="{'create': false, 'create_edit': false}"
-                                   attrs="{'readonly':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}"/>
+                                   attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                         </group>
                     </group>
-                    <group attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
+                    <group attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <field name="change_explanation" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
                     </group>
-                    <footer attrs="{'invisible':['|',('uid_is_user_id','!=',True),('sheet_state','!=','draft')]}">
+                    <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
                         <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?" />
                     </footer>
@@ -61,7 +99,7 @@
             <field name="res_model">hr.timekeeping.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="hr_timekeeping_line_form"/>
+            <field name="view_id" ref="hr_timekeeping_line_form_editable"/>
             <field name="target">new</field>
         </record>
 
@@ -73,7 +111,7 @@
                 <form string="Timesheet" create="false" delete="false">
                 <header>
                     <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
-                            attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
+                            attrs="{'invisible':['|',('state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
@@ -82,11 +120,14 @@
                     <div class="oe_title">
                         <h1><field name="employee_id" class="oe_inline" readonly="True"/></h1>
                         <field name="uid_is_user_id" invisible="True"/>
+                        <field name="uid_is_proxy" invisible="1"/>
                     </div>
                     <group>
                         <group>
-                            <button type="object" string="Previous Timesheet" name="button_previous_timesheet"/>
-                            <button type="object" string="Next Timesheet" name="button_next_timesheet" class="oe_inline"/>
+                            <button type="object" string="Previous Timesheet" name="button_previous_timesheet"
+                                    attrs="{'invisible':['|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
+                            <button type="object" string="Next Timesheet" name="button_next_timesheet" class="oe_inline"
+                                    attrs="{'invisible':['|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
                             <field name="name"/>
                             <label for="date_from" string="Timesheet Period"/>
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
@@ -102,7 +143,7 @@
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll" />
                     </group>
-                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}">
+                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <group attrs="{'invisible':['|',('type','!=','addendum'),'|',('state','!=','done'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
@@ -110,7 +151,7 @@
                     </group>
                     <notebook>
                         <!-- page for editable time entries -->
-                        <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}">
+                        <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}">
                             <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
                             <button name="write" type="object" string="Validate &amp; Save" class="oe_right"
                                     attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
@@ -128,6 +169,7 @@
                                             olive:display_color=='olive';
                                             navy:display_color=='navy';
                                             teal:display_color=='teal';" >
+                                    <field name="sheet_id" invisible="1"/>
                                     <field name="display_color" invisible="True"/>
                                     <field name="date" readonly="True"/>
                                     <field name="day_name" attrs="{'required':['|',('unit_amount','>',0.0)]}"/>
@@ -139,13 +181,13 @@
                                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
                                     <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
                                            attrs="{'readonly':[('state','!=','open')]}"
-                                           domain="[('routing_line_id','=',routing_line_id),('user_has_reviewed','=',True),('hide_from_uid','=',False),
-                                            ('type','!=','view'),('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
+                                           domain="[('routing_line_id','=',routing_line_id),('view_on_timesheet','=',sheet_id),
+                                            ('dcaa_allowable','=',dcaa_allowable),('timesheets_future_filter','in',state)]" />
                                     <field name="name" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
                                     <button name="button_details" string="Details" type="object"
-                                            attrs="{'invisible':['|',('sheet_state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
+                                            attrs="{'invisible':['|',('sheet_state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
                                     <!-- invisible fields -->
                                     <field name="dcaa_allowable" invisible="True"/>
                                     <field name="worktype" invisible="True" />
@@ -158,12 +200,13 @@
                                     <field name="change_explanation" invisible="True" />
                                     <field name="user_id" invisible="1"/>
                                     <field name="uid_is_user_id" invisible="1"/>
+                                    <field name="uid_is_proxy" invisible="1"/>
                                 </tree>
                             </field>
                             <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
                         </page>
                         <!-- page for readonly time entries -->
-                        <page string="Entries" attrs="{'invisible':[('state','=','draft'),('uid_is_user_id','=',True)]}">
+                        <page string="Entries" attrs="{'invisible':[('state','=','draft'),'|',('uid_is_user_id','=',True),('uid_is_proxy','=',True)]}">
                             <field name="view_line_ids" nolabel="1" readonly="True">
                                 <tree string="Timesheet Activities" create="false" edit="false" delete="false"
                                     colors="black:display_color=='black';
@@ -192,7 +235,8 @@
                             <widget type="timekeeping_weekly_summary"/>
                         </page>
                         <!-- page for approvals -->
-                        <page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">
+                        <!--<page string="Approvals" attrs="{'invisible':[('state','=','draft')]}">-->
+                        <page string="Approvals">
                             <field name="approval_line_ids" nolabel="1" readonly="True">
                                 <tree editable="False">
                                     <field name="type"/>

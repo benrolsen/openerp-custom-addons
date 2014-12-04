@@ -111,7 +111,7 @@ class timekeeping_search_sheets_by_task(models.TransientModel):
     _description = "Timesheets by Task"
 
     week = fields.Char('Week', default=lambda self: self._get_last_week())
-    analytic = fields.Many2one('account.analytic.account', string="Contract/Project")
+    analytic = fields.Many2one('account.analytic.account', string="Contract/Project", domain="[('project_header','=',True)]")
 
     @api.model
     def _get_last_week(self):

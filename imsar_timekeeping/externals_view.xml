@@ -105,39 +105,39 @@
             <field name="model">account.analytic.account</field>
             <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
-                <xpath expr='//div[@name="project"]' position='after'>
-                    <div>
-                        <field name="is_labor_code" class="oe_inline"/>
-                        <label for="is_labor_code" class="oe_inline"/>
-                    </div>
-                    <div attrs="{'invisible':[('is_labor_code','=',False)]}">
-                        <label for="linked_worktype" class="oe_inline" string="Restrict to single worktype (optional)"/>
-                        <field name="linked_worktype" widget="selection" class="oe_inline"/>
-                    </div>
-                    <div>
-                        <field name="dcaa_allowable" class="oe_inline"/>
-                        <label for="dcaa_allowable" class="oe_inline"/>
-                    </div>
-                    <div attrs="{'invisible':[('type','!=','contract')]}">
-                        <label for="overtime_account" class="oe_inline" string="Overtime Premium Routing Account (leave blank if none)"/>
-                        <field name="overtime_account" widget="selection" class="oe_inline"/>
-                    </div>
+                <xpath expr='//group[@name="main"]' position='before'>
+                    <group name="settings" string="Settings">
+                        <group>
+                            <field name="is_labor_code"/>
+                            <field name="dcaa_allowable"/>
+                            <field name="project_header" attrs="{'invisible':[('type','not in',['contract','view'])]}"/>
+                        </group>
+                        <group>
+                            <field name="linked_worktype" widget="selection" attrs="{'invisible':[('is_labor_code','=',False)]}"/>
+                            <field name="overtime_account" widget="selection" attrs="{'invisible':[('type','!=','contract')]}"/>
+                        </group>
+                    </group>
                 </xpath>
-                <xpath expr='//field[@name="manager_id"]' position='replace'>
-                    <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
-                </xpath>
-                <xpath expr='//field[@name="pm_ids"]' position='after'>
-                    <field name="color" />
+                <xpath expr='//group[@name="main"]' position='replace'>
+                    <group name="main">
+                        <group name="details" string="Details">
+                            <field name="code"/>
+                            <field name="type" invisible="context.get('default_type', False)"/>
+                            <field name="parent_id" on_change="on_change_parent(parent_id)" attrs="{'invisible': [('type','in',['contract'])]}"/>
+                            <field name="company_id" on_change="on_change_company(company_id)" widget="selection" groups="base.group_multi_company" attrs="{'required': [('type','&lt;&gt;','view')]}"/>
+                            <field name="partner_id" on_change="on_change_partner_id(partner_id, name)"/>
+                            <field name="color" />
+                        </group>
+                        <group name="authorization" string="Authorization" attrs="{'invisible':[('type','not in',['contract','view'])]}">
+                            <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                            <field name="limit_to_auth"/>
+                            <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                        </group>
+                    </group>
                 </xpath>
                 <xpath expr='//group[@name="main"]' position='after'>
                     <separator string="Description" name="description"/>
                     <field name="description" attrs="{'required':[('is_labor_code','=',True)]}"/>
-                </xpath>
-                <xpath expr='//notebook/page/group[@name="contract"]' position='before'>
-                    <group name="authorization" string="Authorization">
-                        <field name="limit_to_auth"/>
-                        <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
-                    </group>
                 </xpath>
 
                 <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>

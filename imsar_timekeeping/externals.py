@@ -14,12 +14,13 @@ class account_analytic_account(models.Model):
     user_review_ids_count = fields.Integer(compute='_computed_fields', readonly=True)
     user_has_reviewed = fields.Boolean(compute='_user_has_reviewed', search='_search_user_has_reviewed', string="Reviewed", readonly=True, store=False)
     is_labor_code = fields.Boolean(string="Is a labor code", default=False)
-    dcaa_allowable = fields.Boolean(string="DCAA Allowable", default=True)
-    limit_to_auth = fields.Boolean(string="Limit Contract/Project to set of users:", default=False,)
-    auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Users Authorized')
+    dcaa_allowable = fields.Boolean(string="FAR Allowable?", default=True)
+    limit_to_auth = fields.Boolean(string="Limit Allowed Users?", default=False,)
+    auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Allowed Users')
     hide_from_users = fields.Many2many('res.users', 'analytic_user_hide_rel', 'analytic_id', 'user_id', string='Hide from Users')
     hide_from_uid = fields.Boolean(compute='_computed_fields', search='_search_hidden_ids', string="Hide from my timesheet", readonly=True, store=False)
     linked_worktype = fields.Many2one('hr.timekeeping.worktype', string="Limit to worktype", domain="[('limited_use','=',True)]")
+    project_header = fields.Boolean(string="Contract/Project Header?", default=False)
 
     @api.one
     @api.depends('user_review_ids','hide_from_users')
@@ -101,6 +102,30 @@ class account_analytic_account(models.Model):
         }
         return view
 
+    @api.multi
+    def write(self, vals):
+        res = super(account_analytic_account, self).write(vals)
+        if self.project_header:
+            for child in self.get_all_children():
+                if child.id == self.id:
+                    continue
+                pms = set(child.pm_ids.ids)
+                auth_users = set(child.auth_users.ids)
+                pms.update(set(self.pm_ids.ids))
+                auth_users.update(set(self.auth_users.ids))
+                child.write({'pm_ids':[(6,0,list(pms))], 'auth_users': [(6,0,list(auth_users))], 'limit_to_auth': self.limit_to_auth})
+        return res
+
+    @api.model
+    def create(self, vals):
+        res = super(account_analytic_account, self).create(vals)
+        parent = res.parent_id
+        while parent:
+            if parent.project_header:
+                res.write({'pm_ids':[(6,0,parent.pm_ids.ids)], 'auth_users': [(6,0,parent.auth_users.ids)], 'limit_to_auth': parent.limit_to_auth})
+                break
+            parent = parent.parent_id
+        return res
 
 class employee(models.Model):
     _inherit = 'hr.employee'
@@ -213,12 +238,14 @@ class account_routing_subrouting(models.Model):
     user_has_reviewed = fields.Boolean(related='account_analytic_id.user_has_reviewed', readonly=True)
     dcaa_allowable = fields.Boolean(related='account_analytic_id.dcaa_allowable', readonly=True)
     hide_from_uid = fields.Boolean(related='account_analytic_id.hide_from_uid', readonly=True)
-    oneclick_filter = fields.Boolean(store=False, compute='_oneclick', search='_filter_oneclick')
+    oneclick_filter = fields.Boolean(store=False, compute='_dummy', search='_filter_oneclick')
     oneclick_prefs = fields.Many2many('hr.timekeeping.preferences', 'user_pref_subroute_rel', 'subrouting_id', 'user_pref', string='One Click Prefs')
+    view_on_timesheet = fields.Boolean(store=False, compute='_dummy', search='_viewable_search')
 
     @api.one
-    def _oneclick(self):
+    def _dummy(self):
         self.oneclick_filter = True
+        self.view_on_timesheet = True
 
     def _filter_oneclick(self, operator, value):
         timekeeping_id = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.ar_section_timekeeping')
@@ -229,6 +256,20 @@ class account_routing_subrouting(models.Model):
         subrouting_ids = self.env['account.routing.subrouting'].search([
             ('routing_line_id','in',routing_line_ids.ids),('user_has_reviewed','=',True),('hide_from_uid','=',False),
         ])
+        return [('id','in', subrouting_ids.ids)]
+
+    def _viewable_search(self, operator, value):
+        sheet_id = self.env['hr.timekeeping.sheet'].browse(value)
+        if self.env.user.id != sheet_id.user_id.id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
+            pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
+            in_absentia_id = self.env.user.company_id.in_absentia_id.id
+            subrouting_ids = self.env['account.routing.subrouting'].search([
+                ('account_analytic_id','in',[pto_analytic_id,in_absentia_id]),
+            ])
+        else:
+            subrouting_ids = self.env['account.routing.subrouting'].search([
+                ('type','!=','view'),('user_has_reviewed','=',True),('hide_from_uid','=',False),
+            ])
         return [('id','in', subrouting_ids.ids)]
 
 

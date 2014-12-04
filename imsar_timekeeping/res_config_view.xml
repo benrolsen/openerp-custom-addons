@@ -48,6 +48,10 @@
                                 <field name="pto_expense_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
+                                <label for="in_absentia_id"/>
+                                <field name="in_absentia_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
                                 <label for="future_analytic_ids"/>
                                 <field name="future_analytic_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>

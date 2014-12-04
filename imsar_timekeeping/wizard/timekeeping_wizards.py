@@ -11,17 +11,16 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
 
     @api.model
     def open_timesheet(self, context=None): # leave the unused kwarg in there, just... trust me
-        today = self._context.get('date_override')
-        if not today:
-            today = date.today()
+        today = self._context.get('date_override') or date.today()
+        ts_user = self._context.get('ts_user') or self._uid
+
         # get the pay period for the given date
         this_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(today)
         week_ab = this_payperiod.get_week_ab(today)
         sunday = today + relativedelta(weekday=SU(-1))
         saturday = sunday + timedelta(days=6)
 
-
-        employee = self.env['hr.employee'].search([('user_id','=',self._uid)])
+        employee = self.env['hr.employee'].search([('user_id','=',ts_user)])
         if not employee:
             raise Warning(_('Error!'), _("Please create an employee and associate it with this user."))
         if len(employee.ids) > 1:
@@ -42,7 +41,7 @@ class imsar_hr_timesheet_current_open(models.TransientModel):
             values['type'] = 'regular'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
-            values['user_id'] = self._uid
+            values['user_id'] = ts_user
             sheet_ids = self.env['hr.timekeeping.sheet'].sudo().create(values)
 
         view = {
@@ -130,7 +129,7 @@ class imsar_hr_timesheet_addendum_open(models.TransientModel):
             values['type'] = 'addendum'
             values['state'] = 'draft'
             values['employee_id'] = employee.id
-            values['user_id'] = self._uid
+            values['user_id'] = regular_timesheet.user_id
             sheet_ids = self.env['hr.timekeeping.sheet'].sudo().create(values)
 
         view = {

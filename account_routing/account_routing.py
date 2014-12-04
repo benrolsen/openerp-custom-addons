@@ -6,7 +6,7 @@ class account_analytic_account(models.Model):
 
     account_routing_subrouting_ids = fields.One2many('account.routing.subrouting', 'account_analytic_id', 'Routing Subroutes')
     color = fields.Selection([('black','Black'),('gray','Gray'),('maroon','Maroon'),('red','Red'),('purple','Purple'),('green','Green'),('olive','Olive'),('navy','Navy'),('teal','Teal'),],
-                             string='Color', default='black')
+                             string='Color')
     display_color = fields.Selection([('black','Black'),('gray','Gray'),('maroon','Maroon'),('red','Red'),('purple','Purple'),('green','Green'),('olive','Olive'),('navy','Navy'),('teal','Teal'),],
                              string='Display Color', store=False, compute='_computed_color')
 

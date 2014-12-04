@@ -47,6 +47,7 @@ class hr_timekeeping_sheet(models.Model):
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
+    uid_is_proxy = fields.Boolean(compute='_computed_fields', readonly=True)
     user_id = fields.Many2one('res.users', string='User', index=True, readonly=True, default=lambda self: self.env.user)
     employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
@@ -55,6 +56,7 @@ class hr_timekeeping_sheet(models.Model):
     subtotal_line = fields.Char(string="Subtotals: ", compute='_compute_subtotals')
     subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
+    pp_total_time = fields.Float(string="Pay Period Total Time", compute='_compute_subtotals')
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
     approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
@@ -73,6 +75,9 @@ class hr_timekeeping_sheet(models.Model):
         self.subtotal_line = ", ".join(["%s: %s" % (worktype_names[key], val) for key, val in totals.items()])
         self.subtotal_json = json.dumps(totals)
         self.total_time = total_time
+        self.pp_total_time = 0
+        for sheet in self.payperiod_id.sheet_ids.search([('employee_id','=',self.employee_id.id), ('state','=','done')]):
+            self.pp_total_time += sheet.total_time
 
     @api.one
     @api.constrains('line_ids')
@@ -105,6 +110,9 @@ class hr_timekeeping_sheet(models.Model):
         self.name = "{}-{}".format(self.payperiod_id.name, self.week_ab)
         self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
         self.adv_search = ''
+        self.uid_is_proxy = False
+        if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
+            self.uid_is_proxy = True
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -141,6 +149,12 @@ class hr_timekeeping_sheet(models.Model):
     def button_confirm(self):
         # recalc computed fields
         self._compute_subtotals()
+        if self.env.user.id != self.user_id.id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
+            for line in self.line_ids:
+                pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
+                in_absentia_id = self.env.user.company_id.in_absentia_id.id
+                if line.account_analytic_id.id not in [pto_analytic_id, in_absentia_id]:
+                    raise Warning(_("You may only submit a timesheet for someone else if the timesheet contains only PTO and In Absentia task codes."))
         # log submission for approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submitted for approval"
@@ -184,7 +198,9 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def button_previous_timesheet(self):
-        ctx = {'date_override': datetime.strptime(self.date_from, DATE_FORMAT) - timedelta(days=7)}
+        ctx = dict()
+        ctx['date_override'] = datetime.strptime(self.date_from, DATE_FORMAT) - timedelta(days=7)
+        ctx['ts_user'] = self.user_id.id
         ctx.update(self._context)
         action_server_obj = self.pool.get('ir.actions.server')
         action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_current_open').id
@@ -192,7 +208,9 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def button_next_timesheet(self):
-        ctx = {'date_override': datetime.strptime(self.date_from, DATE_FORMAT) + timedelta(days=7)}
+        ctx = dict()
+        ctx['date_override'] = datetime.strptime(self.date_from, DATE_FORMAT) + timedelta(days=7)
+        ctx['ts_user'] = self.user_id.id
         ctx.update(self._context)
         action_server_obj = self.pool.get('ir.actions.server')
         action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_current_open').id
@@ -384,31 +402,31 @@ class hr_timekeeping_sheet(models.Model):
                 # only count total hours for approved timesheets
                 else:
                     pp_total += sheet.total_time
-            exp_total = self.employee_id.full_time_hours
-            diff = exp_total - pp_total
-            if diff > 0 and not open_sheet_exists and reg_week_a_exists and reg_week_b_exists:
-                pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id
-                task = self.env['account.routing.subrouting'].search([('account_analytic_id','=',pto_analytic_id.id)])
-                if not task:
-                    raise Warning(_("You must define a PTO Analytic for this employee's company in Settings."))
-                if not task.account_analytic_id.linked_worktype:
-                    raise Warning(_("The PTO Analytic must have a linked worktype."))
-                if len(task) > 1:
-                    task = task[0]
-                vals = {
-                    'sheet_id': self.id,
-                    'routing_id': task.routing_id.id,
-                    'routing_line_id': task.routing_line_id.id,
-                    'routing_subrouting_id': task.id,
-                    'worktype': task.account_analytic_id.linked_worktype.id,
-                    'date': self.date_to,
-                    'name': "Automatic PTO addition to reach full-time hours in pay period",
-                    'unit_amount': diff,
-                    'change_explanation': '',
-                }
-                newid = self.env['hr.timekeeping.line'].create(vals, override=True)
             # full-time employees accrue PTO
             self.accrue_pto(pp_total)
+            exp_total = self.employee_id.full_time_hours
+            diff = exp_total - pp_total
+            # if diff > 0 and not open_sheet_exists and reg_week_a_exists and reg_week_b_exists:
+            #     pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id
+            #     task = self.env['account.routing.subrouting'].search([('account_analytic_id','=',pto_analytic_id.id)])
+            #     if not task:
+            #         raise Warning(_("You must define a PTO Analytic for this employee's company in Settings."))
+            #     if not task.account_analytic_id.linked_worktype:
+            #         raise Warning(_("The PTO Analytic must have a linked worktype."))
+            #     if len(task) > 1:
+            #         task = task[0]
+            #     vals = {
+            #         'sheet_id': self.id,
+            #         'routing_id': task.routing_id.id,
+            #         'routing_line_id': task.routing_line_id.id,
+            #         'routing_subrouting_id': task.id,
+            #         'worktype': task.account_analytic_id.linked_worktype.id,
+            #         'date': self.date_to,
+            #         'name': "Automatic PTO addition to reach full-time hours in pay period",
+            #         'unit_amount': diff,
+            #         'change_explanation': '',
+            #     }
+            #     newid = self.env['hr.timekeeping.line'].create(vals, override=True)
         # refresh the page
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
@@ -423,15 +441,19 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def write(self, vals):
-        # add PM approval lines for any timesheet lines for contracts/projects
+        # add PM approval lines for any timesheet lines for contracts/projects, and SeniorManagement if there are any Unallowable lines
         res = super(hr_timekeeping_sheet, self).write(vals)
         existing_approval_project_ids = set()
+        contains_seniormanagement_approval = False
         for approval_line in self.approval_line_ids:
             if approval_line.account_analytic_id:
                 existing_approval_project_ids.add(approval_line.account_analytic_id.id)
+            if approval_line.type == 'SeniorManagement':
+                contains_seniormanagement_approval = True
         existing_project_ids = set()
         # add approval lines for contracts that have non-zero hours
         time_sum = defaultdict(float)
+        contains_unallowable_task = False
         for line in self.line_ids:
             analytic = line.routing_subrouting_id.account_analytic_id
             existing_project_ids.add(analytic.id)
@@ -440,10 +462,19 @@ class hr_timekeeping_sheet(models.Model):
                 approval_vars = {'type': 'Project', 'state': 'draft', 'sheet_id': self.id, 'account_analytic_id': analytic.id}
                 self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
                 existing_approval_project_ids.add(analytic.id)
+            if not analytic.dcaa_allowable:
+                contains_unallowable_task = True
+                if not contains_seniormanagement_approval:
+                    approval_vars = {'type': 'SeniorManagement', 'state': 'draft', 'sheet_id': self.id}
+                    self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+                    contains_seniormanagement_approval = True
         # remove approval lines if no timesheet lines exist for those projects, or total time for it is 0
+        # remove 'SeniorManagement' approval lines if no unallowable tasks exist
         for approval_line in self.approval_line_ids:
             analytic = approval_line.account_analytic_id
             if approval_line.account_analytic_id.type == 'contract' and (approval_line.account_analytic_id.id not in existing_project_ids or time_sum[analytic.id] == 0):
+                approval_line.sudo().unlink()
+            elif approval_line.type == 'SeniorManagement' and not contains_unallowable_task:
                 approval_line.sudo().unlink()
         return res
 
@@ -458,6 +489,7 @@ class hr_timekeeping_line(models.Model):
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
+    uid_is_proxy = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
@@ -471,6 +503,7 @@ class hr_timekeeping_line(models.Model):
     routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True)
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True, default=lambda self: self._get_user_default_subroute())
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
+    aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
     change_explanation = fields.Char(string='Change Explanation')
     state = fields.Char(compute='_check_state', default='open') # 'past','open','future'
@@ -517,6 +550,9 @@ class hr_timekeeping_line(models.Model):
             else:
                 self.state = 'past'
                 self.logging_required = True
+        # in addition to all that, if someone else is editing this timesheet, log it
+        if self.user_id.id != self.env.user.id:
+            self.logging_required = True
 
     @api.one
     @api.constrains('unit_amount', 'worktype')
@@ -571,12 +607,15 @@ class hr_timekeeping_line(models.Model):
         # Guess again! Related field to computed field loses the self._uid of the function call
         self.uid_is_user_id = (self.user_id.id == self._uid)
         self.full_amount = self.amount + self.premium_amount
+        self.uid_is_proxy = False
+        if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
+            self.uid_is_proxy = True
 
     @api.model
     def _safety_checks(self, sheet):
         if sheet.state != 'draft':
             raise Warning(_("You cannot make changes to this timesheet!"))
-        if not sheet.uid_is_user_id:
+        if not sheet.uid_is_user_id and not sheet.uid_is_proxy:
             raise Warning(_("You cannot make changes to this timesheet!"))
 
     @api.multi
@@ -609,6 +648,7 @@ class hr_timekeeping_line(models.Model):
         sheet = self.env['hr.timekeeping.sheet'].browse(sheet_id)
         if not override:
             self._safety_checks(sheet)
+        vals['user_id'] = sheet.user_id.id
         vals['amount'] = sheet.employee_id.wage_rate * unit_amount
         vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         vals['id'] = super(hr_timekeeping_line, self).create(vals)
@@ -688,7 +728,7 @@ class hr_timekeeping_line(models.Model):
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'hr.timekeeping.line',
-            'view_id': False,
+            'view_id': self.env.ref('imsar_timekeeping.hr_timekeeping_line_form_editable').id,
             'type': 'ir.actions.act_window',
             'target': 'new',
             'readonly': True,
@@ -746,7 +786,7 @@ class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
 
-    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','Project'),], string="Approval Type", required=True, readonly=True)
+    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)
@@ -759,7 +799,7 @@ class hr_timekeeping_approval(models.Model):
     def _computed_fields(self):
         # defaults to false unless condition is met
         self.uid_can_approve = False
-        self.relevant_time = 0.0
+        self.relevant_time = self.sheet_id.total_time
 
         user = self.env.user
         # check to see if user is HR Officer (should include HR Manager automatically)
@@ -768,7 +808,6 @@ class hr_timekeeping_approval(models.Model):
             hr_officer = self.env['res.groups'].search([('name','=','Officer'),('category_id','=',hr_category.id)])
             if hr_officer in user.groups_id:
                 self.uid_can_approve = True
-            self.relevant_time = self.sheet_id.total_time
         # check to see if user is PM on this project
         elif self.type == 'Project':
             if user in self.account_analytic_id.pm_ids:
@@ -783,8 +822,11 @@ class hr_timekeeping_approval(models.Model):
                     self.uid_can_approve = True
                     break
                 manager = manager.parent_id
-            self.relevant_time = self.sheet_id.total_time
-        # check if the user has global approval rights
+        # calculate relevant unallowable time
+        elif self.type == 'SeniorManagement':
+            lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('aa_dcaa_allowable','=',False),])
+            self.relevant_time = sum(line.unit_amount for line in lines)
+        # check if the user has global approval rights (this includes SeniorManagement lines)
         if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
             self.uid_can_approve = True
 

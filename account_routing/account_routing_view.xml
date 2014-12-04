@@ -59,7 +59,7 @@
                         <field name="account_type_id" widget="selection" domain="[('allow_routing','=','true')]" />
                         <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
                         <field name="subrouting_ids">
-                            <tree editable="top">
+                            <tree editable="bottom">
                                 <field name="account_analytic_id" domain="[('state','not in',['template','close','cancelled']),('type','not in',['template'])]"
                                         attrs="{'readonly':[('from_parent','=',True)]}" options="{'create':false, 'create_edit':false}"/>
                                 <field name="account_id" domain="[('user_type','=',parent.account_type_id),('type','not in',['view','closed'])]"
