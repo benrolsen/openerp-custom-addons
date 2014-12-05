@@ -8,6 +8,7 @@ class account_analytic_account(models.Model):
     _inherit = "account.analytic.account"
 
     pm_ids = fields.Many2many('res.users', 'analytic_user_pm_rel', 'analytic_id', 'user_id', string='Project Managers')
+    uid_is_pm = fields.Boolean('User is PM', compute='_computed_fields', search='_filter_uid_is_pm')
     overtime_account = fields.Many2one('account.account', string="Overtime Routing Account", domain="[('type','not in',['view','closed'])]")
     timesheets_future_filter = fields.Char(store=False, compute='_computed_fields', search='_filter_future_accounts')
     user_review_ids = fields.Many2many('res.users', 'analytic_user_review_rel', 'analytic_id', 'user_id', string='Users Reviewed')
@@ -23,7 +24,7 @@ class account_analytic_account(models.Model):
     project_header = fields.Boolean(string="Contract/Project Header?", default=False)
 
     @api.one
-    @api.depends('user_review_ids','hide_from_users')
+    @api.depends('user_review_ids','hide_from_users','pm_ids')
     def _computed_fields(self):
         self.user_review_ids_count = len(self.user_review_ids)
         self.timesheets_future_filter = ''
@@ -32,6 +33,9 @@ class account_analytic_account(models.Model):
             self.hide_from_uid = True
         else:
             self.hide_from_uid = False
+        self.uid_is_pm = False
+        if self.env.user.id in self.pm_ids.ids:
+            self.uid_is_pm = True
 
     def _filter_future_accounts(self, operator, value):
         if value == 'future':
@@ -39,6 +43,13 @@ class account_analytic_account(models.Model):
         else:
             valid_accounts = self.env['account.analytic.account'].search([('state', '!=', 'close'),])
         return [('id','in',valid_accounts.ids)]
+
+    def _filter_uid_is_pm(self, operator, value):
+        if value == True:
+            pm_accounts = self.env['account.analytic.account'].search([('pm_ids', 'in', self.env.user.id),])
+        else:
+            pm_accounts = self.env['account.analytic.account'].search([('pm_ids', 'not in', self.env.user.id),])
+        return [('id','in',pm_accounts.ids)]
 
     @api.one
     @api.depends('user_review_ids')
@@ -105,6 +116,7 @@ class account_analytic_account(models.Model):
     @api.multi
     def write(self, vals):
         res = super(account_analytic_account, self).write(vals)
+        # if project_header, pass on authorizations to children
         if self.project_header:
             for child in self.get_all_children():
                 if child.id == self.id:
@@ -114,11 +126,17 @@ class account_analytic_account(models.Model):
                 pms.update(set(self.pm_ids.ids))
                 auth_users.update(set(self.auth_users.ids))
                 child.write({'pm_ids':[(6,0,list(pms))], 'auth_users': [(6,0,list(auth_users))], 'limit_to_auth': self.limit_to_auth})
+        # ensure that all users listed as PMs are in the Project Manager group
+        pm_group_id = self.env.ref('imsar_timekeeping.group_pms_user')
+        for pm in self.pm_ids:
+            if pm.id not in pm_group_id.users.ids:
+                pm_group_id.write({'users': [(4, pm.id)]})
         return res
 
     @api.model
     def create(self, vals):
         res = super(account_analytic_account, self).create(vals)
+        # inherit authorizations from project_header parent
         parent = res.parent_id
         while parent:
             if parent.project_header:

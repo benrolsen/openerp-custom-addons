@@ -8,4 +8,15 @@
         <t t-jquery=".oe_follower_list" t-operation="replace" />
     </t>
 
+    <!-- Remove the mind-numbingly ridiculous "like" option -->
+    <t t-extend="mail.thread.message.vote">
+        <t t-jquery=".oe_mail_vote_count" t-operation="replace" />
+        <t t-jquery=".oe_msg_vote" t-operation="replace" />
+    </t>
+
+    <!-- Remove the mildly irritating "Mark as Todo" and "Move to Inbox"-->
+    <t t-extend="mail.thread.message">
+        <t t-jquery=".oe_msg_icons" t-operation="replace" />
+    </t>
+
 </templates>

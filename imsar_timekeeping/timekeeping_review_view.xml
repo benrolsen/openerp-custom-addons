@@ -92,16 +92,57 @@
         </record>
         <menuitem id="menu_analytic_reviewed_view" action="analytic_reviewed_view" parent="menu_hr_timekeeping" sequence="31" />
 
-        <!-- Users who have reviewed an account -->
-        <!--<record id="users_analytic_review_tree" model="ir.ui.view">-->
-            <!--<field name="name">hr.timekeeping.users.review.tree</field>-->
-            <!--<field name="model">res.users</field>-->
-            <!--<field name="arch" type="xml">-->
-                <!--<tree string="Users have reviewed" create="false" edit="false" delete="false">-->
-                    <!--<field name="name" />-->
-                <!--</tree>-->
-            <!--</field>-->
-        <!--</record>-->
+        <!-- PM view of analytic accounts to edit authorized users -->
+        <record id="analytic_pms_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.analytic.tree</field>
+            <field name="model">account.analytic.account</field>
+            <field name="arch" type="xml">
+                <tree string="Analytics to review" create="false" edit="false" delete="false"
+                        colors="black:display_color=='black';
+                                gray:display_color=='gray';
+                                maroon:display_color=='maroon';
+                                red:display_color=='red';
+                                purple:display_color=='purple';
+                                green:display_color=='green';
+                                olive:display_color=='olive';
+                                navy:display_color=='navy';
+                                teal:display_color=='teal';" >
+                    <field name="name" string="Task Code"/>
+                    <field name="uid_is_pm" invisible="1"/>
+                    <field name="display_color" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        <record id="analytic_pms_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.analytic.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="arch" type="xml">
+                <form string="Project Users" create="false" delete="false">
+                    <group name="authorization" string="Authorization">
+                        <!--<field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" groups="account.group_account_manager"/>-->
+                        <field name="limit_to_auth"/>
+                        <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        <!-- Menu item for PM view -->
+        <record id="analytic_pms_view" model="ir.actions.act_window">
+            <field name="name">Contracts/Projects</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="analytic_pms_form"/>
+            <field name="domain">[('uid_is_pm','=',True),('project_header','=',True)]</field>
+        </record>
+        <record id="action_analytic_pms_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="analytic_pms_tree"/>
+            <field name="act_window_id" ref="analytic_pms_view"/>
+        </record>
+        <menuitem id="menu_analytic_pms_view" action="analytic_pms_view" parent="hr.menu_hr_main" groups="imsar_timekeeping.group_pms_user" sequence="10" />
+
 
     </data>
 </openerp>

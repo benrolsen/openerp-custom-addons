@@ -355,7 +355,7 @@
 
         <!-- Menus and stuff -->
         <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user,base.group_hr_user,base.group_hr_manager"/>
-        <menuitem id="hr.menu_hr_main" name="Human Resources" parent="hr.menu_hr_root" sequence="10"/>
+        <menuitem id="hr.menu_hr_main" name="Company" parent="hr.menu_hr_root" sequence="10"/>
         <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" groups="base.group_hr_user,base.group_hr_manager"/>
 
         <!-- My Current Timesheet menuitem -->

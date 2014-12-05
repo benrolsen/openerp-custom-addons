@@ -108,13 +108,22 @@
         </record>
 
         <record id="access_timekeeping_payperiod_manager" model="ir.model.access">
-            <field name="name">hr.timekeeping.payperiod</field>
+            <field name="name">hr.timekeeping.payperiod.manager</field>
             <field name="model_id" ref="model_hr_timekeeping_payperiod"/>
             <field name="group_id" ref="base.group_hr_manager"/>
             <field name="perm_read">1</field>
             <field name="perm_write">1</field>
             <field name="perm_create">1</field>
             <field name="perm_unlink">1</field>
+        </record>
+
+        <!-- Also, PMs need to be able to edit Analytic Accounts -->
+        <record id="access_analytic_pms" model="ir.model.access">
+            <field name="name">hr.timekeeping.analytic.pms</field>
+            <field name="model_id" ref="model_account_analytic_account"/>
+            <field name="group_id" ref="imsar_timekeeping.group_pms_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
         </record>
 
     </data>
