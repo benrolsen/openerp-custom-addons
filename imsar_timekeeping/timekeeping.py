@@ -36,7 +36,7 @@ class hr_timekeeping_sheet(models.Model):
 
     # model columns
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
-    type = fields.Selection([('regular','Regular'),('addendum','Addendum'),], 'Type', default='regular', required=True, readonly=True,)
+    type = fields.Selection([('regular','Regular'),('addendum','Addendum'),('proxy','Proxy'),], 'Type', default='regular', required=True, readonly=True,)
     payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', index=True, required=True)
     week_ab = fields.Selection([('A','A'),('B','B'),], 'Pay Period Week A/B', required=True)
     date_from = fields.Date('Start Date', readonly=True, required=True)
@@ -48,8 +48,8 @@ class hr_timekeeping_sheet(models.Model):
     payroll_comment = fields.Char('Payroll Comment')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     uid_is_proxy = fields.Boolean(compute='_computed_fields', readonly=True)
-    user_id = fields.Many2one('res.users', string='User', index=True, readonly=True, default=lambda self: self.env.user)
     employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
+    user_id = fields.Many2one('res.users', related='employee_id.user_id', string='User', readonly=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
     employee_full_time = fields.Boolean(related='employee_id.full_time', string='Full Time', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
@@ -62,6 +62,9 @@ class hr_timekeeping_sheet(models.Model):
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
     approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
+    editable_view = fields.Boolean(compute='_computed_fields', )
+    submit_button_view = fields.Boolean(compute='_computed_fields', )
+    proxy_button_view = fields.Boolean(compute='_computed_fields', )
 
     @api.one
     @api.depends('line_ids')
@@ -108,7 +111,7 @@ class hr_timekeeping_sheet(models.Model):
                 raise Warning(_("Exempt employees are not eligible for overtime."))
 
     @api.one
-    @api.depends('payperiod_id', 'user_id')
+    @api.depends('payperiod_id', 'user_id', 'type', 'state')
     def _computed_fields(self):
         self.name = "{}-{}".format(self.payperiod_id.name, self.week_ab)
         self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
@@ -116,6 +119,17 @@ class hr_timekeeping_sheet(models.Model):
         self.uid_is_proxy = False
         if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
             self.uid_is_proxy = True
+        # whether or not a timesheet is editable/submittable has gotten complicated, so put the logic in python
+        self.editable_view = False
+        self.submit_button_view = False
+        self.proxy_button_view = False
+        if self.state == 'draft':
+            if self.uid_is_user_id:
+                self.editable_view = True
+                self.submit_button_view = True
+            elif self.uid_is_proxy and self.type == 'proxy':
+                self.editable_view = True
+                self.proxy_button_view = True
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -203,7 +217,6 @@ class hr_timekeeping_sheet(models.Model):
     def button_previous_timesheet(self):
         ctx = dict()
         ctx['date_override'] = datetime.strptime(self.date_from, DATE_FORMAT) - timedelta(days=7)
-        ctx['ts_user'] = self.user_id.id
         ctx.update(self._context)
         action_server_obj = self.pool.get('ir.actions.server')
         action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_current_open').id
@@ -213,7 +226,6 @@ class hr_timekeeping_sheet(models.Model):
     def button_next_timesheet(self):
         ctx = dict()
         ctx['date_override'] = datetime.strptime(self.date_from, DATE_FORMAT) + timedelta(days=7)
-        ctx['ts_user'] = self.user_id.id
         ctx.update(self._context)
         action_server_obj = self.pool.get('ir.actions.server')
         action_id = self.env.ref('imsar_timekeeping.action_hr_timekeeping_current_open').id
@@ -467,6 +479,8 @@ class hr_timekeeping_line(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
+    change_reason = fields.Selection([('Correction','Task Code Correction'),('Travel','On Travel'),
+                                      ('Forgot','Forgot Previous Entry'),('Other','Other (requires explanation)')], string="Change Reason")
     change_explanation = fields.Char(string='Change Explanation')
     state = fields.Char(compute='_check_state', default='open') # 'past','open','future'
     sheet_state = fields.Selection(related='sheet_id.state', readonly=True)
@@ -500,6 +514,8 @@ class hr_timekeeping_line(models.Model):
             prev_deadline = prev_date + timedelta(days=1, hours=11)
             if not (prev_date < now < prev_deadline):
                 self.logging_required = True
+        if not self.date:
+            return
         # see if the selected date is within the open window
         check_date = datetime.strptime(self.date, '%Y-%m-%d')
         if check_date > now:
@@ -540,7 +556,9 @@ class hr_timekeeping_line(models.Model):
         if not vals:
             return True
         # log any changes that are outside the valid time window
-        body = "<strong>Change explanation:</strong> {}<br>".format(vals['change_explanation_log'])
+        body = "<strong>Change reason:</strong> {}<br>".format(vals['change_reason_log'])
+        if vals['change_reason_log'] == 'Other':
+            body += "<strong>Change explanation:</strong> {}<br>".format(vals['change_explanation_log'])
         if new_record:
             record = vals.get('id')
             subject = "New record, Line ID: %s" % record.id
@@ -582,6 +600,8 @@ class hr_timekeeping_line(models.Model):
 
     @api.multi
     def write(self, vals):
+        # because the details button allows editing when the sheet isn't in edit mode, need to manually call _compute_subtotals
+        self.sheet_id._compute_subtotals()
         # for some reason write gets called twice with this setup, the second time with context as first arg
         if vals.get('active_model') != None:
             return True
@@ -590,7 +610,11 @@ class hr_timekeeping_line(models.Model):
         if self.logging_required:
             vals['change_explanation_log'] = vals.get('change_explanation')
             vals['change_explanation'] = ''
+            vals['change_reason_log'] = vals.get('change_reason')
+            vals['change_reason'] = ''
             self._log_changes(vals)
+            del vals['change_explanation_log']
+            del vals['change_reason_log']
         unit_amount = vals.get('unit_amount') or self.unit_amount
         worktype_id = vals.get('worktype') or self.worktype.id
         worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
@@ -603,6 +627,8 @@ class hr_timekeeping_line(models.Model):
         vals['previous_date'] = vals['date']
         vals['change_explanation_log'] = vals['change_explanation']
         vals['change_explanation'] = ''
+        vals['change_reason_log'] = vals.get('change_reason')
+        vals['change_reason'] = ''
         unit_amount = vals.get('unit_amount', 0.0)
         worktype_id = vals.get('worktype')
         worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
@@ -674,9 +700,9 @@ class hr_timekeeping_line(models.Model):
         from_date = datetime.strptime(self.sheet_id.date_from, '%Y-%m-%d')
         to_date = datetime.strptime(self.sheet_id.date_to, '%Y-%m-%d')
         if from_date > date:
-            self.date = self.sheet_id.date_from
+            self.date = ''
         if to_date < date:
-            self.date = self.sheet_id.date_to
+            self.date = ''
         self._check_state()
         if self.state == 'future':
             future_analytics = self.env.user.company_id.future_analytic_ids
@@ -818,7 +844,6 @@ class hr_timekeeping_approval(models.Model):
             'type': 'ir.actions.act_window',
             'target': 'new',
             'readonly': True,
-            # 'res_id': self.id,
         }
         return view
 

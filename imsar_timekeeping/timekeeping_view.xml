@@ -84,7 +84,8 @@
                         </group>
                     </group>
                     <group attrs="{'invisible':[('sheet_state','!=','draft')]}">
-                        <field name="change_explanation" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True)],'invisible':[('logging_required','=',False)]}" widget="text"/>
+                        <field name="change_reason" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True)],'invisible':[('logging_required','=',False)]}"/>
+                        <field name="change_explanation" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True),('change_reason','=','Other')],'invisible':['|',('logging_required','=',False),('change_reason','!=','Other')]}" widget="text"/>
                     </group>
                     <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
@@ -111,7 +112,9 @@
                 <form string="Timesheet" create="false" delete="false">
                 <header>
                     <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
-                            attrs="{'invisible':['|',('state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
+                            attrs="{'invisible':[('submit_button_view','=',False)]}"/>
+                    <button name="button_confirm" string="Proxy Submit" type="object" class="oe_highlight oe_right"
+                            attrs="{'invisible':[('proxy_button_view','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
@@ -119,15 +122,18 @@
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="employee_id" class="oe_inline" readonly="True"/></h1>
-                        <field name="uid_is_user_id" invisible="True"/>
+                        <field name="uid_is_user_id" invisible="1"/>
                         <field name="uid_is_proxy" invisible="1"/>
+                        <field name="editable_view" invisible="1"/>
+                        <field name="submit_button_view" invisible="1"/>
+                        <field name="proxy_button_view" invisible="1"/>
                     </div>
                     <group>
                         <group>
                             <button type="object" string="Previous Timesheet" name="button_previous_timesheet"
-                                    attrs="{'invisible':['|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
+                                    attrs="{'invisible':['|',('type','!=','regular'),('uid_is_user_id','=',False)]}"/>
                             <button type="object" string="Next Timesheet" name="button_next_timesheet" class="oe_inline"
-                                    attrs="{'invisible':['|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
+                                    attrs="{'invisible':['|',('type','!=','regular'),('uid_is_user_id','=',False)]}"/>
                             <field name="name"/>
                             <label for="date_from" string="Timesheet Period"/>
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
@@ -144,7 +150,7 @@
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll" />
                     </group>
-                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}">
+                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),('uid_is_user_id','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <group attrs="{'invisible':['|',('type','!=','addendum'),'|',('state','!=','done'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
@@ -152,12 +158,12 @@
                     </group>
                     <notebook>
                         <!-- page for editable time entries -->
-                        <page string="Entries" attrs="{'invisible':['|',('state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}">
-                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
-                            <button name="write" type="object" string="Validate &amp; Save" class="oe_right"
+                        <page string="Entries" attrs="{'invisible':[('editable_view','=',False)]}">
+                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action" class="oe_edit_only"/>
+                            <button name="write" type="object" string="Save Changes" class="oe_right oe_edit_only"
                                     attrs="{'invisible':['|',('state','!=','draft'),('uid_is_user_id','!=',True)]}"/>
                             <div style="display: inline-block; width: 100px;"/>
-                            <button name="button_oneclick_add" type="object" string="Add One-Click Tasks" class="oe_bounce_container"
+                            <button name="button_oneclick_add" type="object" string="Add One-Click Tasks" class="oe_bounce_container oe_edit_only"
                                     attrs="{'invisible':['|',('state','!=','draft'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}"/>
                             <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
                                 <tree string="Timesheet Activities" editable="top" create="false" delete="false"
@@ -187,7 +193,7 @@
                                     <field name="name" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
-                                    <button name="button_details" string="Details" type="object"
+                                    <button name="button_details" string="Details" type="object" class="oe_edit_only"
                                             attrs="{'invisible':['|',('sheet_state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
                                     <!-- invisible fields -->
                                     <field name="dcaa_allowable" invisible="True"/>
@@ -204,10 +210,10 @@
                                     <field name="uid_is_proxy" invisible="1"/>
                                 </tree>
                             </field>
-                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action"/>
+                            <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action" class="oe_edit_only"/>
                         </page>
                         <!-- page for readonly time entries -->
-                        <page string="Entries" attrs="{'invisible':[('state','=','draft'),'|',('uid_is_user_id','=',True),('uid_is_proxy','=',True)]}">
+                        <page string="Entries" attrs="{'invisible':[('editable_view','=',True)]}">
                             <field name="view_line_ids" nolabel="1" readonly="True">
                                 <tree string="Timesheet Activities" create="false" edit="false" delete="false"
                                     colors="black:display_color=='black';
@@ -252,7 +258,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Instructions" attrs="{'invisible':[('state','!=','draft')]}">
+                        <page string="Instructions" attrs="{'invisible':['|',('state','!=','draft'),('type','=','proxy')]}">
                             <p><strong>How to keep time</strong></p>
                             <p>Timesheets are intended to be filled out every day, on the day that work is done. You may edit entries for other days,
                             but you will be required to provide an explanation for the change. You may not create work entries for days
@@ -286,9 +292,20 @@
                             <p>If an addendum is submitted with non-zero total hours, please notify HR so they can make the appropriate
                             payroll adjustments!</p>
                         </page>
+                        <page string="Proxy Instructions" attrs="{'invisible':['|',('state','!=','draft'),('type','!=','proxy')]}">
+                            <p><strong>Proxy Timesheets</strong></p>
+                            <p>Proxy timesheets are intended to be filled out by someone other than the timesheet's owner. Because of this,
+                            a proxy timesheet is <strong>not</strong> considered authoritative. Initially, only two task codes are allowed
+                            on a proxy timesheet: In Absentia Unallowable Labor and PTO. In order to use any other task codes, an
+                            authoritative timesheet file must be attached to this proxy timesheet. The authoritative timesheet file
+                            may be various things, but it must fulfill the requirement of having been filled out and verified
+                            by the employee to whom it belongs. It could be something like a scanned document or a signed PDF.</p>
+                            <p>It is important to note that this proxy timesheet should <strong>exactly</strong> match the attached
+                            authoritative timesheet. If there are any discrepencies, it can result in severe consequences, including
+                            a labor audit failure for the entire company. Please be mindful when using this type of timesheet!</p>
+                        </page>
                     </notebook>
                     <group>
-                        <!--<field name="subtotal_line" attrs="{'invisible':[('employee_flsa_status','=','exempt')]}"/>-->
                         <field name="subtotal_line"/>
                         <field name="pp_total_time_display" attrs="{'invisible':[('employee_full_time','=','False')]}"/>
                     </group>
@@ -354,17 +371,17 @@
         </record>
 
         <!-- Menus and stuff -->
-        <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user,base.group_hr_user,base.group_hr_manager"/>
+        <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user"/>
         <menuitem id="hr.menu_hr_main" name="Company" parent="hr.menu_hr_root" sequence="10"/>
-        <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" groups="base.group_hr_user,base.group_hr_manager"/>
+        <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" groups="base.group_hr_user"/>
 
         <!-- My Current Timesheet menuitem -->
         <record id="action_hr_timekeeping_current_open" model="ir.actions.server">
             <field name="sequence" eval="5"/>
             <field name="state">code</field>
             <field name="type">ir.actions.server</field>
-            <field name="model_id" ref="model_hr_timekeeping_current_open"/>
-            <field name="code">action = pool.get('hr.timekeeping.current.open').open_timesheet(cr, uid, None, context)</field>
+            <field name="model_id" ref="model_hr_timekeeping_wizards"/>
+            <field name="code">action = pool.get('hr.timekeeping.wizards').open_timesheet(cr, uid, None, context)</field>
             <field name="condition">True</field>
             <field name="name">My Current Timesheet</field>
         </record>
@@ -375,8 +392,8 @@
             <field name="sequence" eval="5"/>
             <field name="state">code</field>
             <field name="type">ir.actions.server</field>
-            <field name="model_id" ref="model_hr_timekeeping_addendum_open"/>
-            <field name="code">action = pool.get('hr.timekeeping.addendum.open').open_addendum(cr, uid, context)</field>
+            <field name="model_id" ref="model_hr_timekeeping_wizards"/>
+            <field name="code">action = pool.get('hr.timekeeping.wizards').open_addendum(cr, uid, context)</field>
             <field name="condition">True</field>
             <field name="name">Timesheet Addendum</field>
         </record>
@@ -387,7 +404,7 @@
             <field name="model">hr.timekeeping.sheet</field>
             <field name="arch" type="xml">
                 <tree string="Timesheets" create="false" edit="false" delete="false"
-                      colors="red:payroll_state=='failed';purple:type=='addendum';">
+                      colors="red:payroll_state=='failed';purple:type=='addendum';teal:type=='proxy';">
                     <field name="employee_id" />
                     <field name="name" />
                     <field name="date_from" />
@@ -489,8 +506,8 @@
             <field name="sequence" eval="5"/>
             <field name="state">code</field>
             <field name="type">ir.actions.server</field>
-            <field name="model_id" ref="model_hr_timekeeping_current_open"/>
-            <field name="code">action = pool.get('hr.timekeeping.current.open').open_preferences(cr, uid, None, context)</field>
+            <field name="model_id" ref="model_hr_timekeeping_wizards"/>
+            <field name="code">action = pool.get('hr.timekeeping.wizards').open_preferences(cr, uid, None, context)</field>
             <field name="condition">True</field>
             <field name="name">Preferences</field>
         </record>
@@ -584,6 +601,34 @@
                 </tree>
             </field>
         </record>
+
+        <!-- Create Proxy timesheet -->
+        <record id="view_timekeeping_proxy_wizard" model="ir.ui.view">
+             <field name="name">hr.timekeeping.proxy</field>
+             <field name="model">hr.timekeeping.proxy</field>
+             <field name="arch" type="xml">
+                <form string="Search by week and project">
+                    <group>
+                        <field name="week_date"/>
+                        <field name="employee" options="{'create': false, 'create_edit': false}"/>
+                    </group>
+                    <footer>
+                        <button name="submit" string="Create" type="object"  class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />
+                    </footer>
+                </form>
+             </field>
+        </record>
+        <record id="action_timekeeping_proxy_wizard" model="ir.actions.act_window">
+            <field name="name">Create Proxy Timesheet</field>
+            <field name="res_model">hr.timekeeping.proxy</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_timekeeping_proxy_wizard"/>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="menu_action_timekeeping_proxy_wizard" action="action_timekeeping_proxy_wizard" parent="hr.menu_hr_main" groups="base.group_hr_user" sequence="15"/>
 
 
     </data>

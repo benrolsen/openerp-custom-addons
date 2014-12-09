@@ -68,7 +68,7 @@ class account_analytic_account(models.Model):
             reviewed_ids = self.search([])
         # this next filter actually depends on auth users, not reviewed users, but I didn't want to make yet another
         # field and search just for one line, and auth_users always applies in this case
-        auth_ids = reviewed_ids.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
+        auth_ids = self.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
         intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
         return [('id','in', list(intersection))]
 
@@ -281,15 +281,22 @@ class account_routing_subrouting(models.Model):
 
     def _viewable_search(self, operator, value):
         sheet_id = self.env['hr.timekeeping.sheet'].browse(value)
-        if self.env.user.id != sheet_id.user_id.id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
+        has_attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.timekeeping.sheet'), ('res_id','=',sheet_id.id)])
+        # under very specific circumstances, allow a proxy user to put in In Absentia or PTO time
+        if sheet_id.type == 'proxy' and not sheet_id.uid_is_user_id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids and not has_attachment:
             pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
             in_absentia_id = self.env.user.company_id.in_absentia_id.id
             subrouting_ids = self.env['account.routing.subrouting'].search([
                 ('account_analytic_id','in',[pto_analytic_id,in_absentia_id]),
             ])
         else:
+            aa_model = self.env['account.analytic.account']
+            reviewed_ids = aa_model.search([('type','!=','view'),('user_review_ids','in',sheet_id.user_id.id)])
+            auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
+            shown_ids = aa_model.search([('hide_from_users','not in',sheet_id.user_id.id)])
+            intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids), set(shown_ids.ids))
             subrouting_ids = self.env['account.routing.subrouting'].search([
-                ('type','!=','view'),('user_has_reviewed','=',True),('hide_from_uid','=',False),
+                ('account_analytic_id','in',list(intersection)),
             ])
         return [('id','in', subrouting_ids.ids)]
 
