@@ -56,7 +56,7 @@
                             <field name="end_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="state" invisible="True"/>
-                            <field name="logging_required" invisible="0"/>
+                            <field name="logging_required" invisible="1"/>
                             <field name="amount" invisible="True" />
                             <field name="premium_amount" invisible="True" />
                             <field name="sheet_id" invisible="1"/>
