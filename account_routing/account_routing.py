@@ -50,6 +50,15 @@ class account_routing_line(models.Model):
     subrouting_ids = fields.One2many('account.routing.subrouting', 'routing_line_id', 'Analytic Routes', ondelete='cascade')
     section_ids = fields.Many2many('account.routing.section','account_routing_line_section_rel', 'routing_line_id', 'section_id', string="Applies to sections")
 
+    @api.one
+    @api.constrains('routing_id', 'account_type_id')
+    def _one_timekeeping_per_routing(self):
+        tk_section = self.env.ref('imsar_timekeeping.ar_section_timekeeping').id
+        if tk_section in self.section_ids.ids:
+            for line in self.routing_id.routing_lines:
+                if self.id != line.id and tk_section in line.section_ids.ids:
+                    raise Warning(_("You may only designate one routing line for Timekeeping."))
+
     _sql_constraints = [
         ('routing_account_type_uniq', 'unique (routing_id,account_type_id)', 'Only one account type allowed per account routing!')
     ]

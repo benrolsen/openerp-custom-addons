@@ -18,38 +18,59 @@
             <field name="model">account.routing</field>
             <field name="arch" type="xml">
                 <form string="Account Routing">
-
-                    <table>
-                        <tr>
-                            <td colspan="4">
-                                <label for="name" string="Routing Category: " class="oe_inline"/>
-                                <field name="name" class="oe_inline"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="4">
-                                <label for="section_ids" class="oe_inline"/>
-                                <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="75%%">
-                                <label for="routing_lines" />
-                                <field name="routing_lines" domain="">
-                                    <tree>
-                                        <field name="account_type_id" />
-                                        <field name="subrouting_ids" />
-                                        <field name="section_ids" />
-                                    </tree>
-                                </field>
-                            </td>
-                        </tr>
-                    </table>
-
+                    <group>
+                        <field name="name" string="Routing Category"/>
+                        <field name="section_ids" widget="many2many_tags" options="{'create':false}"/>
+                        <field name="routing_lines">
+                            <tree>
+                                <field name="account_type_id" />
+                                <field name="subrouting_ids" />
+                                <field name="section_ids" />
+                            </tree>
+                        </field>
+                    </group>
                 </form>
             </field>
         </record>
+        <record id="account_routing_view_form" model="ir.actions.act_window">
+            <field name="name">Account Routing</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.routing</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="account_routing_form"/>
+        </record>
+        <record id="action_account_routing_tree" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="act_window_id" ref="account_routing_view_form"/>
+        </record>
+        <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
 
+        <!-- Account routing lines -->
+        <record id="account_routing_line_filter" model="ir.ui.view">
+            <field name="name">account.routing.line.filter</field>
+            <field name="model">account.routing.line</field>
+            <field name="arch" type="xml">
+                <search string="Search">
+                    <field name="name"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_category" string="Category" icon="terp-personal" context="{'group_by':'routing_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        <record id="account_routing_line_tree" model="ir.ui.view">
+            <field name="name">account.routing.line.tree</field>
+            <field name="model">account.routing.line</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="routing_id" string="Category"/>
+                    <field name="account_type_id" string="Type"/>
+                    <field name="section_ids"/>
+                </tree>
+            </field>
+        </record>
         <record id="account_routing_line_form" model="ir.ui.view">
             <field name="name">account.routing.line.form</field>
             <field name="model">account.routing.line</field>
@@ -71,36 +92,30 @@
                 </form>
             </field>
         </record>
-
-        <record id="account_routing_view_form" model="ir.actions.act_window">
-            <field name="name">Account Routing</field>
+        <record id="account_routing_line_view" model="ir.actions.act_window">
+            <field name="name">Account Routing Line</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.routing</field>
+            <field name="res_model">account.routing.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" eval="account_routing_form"/>
-            <field name="help" type="html">
-              <p class="oe_view_nocontent_create">
-                Click to create new accounting category.
-              </p><p>
-                Accounting categories provide more fine-grained control of sale and purchase order lines and which
-                general account those incomes/expenses route to.
-              </p>
+            <field name="context">{'search_default_group_by_category':1}</field>
+        </record>
+        <menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21" />
+
+        <!-- Account routing subrouting -->
+        <record id="account_routing_subrouting_filter" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.filter</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="arch" type="xml">
+                <search string="Search Tasks">
+                    <field name="name"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_category" string="Category" icon="terp-personal" context="{'group_by':'routing_id'}"/>
+                        <filter name="group_by_bill_type" string="Billing Type" icon="terp-personal" context="{'group_by':'routing_line_id'}"/>
+                    </group>
+                </search>
             </field>
         </record>
-        <record id="action_account_routing_tree" model="ir.actions.act_window.view">
-            <field name="sequence" eval="1"/>
-            <field name="view_mode">tree</field>
-            <field name="act_window_id" ref="account_routing_view_form"/>
-        </record>
-        <record id="action_account_routing_form" model="ir.actions.act_window.view">
-            <field name="sequence" eval="2"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="account_routing_form"/>
-            <field name="act_window_id" ref="account_routing_view_form"/>
-        </record>
-        <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
-
         <record id="account_routing_subrouting_tree" model="ir.ui.view">
             <field name="name">account.routing.subrouting.tree</field>
             <field name="model">account.routing.subrouting</field>
@@ -109,9 +124,42 @@
                     <field name="routing_id" string="Category"/>
                     <field name="routing_line_id" string="Type"/>
                     <field name="name" string="Task Code"/>
+                    <field name="old_task_code"/>
                 </tree>
             </field>
         </record>
+        <record id="account_routing_subrouting_form" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.form</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="arch" type="xml">
+                <form string="Account Routing Subroutes (Task Codes)">
+                    <group>
+                        <group>
+                            <field name="routing_id" />
+                            <field name="routing_line_id" readonly="True"/>
+                            <field name="account_analytic_id" options="{'create':false, 'create_edit':false}"/>
+                            <field name="account_id" options="{'create':false, 'create_edit':false}"/>
+                        </group>
+                        <group>
+                            <field name="old_task_code" />
+                            <field name="qb_company_job" />
+                            <field name="qb_service_item" />
+                            <field name="qb_payroll_item_st" />
+                            <field name="qb_payroll_item_ot" />
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+        <record id="account_routing_subrouting_view" model="ir.actions.act_window">
+            <field name="name">Account Routing Subrouting</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.routing.subrouting</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_by_category':1}</field>
+        </record>
+        <menuitem id="menu_account_routing_subrouting_view" action="account_routing_subrouting_view" parent="account.account_account_menu" sequence="22" />
 
         <!-- allow routing checkbox on account types -->
         <record id="view_account_type_routing_form" model="ir.ui.view">
@@ -156,40 +204,6 @@
                 </xpath>
             </field>
         </record>
-
-        <!-- These are only required to allow imports for these models and should be removed when imports are no longer required -->
-        <record id="account_routing_line_view" model="ir.actions.act_window">
-            <field name="name">Account Routing Line</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.routing.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-        <menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21" />
-        <record id="account_routing_subrouting_filter" model="ir.ui.view">
-            <field name="name">account.routing.subrouting.filter</field>
-            <field name="model">account.routing.subrouting</field>
-            <field name="arch" type="xml">
-                <search string="Search Tasks">
-                    <field name="name"/>
-                    <group expand="0" string="Group By">
-                        <filter name="group_by_category" string="Category" icon="terp-personal" context="{'group_by':'routing_id'}"/>
-                        <filter name="group_by_bill_type" string="Billing Type" icon="terp-personal" context="{'group_by':'routing_line_id'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-        <record id="account_routing_subrouting_view" model="ir.actions.act_window">
-            <field name="name">Account Routing Subrouting</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.routing.subrouting</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_group_by_category':1}</field>
-        </record>
-        <menuitem id="menu_account_routing_subrouting_view" action="account_routing_subrouting_view" parent="account.account_account_menu" sequence="22" />
-
-
 
     </data>
 </openerp>
