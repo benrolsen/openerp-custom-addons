@@ -512,7 +512,7 @@ class hr_timekeeping_line(models.Model):
         if self.previous_date:
             prev_date = datetime.strptime(self.previous_date, '%Y-%m-%d')
             prev_deadline = prev_date + timedelta(days=1, hours=11)
-            if not (prev_date < now < prev_deadline):
+            if not (now < prev_deadline):
                 self.logging_required = True
         if not self.date:
             return
@@ -520,7 +520,7 @@ class hr_timekeeping_line(models.Model):
         check_date = datetime.strptime(self.date, '%Y-%m-%d')
         if check_date > now:
             self.state = 'future'
-            self.logging_required = True
+            # self.logging_required = True
         else:
             deadline = check_date + timedelta(days=1, hours=11)
             if (check_date < now < deadline):
