@@ -152,7 +152,7 @@ aa_m10,M10 - ASSEMBLY,MFG Labor,normal,Labor for assembling manufactured goods f
 aa_m15,M15 - QUALITY ASSURANCE,MFG Labor,normal,Labor for performing QA functions for manufactured goods for product sales.,1,1,,,
 aa_m20,M20 - TEST,MFG Labor,normal,Labor for testing of manufactured goods not already covered by other codes.,1,1,,,
 aa_m25,M25 - RADIO FREQUENCY TEST,MFG Labor,normal,Labor for performing RF tests of manufactured goods for product sales.,1,1,,,
-aa_m30,M30 - EMVORNMENTAL TEST,MFG Labor,normal,Labor for performing environmental testing of manufactured goods for product sales.,1,1,,,
+aa_m30,M30 - ENVIRONMENTAL TEST,MFG Labor,normal,Labor for performing environmental testing of manufactured goods for product sales.,1,1,,,
 aa_m35,M35 - FLIGHT TEST,MFG Labor,normal,Labor for performing flight testing of manufactured goods for product sales.,1,1,,,
 aa_m40,M40 - REWORK,MFG Labor,normal,Labor for rework of manufactured goods for product sales..,1,1,,,
 aa_m45,M45 - SHIPPING,MFG Labor,normal,Labor for shipping manufactured goods for product sales.,1,1,,,
