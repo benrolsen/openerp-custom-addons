@@ -168,13 +168,17 @@ class employee(models.Model):
     hire_date = fields.Date('Hire Date')
     personal_email = fields.Char('Personal Email')
     personal_phone = fields.Char('Personal Phone')
-    uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
+    uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')
 
     @api.one
     @api.depends('first_name','middle_name','last_name')
     def _computed_fields(self):
         self.name = "{}, {} {}".format(self.last_name, self.first_name, self.middle_name)
         self.name_related = self.name
+
+    @api.one
+    @api.depends('user_id')
+    def _uid_is_user_id(self):
         self.uid_is_user_id = (self.user_id.id == self.env.user.id)
 
     @api.multi
