@@ -123,8 +123,8 @@
                 <tree>
                     <field name="routing_id" string="Category"/>
                     <field name="routing_line_id" string="Type"/>
-                    <field name="name" string="Task Code"/>
-                    <field name="old_task_code"/>
+                    <field name="name" string="Analytic"/>
+                    <field name="account_id"/>
                 </tree>
             </field>
         </record>
@@ -133,19 +133,12 @@
             <field name="model">account.routing.subrouting</field>
             <field name="arch" type="xml">
                 <form string="Account Routing Subroutes (Task Codes)">
-                    <group>
+                    <group name="ars_view">
                         <group>
                             <field name="routing_id" />
                             <field name="routing_line_id" readonly="True"/>
                             <field name="account_analytic_id" options="{'create':false, 'create_edit':false}"/>
                             <field name="account_id" options="{'create':false, 'create_edit':false}"/>
-                        </group>
-                        <group>
-                            <field name="old_task_code" />
-                            <field name="qb_company_job" />
-                            <field name="qb_service_item" />
-                            <field name="qb_payroll_item_st" />
-                            <field name="qb_payroll_item_ot" />
                         </group>
                     </group>
                 </form>

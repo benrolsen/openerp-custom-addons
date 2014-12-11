@@ -77,8 +77,8 @@
         </record>
 
         <record id="access_timekeeping_payroll_report" model="ir.model.access">
-            <field name="name">hr.timekeeping.payroll.report</field>
-            <field name="model_id" ref="model_hr_timekeeping_payroll_report"/>
+            <field name="name">hr.timekeeping.lines.report</field>
+            <field name="model_id" ref="model_hr_timekeeping_lines_report"/>
             <field name="group_id" ref="base.group_hr_user"/>
             <field name="perm_read">1</field>
             <field name="perm_write">1</field>
@@ -117,13 +117,20 @@
             <field name="perm_unlink">1</field>
         </record>
 
-        <!-- Also, PMs need to be able to edit Analytic Accounts -->
+        <!-- Also, PMs need to be able to edit Analytic Accounts and view some reports -->
         <record id="access_analytic_pms" model="ir.model.access">
             <field name="name">hr.timekeeping.analytic.pms</field>
             <field name="model_id" ref="model_account_analytic_account"/>
             <field name="group_id" ref="imsar_timekeeping.group_pms_user"/>
             <field name="perm_read">1</field>
             <field name="perm_write">1</field>
+        </record>
+
+        <record id="access_timekeeping_payroll_report_pms" model="ir.model.access">
+            <field name="name">hr.timekeeping.lines.report.pms</field>
+            <field name="model_id" ref="model_hr_timekeeping_lines_report"/>
+            <field name="group_id" ref="imsar_timekeeping.group_pms_user"/>
+            <field name="perm_read">1</field>
         </record>
 
     </data>

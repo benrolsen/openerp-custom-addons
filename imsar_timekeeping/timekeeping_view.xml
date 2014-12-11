@@ -373,7 +373,7 @@
         <!-- Menus and stuff -->
         <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user"/>
         <menuitem id="hr.menu_hr_main" name="Company" parent="hr.menu_hr_root" sequence="10"/>
-        <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" groups="base.group_hr_user"/>
+        <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" />
 
         <!-- My Current Timesheet menuitem -->
         <record id="action_hr_timekeeping_current_open" model="ir.actions.server">
@@ -445,7 +445,7 @@
             <field name="act_window_id" ref="all_timesheets_view_form"/>
         </record>
         <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" name="My Timesheets" sequence="2"/>
-        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" name="All Timesheets" sequence="2"/>
+        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user" name="All Timesheets" sequence="1"/>
 
         <!-- Need My Approval -->
         <record id="timesheets_approvals_view_form" model="ir.actions.act_window">

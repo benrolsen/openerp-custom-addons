@@ -2,64 +2,53 @@
 <openerp>
     <data>
 
-        <record id="view_payroll_report_search" model="ir.ui.view">
-            <field name="name">hr.timekeeping.payroll.report.search</field>
-            <field name="model">hr.timekeeping.payroll.report</field>
+        <!-- Timesheet lines report -->
+        <record id="view_timekeeping_lines_report_search" model="ir.ui.view">
+            <field name="name">hr.timekeeping.lines.report.search</field>
+            <field name="model">hr.timekeeping.lines.report</field>
             <field name="arch" type="xml">
-                <search string="Timekeeping Entries Analysis">
+                <search>
                     <field name="date"/>
                     <field name="user_id"/>
                     <field name="state"/>
-                    <filter string="Approved" domain="[('state','=','done')]"/>
-                    <filter string="Not Approved" domain="[('state','!=','done')]"/>
+                    <filter name="approved" string="Approved" domain="[('state','=','done')]"/>
+                    <filter name="not_approved" string="Not Approved" domain="[('state','!=','done')]"/>
+                    <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
+                    <filter name="this_payperiod" string="This Payperiod" domain="[('adv_search','=','this_payperiod')]"/>
+                    <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
                     <group expand="0" string="Group By">
-                        <filter string="User" name="User" context="{'group_by':'user_id'}"/>
-                        <filter string="Week" name="Week" context="{'group_by':'date:week'}"/>
-                        <filter string="Task Code" name="Task Code" context="{'group_by':'task_code'}"/>
+                        <filter name="group_by_user" string="User" context="{'group_by':'user_id'}"/>
+                        <filter name="group_by_day" string="Day" context="{'group_by':'date:day'}"/>
+                        <filter name="group_by_task_code" string="Task Code" context="{'group_by':'task_code'}"/>
+                        <filter name="group_by_worktype" string="Worktype" context="{'group_by':'worktype'}"/>
+                        <filter name="group_by_payperiod" string="Payperiod" context="{'group_by':'payperiod_id'}"/>
                     </group>
                 </search>
             </field>
         </record>
-        <record id="view_account_analytic_entries_search" model="ir.ui.view">
-             <field name="name">hr.timekeeping.payroll.graph</field>
-             <field name="model">hr.timekeeping.payroll.report</field>
+        <record id="view_timekeeping_lines_report" model="ir.ui.view">
+             <field name="name">hr.timekeeping.lines.graph</field>
+             <field name="model">hr.timekeeping.lines.report</field>
              <field name="arch" type="xml">
                  <graph string="Timekeeping Entries Analysis" type="pivot">
                     <field name="user_id" type="row"/>
-                    <field name="worktype" type="col"/>
+                    <field name="payperiod_id" type="col"/>
                     <field name="unit_amount" type="measure"/>
                     <field name="amount" type="measure"/>
                  </graph>
              </field>
         </record>
-
-        <record id="view_account_analytic_entries_wizard" model="ir.ui.view">
-             <field name="name">hr.timekeeping.payroll.wizard</field>
-             <field name="model">hr.timekeeping.payroll.report.wizard</field>
-             <field name="arch" type="xml">
-                <form string="Choose date range">
-                    <group>
-                        <field name="year"/>
-                        <field name="payperiod_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                domain="[('year','=',year)]"/>
-                    </group>
-                    <footer>
-                        <button name="open_report" string="Get Report" type="object"  class="oe_highlight"  />
-                        or
-                        <button string="Cancel" class="oe_link" special="cancel" />
-                    </footer>
-                </form>
-             </field>
-        </record>
-        <record id="action_account_analytic_entries_wizard" model="ir.actions.act_window">
-            <field name="name">Payroll Wizard</field>
-            <field name="res_model">hr.timekeeping.payroll.report.wizard</field>
+        <record id="action_timekeeping_lines_report" model="ir.actions.act_window">
+            <field name="name">Timesheet Entries Report</field>
+            <field name="res_model">hr.timekeeping.lines.report</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_account_analytic_entries_wizard"/>
-            <field name="target">new</field>
+            <field name="view_mode">graph,tree</field>
+            <field name="view_id" ref="view_timekeeping_lines_report"/>
+            <field name="target">current</field>
+            <field name="context">{'search_default_group_by_name':1}</field>
         </record>
-        <menuitem id="menu_action_account_analytic_entries_wizard" action="action_account_analytic_entries_wizard" parent="menu_hr_timekeeping_reports" sequence="1"/>
+        <menuitem id="menu_action_timekeeping_lines_report" action="action_timekeeping_lines_report" parent="menu_hr_timekeeping_reports"
+                  groups="base.group_hr_user,imsar_timekeeping.group_pms_user" sequence="2"/>
 
         <!-- Inventory report -->
         <record id="view_timekeeping_inventory_wizard" model="ir.ui.view">
@@ -87,7 +76,8 @@
             <field name="view_id" ref="view_timekeeping_inventory_wizard"/>
             <field name="target">new</field>
         </record>
-        <menuitem id="menu_action_timekeeping_inventory_wizard" action="action_timekeeping_inventory_wizard" parent="menu_hr_timekeeping_reports" sequence="5"/>
+        <menuitem id="menu_action_timekeeping_inventory_wizard" action="action_timekeeping_inventory_wizard" parent="menu_hr_timekeeping_reports"
+                  groups="base.group_hr_user" sequence="5"/>
 
         <!-- Sheets by week/task report -->
         <record id="view_timekeeping_by_task_wizard" model="ir.ui.view">
@@ -115,7 +105,8 @@
             <field name="view_id" ref="view_timekeeping_by_task_wizard"/>
             <field name="target">new</field>
         </record>
-        <menuitem id="menu_action_timekeeping_by_task_wizard" action="action_timekeeping_by_task_wizard" parent="menu_hr_timekeeping_reports" sequence="6"/>
+        <menuitem id="menu_action_timekeeping_by_task_wizard" action="action_timekeeping_by_task_wizard" parent="menu_hr_timekeeping_reports"
+                  groups="base.group_hr_user" sequence="6"/>
 
         <!-- Timesheet Approval report -->
         <report

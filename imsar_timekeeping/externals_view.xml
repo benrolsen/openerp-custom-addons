@@ -147,5 +147,33 @@
             </field>
         </record>
 
+        <!-- Account routing subrouting, add old task code stuff -->
+        <record id="account_routing_subrouting_tree" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.tree</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="inherit_id" ref="account_routing.account_routing_subrouting_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr='//field[@name="account_id"]' position='after'>
+                    <field name="old_task_code"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="account_routing_subrouting_form" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.form</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="inherit_id" ref="account_routing.account_routing_subrouting_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//group[@name="ars_view"]' position='inside'>
+                    <group>
+                        <field name="old_task_code" />
+                        <field name="qb_company_job" />
+                        <field name="qb_service_item" />
+                        <field name="qb_payroll_item_st" />
+                        <field name="qb_payroll_item_ot" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
