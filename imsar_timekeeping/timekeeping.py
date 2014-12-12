@@ -827,7 +827,7 @@ class hr_timekeeping_approval(models.Model):
             body += "<br><strong>Comment:</strong> {}".format(comment)
         self.sheet_id.message_post(subject=subject, body=body,)
         # send email
-        template = self.pool.get('ir.model.data').get_object(self._cr, self._uid, 'imsar_timekeeping', 'reject_timesheet_email')
+        template = self.env.ref('imsar_timekeeping.reject_timesheet_email')
         ctx = self._context.copy()
         ctx.update({'body': body, 'comment': comment})
         self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True, context=ctx)

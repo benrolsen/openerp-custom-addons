@@ -61,11 +61,23 @@
             <field name="email_from"><![CDATA[<${(user.email or object.sheet_id.user_id.company_id.email)|safe}>]]></field>
             <field name="email_to">${object.sheet_id.user_id.email|safe}</field>
             <field name="subject">Timesheet Rejected</field>
-            <field name="body_html"><![CDATA[Approval line for ${object.type} was rejected on timesheet ${object.sheet_id.name}.\n
+            <field name="body_html"><![CDATA[Approval line for ${object.type} was rejected on timesheet ${object.sheet_id.name}.
 Rejection reason:
 ${ctx.get('comment')}
                 ]]></field>
         </record>
 
+        <!-- Email template SOW change -->
+        <record id="sow_change_email" model="email.template">
+            <field name="name">Statement of Work Change</field>
+            <field name="model_id" ref="model_res_users"/>
+            <field name="email_from">${(object.company_id.email or 'no-reply@imsar.com')|safe}</field>
+            <field name="email_to">${object.email|safe}</field>
+            <field name="subject">Statement of Work Change</field>
+            <field name="body_html"><![CDATA[The Statement of Work for "${ctx.aa_name}" has been modified. You must review and sign this task Statement of Work again before you will be able to use it.]]></field>
+        </record>
+
     </data>
 </openerp>
+
+

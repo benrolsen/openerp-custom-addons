@@ -116,6 +116,15 @@ class account_analytic_account(models.Model):
     @api.multi
     def write(self, vals):
         res = super(account_analytic_account, self).write(vals)
+        if 'description' in vals.keys():
+            # SOW has changed, so invalidate everyone who has signed and email them notification.
+            for user in self.user_review_ids:
+                # send email
+                template = self.env.ref('imsar_timekeeping.sow_change_email')
+                ctx = self._context.copy()
+                ctx.update({'aa_name': self.name})
+                self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, user.id, force_send=True, raise_exception=True, context=ctx)
+                self.write({'user_review_ids': [(3,user.id)]})
         # if project_header, pass on authorizations to children
         if self.project_header:
             for child in self.get_all_children():
@@ -144,6 +153,7 @@ class account_analytic_account(models.Model):
                 break
             parent = parent.parent_id
         return res
+
 
 class employee(models.Model):
     _inherit = 'hr.employee'
