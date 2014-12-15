@@ -183,7 +183,10 @@ class employee(models.Model):
     @api.one
     @api.depends('first_name','middle_name','last_name')
     def _computed_fields(self):
-        self.name = "{}, {} {}".format(self.last_name, self.first_name, self.middle_name)
+        if self.middle_name:
+            self.name = "{}, {} {}".format(self.last_name, self.first_name, self.middle_name)
+        else:
+            self.name = "{}, {}".format(self.last_name, self.first_name)
         self.name_related = self.name
 
     @api.one
