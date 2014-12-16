@@ -400,7 +400,11 @@ class hr_timekeeping_sheet(models.Model):
                 pp_total += sheet.total_time
             # full-time employees accrue PTO
             self.accrue_pto(pp_total)
-            exp_total = self.employee_id.full_time_hours
+            # also need to decrement PTO if they used it
+            pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id.id
+            for line in self.line_ids:
+                if line.account_analytic_id.id == pto_analytic_id:
+                    self.employee_id.accrued_pto -= line.unit_amount
         # refresh the page
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
