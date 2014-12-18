@@ -35,4 +35,21 @@ openerp.imsar_ui = function (instance) {
         }
     });
 
+    // This removes the export option if the user can't edit this object/view
+    instance.web.ListView.include({
+        load_list: function(data) {
+            this._super(data);
+            var self = this;
+            if (this.sidebar) {
+                if (!this.is_action_enabled('edit')){
+                    items = self.sidebar.items['other'];
+                    _(items).each(function(item){
+                        if (item.label === _t("Export"))
+                            items.splice(items.indexOf(item), 1);
+                    });
+                    self.sidebar.redraw();
+                }
+            }
+        },
+    });
 };

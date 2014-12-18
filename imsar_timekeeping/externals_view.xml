@@ -29,6 +29,30 @@
             <field name="target">new</field>
         </record>
 
+        <!-- search filters -->
+        <record id="view_employee_filter" model="ir.ui.view">
+            <field name="name">Employees</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr='//search' position='replace'>
+                    <search string="Employees">
+                        <field name="name" string="Employees" filter_domain="['|',('work_email','ilike',self),('name','ilike',self)]"/>
+                        <field name="department_id" />
+                        <field name="user_active" />
+                        <field name="category_ids" groups="base.group_hr_user"/>
+                        <filter name="active" string="Active" domain="[('user_active','=',True)]"/>
+                        <filter name="inactive" string="Inactive" domain="[('user_active','=',False)]"/>
+                        <group expand="0" string="Group By">
+                            <filter string="Manager" icon="terp-personal" domain="[]" context="{'group_by':'parent_id'}"/>
+                            <filter string="Department" icon="terp-personal+" domain="[]" context="{'group_by':'department_id'}"/>
+                            <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
+                        </group>
+                    </search>
+                </xpath>
+             </field>
+         </record>
+
         <!--Employee form view, add new fields -->
         <record id="imsar_view_employee_form" model="ir.ui.view">
             <field name="name">imsar.hr.employee.form</field>
@@ -40,6 +64,7 @@
                         <group>
                             <field name="first_name"/>
                             <field name="last_name"/>
+                            <field name="user_active"/>
                         </group>
                         <group>
                             <field name="middle_name"/>
@@ -54,14 +79,15 @@
                         <field name="category_ids" widget="many2many_tags" placeholder="e.g. Part Time" groups="base.group_hr_user"/>
                     </group>
                 </xpath>
+                <xpath expr='//field[@name="address_id"]' position='replace'></xpath>
+                <xpath expr='//field[@name="coach_id"]' position='replace'></xpath>
                 <xpath expr='//field[@name="mobile_phone"]' position='before'>
                     <field name="work_email" widget="email"/>
                     <field name="work_phone"/>
                 </xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Citizenship &amp; Other Info"]' position='replace'>
                 </xpath>
-                <xpath expr='//page[@string="Personal Information"]//group[@string="Birth"]' position='replace'>
-                </xpath>
+                <xpath expr='//page[@string="Personal Information"]//group[@string="Birth"]' position='replace'></xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Contact Information"]' position='inside'>
                     <field name="personal_email" widget="email"/>
                     <field name="personal_phone"/>
@@ -98,6 +124,7 @@
 
         <record id="hr.open_view_employee_list_my" model="ir.actions.act_window">
             <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_active':1}</field>
         </record>
 
 

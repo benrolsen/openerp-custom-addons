@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from openerp import models, fields, api, _
+from openerp.addons.base.ir.ir_mail_server import MailDeliveryException
 
 
 # I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
@@ -115,6 +116,11 @@ class account_analytic_account(models.Model):
 
     @api.multi
     def write(self, vals):
+        new_auth_user_temp = vals.get('auth_users')
+        removed_users = set()
+        if new_auth_user_temp and len(new_auth_user_temp[0]) > 2:
+            new_auth_users = new_auth_user_temp[0][2]
+            removed_users = set(self.auth_users.ids) - set(new_auth_users)
         res = super(account_analytic_account, self).write(vals)
         if 'description' in vals.keys():
             # SOW has changed, so invalidate everyone who has signed and email them notification.
@@ -123,7 +129,10 @@ class account_analytic_account(models.Model):
                 template = self.env.ref('imsar_timekeeping.sow_change_email')
                 ctx = self._context.copy()
                 ctx.update({'aa_name': self.name})
-                self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, user.id, force_send=True, raise_exception=True, context=ctx)
+                try:
+                    self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, user.id, force_send=True, raise_exception=True, context=ctx)
+                except MailDeliveryException:
+                    pass
                 self.write({'user_review_ids': [(3,user.id)]})
         # if project_header, pass on authorizations to children
         if self.project_header:
@@ -134,6 +143,7 @@ class account_analytic_account(models.Model):
                 auth_users = set(child.auth_users.ids)
                 pms.update(set(self.pm_ids.ids))
                 auth_users.update(set(self.auth_users.ids))
+                auth_users.difference_update(removed_users)
                 child.write({'pm_ids':[(6,0,list(pms))], 'auth_users': [(6,0,list(auth_users))], 'limit_to_auth': self.limit_to_auth})
         # ensure that all users listed as PMs are in the Project Manager group
         pm_group_id = self.env.ref('imsar_timekeeping.group_pms_user')
@@ -179,6 +189,7 @@ class employee(models.Model):
     personal_email = fields.Char('Personal Email')
     personal_phone = fields.Char('Personal Phone')
     uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')
+    user_active = fields.Boolean(related='resource_id.user_id.active', string="User Active")
 
     @api.one
     @api.depends('first_name','middle_name','last_name')
