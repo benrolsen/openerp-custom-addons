@@ -411,7 +411,7 @@ class hr_timekeeping_sheet(models.Model):
     @api.model
     def create(self, vals):
         new_id = super(hr_timekeeping_sheet, self).create(vals)
-        approval_vars = {'type': 'HR', 'state': 'draft', 'sheet_id': new_id[0].id,}
+        approval_vars = {'type': 'Admin', 'state': 'draft', 'sheet_id': new_id[0].id,}
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
         approval_vars.update({'type': 'Manager'})
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
@@ -778,7 +778,7 @@ class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
 
-    type = fields.Selection([('HR','HR'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
+    type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)
@@ -794,11 +794,10 @@ class hr_timekeeping_approval(models.Model):
         self.relevant_time = self.sheet_id.total_time
 
         user = self.env.user
-        # check to see if user is HR Officer (should include HR Manager automatically)
-        if self.type == 'HR':
-            hr_category = self.env['ir.module.category'].search([('name','=','Human Resources')])
-            hr_officer = self.env['res.groups'].search([('name','=','Officer'),('category_id','=',hr_category.id)])
-            if hr_officer in user.groups_id:
+        # check to see if user is timesheet admin
+        if self.type == 'Admin':
+            ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
+            if ts_admin in user.groups_id:
                 self.uid_can_approve = True
         # check to see if user is PM on this project
         elif self.type == 'Project':

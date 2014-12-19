@@ -34,7 +34,6 @@
                     <field name="user_id" type="row"/>
                     <field name="payperiod_id" type="col"/>
                     <field name="unit_amount" type="measure"/>
-                    <field name="amount" type="measure"/>
                  </graph>
              </field>
         </record>

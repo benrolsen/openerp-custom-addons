@@ -2,6 +2,13 @@
 <openerp>
     <data noupdate="1">
 
+        <!-- Group for Admin timesheet reviewers -->
+        <record id="imsar_timekeeping.group_timesheet_admin" model="res.groups">
+            <field name="name">Timesheet Admin</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">This user will be able to review and approve Admin approval lines on timesheets.</field>
+        </record>
+
         <!-- Group for users allowed to make edits to other people's timesheets -->
         <record id="imsar_timekeeping.group_tk_proxy_user" model="res.groups">
             <field name="name">Timekeeping Proxy Users</field>

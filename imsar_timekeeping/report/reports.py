@@ -16,7 +16,7 @@ class timekeeping_lines_report(models.Model):
     date = fields.Date('Date', readonly=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True)
     unit_amount = fields.Float('Quantity', readonly=True)
-    amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account'))
+    # amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account')) # removed because this report shouldn't contain financials
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", readonly=True)
     state = fields.Char('Timesheet State', readonly=True)
     task_code = fields.Char('Task Code', readonly=True)

@@ -190,6 +190,8 @@ class employee(models.Model):
     personal_phone = fields.Char('Personal Phone')
     uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')
     user_active = fields.Boolean(related='resource_id.user_id.active', string="User Active")
+    address_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Working Address')
+    address_home_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Home Address')
 
     @api.one
     @api.depends('first_name','middle_name','last_name')
@@ -265,6 +267,7 @@ class resource(models.Model):
 
 class res_users(models.Model):
     _inherit = "res.users"
+    _order = 'login'
 
     analytic_review_ids = fields.Many2many('account.analytic.account', 'analytic_user_review_rel', 'user_id', 'analytic_id', string='Reviewed Analytic Accounts')
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
