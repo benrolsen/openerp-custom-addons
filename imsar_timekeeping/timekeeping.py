@@ -233,7 +233,7 @@ class hr_timekeeping_sheet(models.Model):
 
     @api.multi
     def button_oneclick_add(self):
-        today_lines = self.line_ids.search([('date','=',date.today().strftime(DATE_FORMAT))])
+        today_lines = self.line_ids.search([('sheet_id','=',self.id),('date','=',date.today().strftime(DATE_FORMAT))])
         today_tasks = [line.routing_subrouting_id for line in today_lines]
         for task in self.env.user.timesheet_prefs.oneclick_tasks:
             if task not in today_tasks:
