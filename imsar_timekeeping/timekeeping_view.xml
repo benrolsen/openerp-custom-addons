@@ -112,7 +112,8 @@
                 <form string="Timesheet" create="false" delete="false">
                 <header>
                     <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
-                            attrs="{'invisible':[('submit_button_view','=',False)]}"/>
+                            attrs="{'invisible':[('submit_button_view','=',False)]}"
+                            confirm="Submit your weekly timesheet for approval?"/>
                     <button name="button_confirm" string="Proxy Submit" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':[('proxy_button_view','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"

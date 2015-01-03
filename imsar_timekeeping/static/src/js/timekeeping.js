@@ -78,7 +78,7 @@ openerp.imsar_timekeeping = function (instance) {
                     self.lines = result;
                     self.reinitialize();
             });
-        },
+        }
     });
 
 
@@ -93,7 +93,7 @@ openerp.imsar_timekeeping = function (instance) {
 
         events: {
             'change .oe_datepicker_master': 'change_datetime',
-            'keypress .oe_datepicker_master': 'change_datetime',
+            'keypress .oe_datepicker_master': 'change_datetime'
         },
         init: function(parent) {
             this._super(parent);
@@ -116,7 +116,7 @@ openerp.imsar_timekeeping = function (instance) {
             });
             this.picker({
                 onClose: this.on_picker_select,
-                onSelect: this.on_picker_select,
+                onSelect: this.on_picker_select
             });
             // Some clicks in the datepicker dialog are not stopped by the
             // datepicker and "bubble through", unexpectedly triggering the bus's
@@ -187,7 +187,7 @@ openerp.imsar_timekeeping = function (instance) {
         },
         commit_value: function () {
             this.change_datetime();
-        },
+        }
     });
     instance.web.form.FieldTime = instance.web.form.FieldDatetime.extend({
         build_widget: function() {

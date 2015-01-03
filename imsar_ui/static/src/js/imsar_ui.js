@@ -50,6 +50,6 @@ openerp.imsar_ui = function (instance) {
                     self.sidebar.redraw();
                 }
             }
-        },
+        }
     });
 };

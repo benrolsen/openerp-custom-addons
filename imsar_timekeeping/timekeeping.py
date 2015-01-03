@@ -166,12 +166,6 @@ class hr_timekeeping_sheet(models.Model):
     def button_confirm(self):
         # recalc computed fields
         self._compute_subtotals()
-        if self.env.user.id != self.user_id.id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
-            for line in self.line_ids:
-                pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
-                in_absentia_id = self.env.user.company_id.in_absentia_id.id
-                if line.account_analytic_id.id not in [pto_analytic_id, in_absentia_id]:
-                    raise Warning(_("You may only submit a timesheet for someone else if the timesheet contains only PTO and In Absentia task codes."))
         # log submission for approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submitted for approval"
@@ -474,7 +468,8 @@ class hr_timekeeping_line(models.Model):
     premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
     full_amount = fields.Float(string='Final Amount', digits=dp.get_precision('Account'), compute='_computed_fields', readonly=True, store=True)
     # NOTE: when using a functional default, make sure to use a lambda, or else the default will be a static value from the server start
-    date = fields.Date(string='Date', required=True, default=lambda self: date.today().strftime(DATE_FORMAT))
+    # date = fields.Date(string='Date', required=True, default=lambda self: date.today().strftime(DATE_FORMAT))
+    date = fields.Date(string='Date', required=True, default=lambda self: get_now_tz(self.env.user, self.env['ir.config_parameter']).strftime(DATE_FORMAT))
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
     routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route())
