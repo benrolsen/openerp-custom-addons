@@ -229,17 +229,22 @@ class hr_timekeeping_sheet(models.Model):
     def button_oneclick_add(self):
         today_lines = self.line_ids.search([('sheet_id','=',self.id),('date','=',date.today().strftime(DATE_FORMAT))])
         today_tasks = [line.routing_subrouting_id for line in today_lines]
-        for task in self.env.user.timesheet_prefs.oneclick_tasks:
-            if task not in today_tasks:
-                vals = {
-                    'sheet_id': self.id,
-                    'routing_id': task.routing_id.id,
-                    'routing_line_id': task.routing_line_id.id,
-                    'routing_subrouting_id': task.id,
-                    'date': date.today().strftime(DATE_FORMAT),
-                    'change_explanation': '',
-                }
-                id = self.env['hr.timekeeping.line'].create(vals)
+        # make sure today's date is within the current timesheet
+        start = datetime.strptime(self.date_from, DATE_FORMAT)
+        end = datetime.strptime(self.date_to, DATE_FORMAT) + timedelta(hours=23, minutes=59)
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        if start <= now <= end:
+            for task in self.env.user.timesheet_prefs.oneclick_tasks:
+                if task not in today_tasks:
+                    vals = {
+                        'sheet_id': self.id,
+                        'routing_id': task.routing_id.id,
+                        'routing_line_id': task.routing_line_id.id,
+                        'routing_subrouting_id': task.id,
+                        'date': date.today().strftime(DATE_FORMAT),
+                        'change_explanation': '',
+                    }
+                    id = self.env['hr.timekeeping.line'].create(vals)
 
     @api.multi
     def button_retry_payroll(self):
@@ -478,7 +483,7 @@ class hr_timekeeping_line(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
-    change_reason = fields.Selection([('Correction','Task Code Correction'),('Travel','On Travel'),
+    change_reason = fields.Selection([('Correction','Task Code Correction'),('Working','Next Working Day'),('Travel','On Travel'),
                                       ('Forgot','Forgot Previous Entry'),('Other','Other (requires explanation)')], string="Change Reason")
     change_explanation = fields.Char(string='Change Explanation')
     state = fields.Char(compute='_check_state', default='open') # 'past','open','future'

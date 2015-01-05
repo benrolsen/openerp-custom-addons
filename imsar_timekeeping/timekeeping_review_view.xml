@@ -67,7 +67,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="analytic_review_form"/>
-            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',False)]</field>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['close','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',False)]</field>
         </record>
         <record id="action_analytic_to_review_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>
@@ -83,7 +83,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="analytic_review_form"/>
-            <field name="domain">[('type','not in',['view','template']),('state','not in',['closed','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',True)]</field>
+            <field name="domain">[('type','not in',['view','template']),('state','not in',['close','cancelled']),('is_labor_code','=',True),('user_has_reviewed','=',True)]</field>
         </record>
         <record id="action_analytic_reviewed_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>

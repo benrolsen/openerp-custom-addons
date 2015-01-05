@@ -15,6 +15,7 @@ class timekeeping_lines_report(models.Model):
     payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period')
     date = fields.Date('Date', readonly=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True)
+    employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
     unit_amount = fields.Float('Quantity', readonly=True)
     # amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account')) # removed because this report shouldn't contain financials
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", readonly=True)
@@ -31,12 +32,18 @@ class timekeeping_lines_report(models.Model):
         this_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(today)
         prev_payperiod_date = datetime.strptime(this_payperiod.start_date, DATE_FORMAT) + timedelta(days=-1)
         prev_payperiod = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_payperiod_date)
-        week_ab = this_payperiod.get_week_ab(today)
 
         ids = []
         if value == 'this_week':
+            week_ab = this_payperiod.get_week_ab(today)
             this_week = this_payperiod.name + '-' + week_ab
             ids = self.search([('week_name','=',this_week)]).ids
+        elif value == 'last_week':
+            prev_week_date = today - timedelta(days=7)
+            prev_week_pp = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_week_date)
+            prev_week_ab = prev_week_pp.get_week_ab(prev_week_date)
+            prev_week = prev_payperiod.name + '-' + prev_week_ab
+            ids = self.search([('week_name','=',prev_week)]).ids
         elif value == 'this_payperiod':
             ids = self.search([('payperiod_id','=',this_payperiod.id)]).ids
         elif value == 'prev_payperiod':
@@ -56,6 +63,7 @@ class timekeeping_lines_report(models.Model):
                     min(tl.id) as id,
                     tl.date as date,
                     tl.user_id as user_id,
+                    ts.employee_id as employee_id,
                     sum(tl.unit_amount) as unit_amount,
                     sum(tl.amount + tl.premium_amount) as amount,
                     tl.worktype as worktype,
@@ -70,7 +78,7 @@ class timekeeping_lines_report(models.Model):
                 join account_routing_subrouting ars on tl.routing_subrouting_id = ars.id
                 join account_analytic_account aa on ars.account_analytic_id = aa.id
                 group by
-                    tl.date, tl.user_id, tl.worktype, ts.state, ts.payperiod_id, week_name, task_code
+                    tl.date, tl.user_id, employee_id, tl.worktype, ts.state, ts.payperiod_id, week_name, task_code
             )
         """)
 
@@ -109,7 +117,8 @@ class timekeeping_search_sheets_by_task(models.TransientModel):
     _description = "Timesheets by Task"
 
     week = fields.Char('Week', default=lambda self: self._get_last_week())
-    analytic = fields.Many2one('account.analytic.account', string="Contract/Project", domain="[('project_header','=',True)]")
+    analytic = fields.Many2one('account.analytic.account', string="Contract/Project",
+                       domain="[('project_header','=',True),('state','not in',['close','cancelled'])]")
 
     @api.model
     def _get_last_week(self):

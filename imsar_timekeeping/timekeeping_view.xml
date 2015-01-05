@@ -353,6 +353,8 @@
             <field name="model">hr.timekeeping.sheet</field>
             <field name="arch" type="xml">
                 <search string="Search Timesheet">
+                    <field name="user_id"/>
+                    <field name="name"/>
                     <filter name="draft" string="In Draft" domain="[('state','=','draft')]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state','=','confirm')]"/>
                     <filter name="my_approvals" string="My Approvals" domain="[('adv_search','=','my_approvals')]"/>

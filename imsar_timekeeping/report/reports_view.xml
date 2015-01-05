@@ -10,10 +10,12 @@
                 <search>
                     <field name="date"/>
                     <field name="user_id"/>
+                    <field name="employee_id"/>
                     <field name="state"/>
                     <filter name="approved" string="Approved" domain="[('state','=','done')]"/>
                     <filter name="not_approved" string="Not Approved" domain="[('state','!=','done')]"/>
                     <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
+                    <filter name="last_week" string="Last Week" domain="[('adv_search','=','last_week')]"/>
                     <filter name="this_payperiod" string="This Payperiod" domain="[('adv_search','=','this_payperiod')]"/>
                     <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
                     <group expand="0" string="Group By">
@@ -31,7 +33,7 @@
              <field name="model">hr.timekeeping.lines.report</field>
              <field name="arch" type="xml">
                  <graph string="Timekeeping Entries Analysis" type="pivot">
-                    <field name="user_id" type="row"/>
+                    <field name="employee_id" type="row"/>
                     <field name="payperiod_id" type="col"/>
                     <field name="unit_amount" type="measure"/>
                  </graph>
