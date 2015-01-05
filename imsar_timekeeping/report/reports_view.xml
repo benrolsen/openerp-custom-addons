@@ -20,6 +20,7 @@
                     <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
                     <group expand="0" string="Group By">
                         <filter name="group_by_user" string="User" context="{'group_by':'user_id'}"/>
+                        <filter name="group_by_employee" string="Employee" context="{'group_by':'employee_id'}"/>
                         <filter name="group_by_day" string="Day" context="{'group_by':'date:day'}"/>
                         <filter name="group_by_task_code" string="Task Code" context="{'group_by':'task_code'}"/>
                         <filter name="group_by_worktype" string="Worktype" context="{'group_by':'worktype'}"/>
