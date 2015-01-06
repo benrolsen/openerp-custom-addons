@@ -146,17 +146,15 @@ class hr_timekeeping_sheet(models.Model):
             sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',prev_payperiod.id)]).ids
         elif value == 'my_approvals':
             sheets = set()
-            for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
-                for approval_line in sheet.approval_line_ids:
-                    if approval_line.state == 'confirm' and approval_line.uid_can_approve:
-                        sheets.add(sheet.id)
+            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
+                if approval_line.uid_can_approve:
+                        sheets.add(approval_line.sheet_id.id)
             sheets = list(sheets)
         elif value == 'my_direct_approvals':
             sheets = set()
-            for sheet in self.env['hr.timekeeping.sheet'].search([('state','=','confirm')]):
-                for approval_line in sheet.approval_line_ids:
-                    if approval_line.state == 'confirm' and approval_line.uid_can_approve and sheet.employee_id.parent_id.user_id.id == self._uid:
-                        sheets.add(sheet.id)
+            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
+                if approval_line.uid_can_approve and approval_line.sheet_id.employee_id.parent_id.user_id.id == self._uid:
+                        sheets.add(approval_line.sheet_id.id)
             sheets = list(sheets)
         else:
             sheets = self.env['hr.timekeeping.sheet'].search([]).ids
