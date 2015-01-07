@@ -40,7 +40,9 @@
                     <group>
                         <field name="name"/>
                         <field name="description"/>
+                        <field name="pm_ids" widget="many2many_tags" attrs="{'invisible':[('type','!=','contract')]}"/>
                         <field name="hide_from_uid" invisible="True"/>
+                        <field name="type" invisible="True"/>
                         <field name="user_has_reviewed" invisible="True"/>
                     </group>
                     <group attrs="{'invisible':['|',('hide_from_uid','=',True),('user_has_reviewed','=',False)]}">

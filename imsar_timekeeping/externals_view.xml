@@ -70,6 +70,7 @@
                             <field name="middle_name"/>
                             <field name="qb_name" groups="base.group_hr_user"/>
                             <field name="uid_is_user_id" invisible="1"/>
+                            <field name="user_is_pm" invisible="1"/>
                             <field name="accrued_pto_personal" attrs="{'invisible':[('uid_is_user_id','=',False)]}"/>
                         </group>
                     </group>
@@ -84,6 +85,15 @@
                 <xpath expr='//field[@name="mobile_phone"]' position='before'>
                     <field name="work_email" widget="email"/>
                     <field name="work_phone"/>
+                </xpath>
+                <xpath expr='//page[@string="Public Information"]' position='after'>
+                    <page string="Projects" attrs="{'invisible':[('user_is_pm','=',False)]}">
+                        <group>
+                            <field name="pm_analytics" readonly="True" widget="one2many">
+                                <tree><field name="name"/></tree>
+                            </field>
+                        </group>
+                    </page>
                 </xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Citizenship &amp; Other Info"]' position='replace'>
                 </xpath>

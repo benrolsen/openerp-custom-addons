@@ -87,6 +87,9 @@
                         <field name="change_reason" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True)],'invisible':[('logging_required','=',False)]}"/>
                         <field name="change_explanation" attrs="{'required':[('unit_amount','!=',0.0),('logging_required','=',True),('change_reason','=','Other')],'invisible':['|',('logging_required','=',False),('change_reason','!=','Other')]}" widget="text"/>
                     </group>
+                    <group name="sow">
+                        <field name="sow" string="Task SOW" readonly="1"/>
+                    </group>
                     <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
                         <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?" />
@@ -252,9 +255,9 @@
                                     <field name="state"/>
                                     <field name="approved_by" readonly="True"/>
                                     <field name="uid_can_approve" invisible="True"/>
-                                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
-                                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
                                     <button name="button_approve" string="Approve" class="oe_highlight" type="object"
+                                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
                                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
                                 </tree>
                             </field>
@@ -355,6 +358,8 @@
                 <search string="Search Timesheet">
                     <field name="user_id"/>
                     <field name="name"/>
+                    <field name="type"/>
+                    <field name="includes_task"/>
                     <filter name="draft" string="In Draft" domain="[('state','=','draft')]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state','=','confirm')]"/>
                     <filter name="my_approvals" string="My Approvals" domain="[('adv_search','=','my_approvals')]"/>
@@ -374,7 +379,7 @@
         </record>
 
         <!-- Menus and stuff -->
-        <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1" groups="base.group_user"/>
+        <menuitem id="menu_hr_timekeeping" name="Time Keeping" parent="hr.menu_hr_root" sequence="1"/>
         <menuitem id="hr.menu_hr_main" name="Company" parent="hr.menu_hr_root" sequence="10"/>
         <menuitem id="menu_hr_timekeeping_reports" name="Reporting" parent="hr.menu_hr_root" sequence="20" />
 
@@ -448,24 +453,66 @@
             <field name="act_window_id" ref="all_timesheets_view_form"/>
         </record>
         <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" name="My Timesheets" sequence="2"/>
-        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user" name="All Timesheets" sequence="1"/>
+        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user,account.group_account_user" name="All Timesheets" sequence="1"/>
 
-        <!-- Need My Approval -->
-        <record id="timesheets_approvals_view_form" model="ir.actions.act_window">
+        <!-- Approval lines and My Approvals -->
+        <record id="view_hr_timekeeping_approval_filter" model="ir.ui.view">
+            <field name="name">hr.timekeeping.approval.filter</field>
+            <field name="model">hr.timekeeping.approval</field>
+            <field name="arch" type="xml">
+                <search string="Search Approvals">
+                    <field name="employee_id"/>
+                    <field name="type"/>
+                    <field name="sheet_id"/>
+                    <field name="account_analytic_id"/>
+                    <filter name="my_approvals" string="My Approvals" domain="[('adv_search','=','my_approvals')]"/>
+                    <filter name="my_direct_approvals" string="My Direct Approvals" domain="[('adv_search','=','my_direct_approvals')]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_employee" string="Employees" icon="terp-personal" context="{'group_by':'employee_id'}"/>
+                        <filter name="group_by_type" string="Type" icon="terp-personal" context="{'group_by':'type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        <record id="approval_lines_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.approval.tree</field>
+            <field name="model">hr.timekeeping.approval</field>
+            <field name="arch" type="xml">
+                <tree string="Approvals" create="false" delete="false">
+                    <field name="state" invisible="1"/>
+                    <field name="adv_search" invisible="1"/>
+                    <field name="employee_id"/>
+                    <field name="type" invisible="1"/>
+                    <field name="sheet_id" string="Week"/>
+                    <field name="relevant_time" widget="float_time"/>
+                    <field name="account_analytic_id"/>
+                    <field name="uid_can_approve" invisible="True"/>
+                    <button name="button_approve" string="Approve" class="oe_highlight" type="object"
+                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
+                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                    <button name="button_view_timesheet" string="View Timesheet" type="object"
+                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Need My Approval Lines-->
+        <record id="timesheets_approval_lines_view_form" model="ir.actions.act_window">
             <field name="name">My Approvals</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="res_model">hr.timekeeping.approval</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('adv_search','=','my_approvals')]</field>
-            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
-        </record>
-        <record id="action_timesheets_approvals_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="past_timesheet_tree"/>
-            <field name="act_window_id" ref="timesheets_approvals_view_form"/>
+            <field name="domain">[('state','=','confirm')]</field>
+            <field name="context">{'search_default_my_direct_approvals':1,'search_default_group_by_type':1}</field>
         </record>
-        <menuitem id="menu_act_hr_timekeeping_my_approval_filter" action="timesheets_approvals_view_form" parent="menu_hr_timekeeping" sequence="3"/>
+        <record id="action_timesheets_approval_lines_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="approval_lines_tree"/>
+            <field name="act_window_id" ref="timesheets_approval_lines_view_form"/>
+        </record>
+        <menuitem id="menu_act_hr_timekeeping_my_approval_lines_filter" action="timesheets_approval_lines_view_form" parent="menu_hr_timekeeping" sequence="3"/>
 
         <!-- Timekeeping user preferences -->
         <record id="user_preferences_form" model="ir.ui.view">

@@ -189,9 +189,11 @@ class employee(models.Model):
     personal_email = fields.Char('Personal Email')
     personal_phone = fields.Char('Personal Phone')
     uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')
+    user_is_pm = fields.Boolean('User is PM', compute='_uid_is_user_id')
     user_active = fields.Boolean(related='resource_id.user_id.active', string="User Active")
     address_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Working Address')
     address_home_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Home Address')
+    pm_analytics = fields.Many2many('account.analytic.account', related='resource_id.user_id.pm_analytics', string='Projects Managed')
 
     @api.one
     @api.depends('first_name','middle_name','last_name')
@@ -205,7 +207,10 @@ class employee(models.Model):
     @api.one
     @api.depends('user_id')
     def _uid_is_user_id(self):
+        self.user_is_pm = False
         self.uid_is_user_id = (self.user_id.id == self.env.user.id)
+        if self.env.ref('imsar_timekeeping.group_pms_user').id in self.user_id.groups_id.ids:
+            self.user_is_pm = True
 
     @api.multi
     def accrue_pto(self, hours):

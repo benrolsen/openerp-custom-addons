@@ -62,6 +62,7 @@ class hr_timekeeping_sheet(models.Model):
     move_id = fields.Many2one('account.move', string='Journal Entry', readonly=True, ondelete='restrict',)
     approval_line_ids = fields.One2many('hr.timekeeping.approval', 'sheet_id', 'Approval lines', readonly=True, states={'draft':[('readonly', False)]})
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
+    includes_task = fields.Char('Task', compute='_computed_fields', search='_task_search')
     editable_view = fields.Boolean(compute='_computed_fields', )
     submit_button_view = fields.Boolean(compute='_computed_fields', )
     proxy_button_view = fields.Boolean(compute='_computed_fields', )
@@ -116,6 +117,7 @@ class hr_timekeeping_sheet(models.Model):
         self.name = "{}-{}".format(self.payperiod_id.name, self.week_ab)
         self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
         self.adv_search = ''
+        self.includes_task = ''
         self.uid_is_proxy = False
         if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
             self.uid_is_proxy = True
@@ -159,6 +161,14 @@ class hr_timekeeping_sheet(models.Model):
         else:
             sheets = self.env['hr.timekeeping.sheet'].search([]).ids
         return [('id','in',sheets)]
+
+    def _task_search(self, operator, value):
+        sheets = set()
+        analytic_ids = self.env['account.analytic.account'].search([('name',operator,value)]).ids
+        lines = self.env['hr.timekeeping.line'].search([('account_analytic_id','in',analytic_ids)])
+        for line in lines:
+            sheets.add(line.sheet_id.id)
+        return [('id','in',list(sheets))]
 
     @api.multi
     def button_confirm(self):
@@ -402,8 +412,7 @@ class hr_timekeeping_sheet(models.Model):
             for line in self.line_ids:
                 if line.account_analytic_id.id == pto_analytic_id:
                     self.employee_id.accrued_pto -= line.unit_amount
-        # refresh the page
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+        return True
 
     @api.model
     def create(self, vals):
@@ -499,6 +508,7 @@ class hr_timekeeping_line(models.Model):
     end_time = fields.Char("End time")
     display_color = fields.Selection(related='routing_subrouting_id.account_analytic_id.display_color', readonly=True)
     old_task_code = fields.Char("Old Task Code", related="routing_subrouting_id.old_task_code", readonly=True)
+    sow = fields.Text(related='routing_subrouting_id.account_analytic_id.description')
 
     @api.one
     @api.depends('date')
@@ -775,7 +785,9 @@ class hr_timekeeping_line(models.Model):
 class hr_timekeeping_approval(models.Model):
     _name = 'hr.timekeeping.approval'
     _description = 'Timekeeping Approval Line'
+    _order = 'sheet_id desc, create_date desc'
 
+    employee_id = fields.Many2one('hr.employee', related='sheet_id.employee_id', store=True)
     type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
@@ -784,12 +796,14 @@ class hr_timekeeping_approval(models.Model):
     uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
     relevant_time = fields.Float(compute='_computed_fields', readonly=True)
     approved_by = fields.Many2one('res.users', 'Approved By')
+    adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
 
     @api.one
     def _computed_fields(self):
         # defaults to false unless condition is met
         self.uid_can_approve = False
         self.relevant_time = self.sheet_id.total_time
+        self.adv_search = ''
 
         user = self.env.user
         # check to see if user is timesheet admin
@@ -819,6 +833,24 @@ class hr_timekeeping_approval(models.Model):
         if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
             self.uid_can_approve = True
 
+    def _adv_search(self, operator, value):
+        if value == 'my_approvals':
+            ids = set()
+            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
+                if approval_line.uid_can_approve:
+                        ids.add(approval_line.id)
+            ids = list(ids)
+        elif value == 'my_direct_approvals':
+            ids = set()
+            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
+                if approval_line.uid_can_approve and \
+                    ((approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id.id == self._uid) or approval_line.type != 'Manager'):
+                        ids.add(approval_line.id)
+            ids = list(ids)
+        else:
+            ids = self.env['hr.timekeeping.approval'].search([]).ids
+        return [('id','in',ids)]
+
     @api.multi
     def log_rejection(self, comment=''):
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
@@ -845,6 +877,21 @@ class hr_timekeeping_approval(models.Model):
             'type': 'ir.actions.act_window',
             'target': 'new',
             'readonly': True,
+        }
+        return view
+
+    @api.multi
+    def button_view_timesheet(self):
+        view = {
+            'name': _('Timesheet'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.sheet',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'readonly': True,
+            'res_id': self.sheet_id.id,
         }
         return view
 
