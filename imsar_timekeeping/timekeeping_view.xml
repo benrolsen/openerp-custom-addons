@@ -170,7 +170,9 @@
                             <button name="button_oneclick_add" type="object" string="Add One-Click Tasks" class="oe_bounce_container oe_edit_only"
                                     attrs="{'invisible':['|',('state','!=','draft'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}"/>
                             <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
-                                <tree string="Timesheet Activities" editable="top" create="false" delete="false"
+                                <!--<tree string="Timesheet Activities" editable="top" create="false" delete="false"-->
+                                <!-- Editable views are sending [id, 'name'] instead of id for relational fields -->
+                                <tree string="Timesheet Activities" create="false" delete="false"
                                     colors="black:display_color=='black';
                                             gray:display_color=='gray';
                                             maroon:display_color=='maroon';
