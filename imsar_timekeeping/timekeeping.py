@@ -834,6 +834,7 @@ class hr_timekeeping_approval(models.Model):
             self.uid_can_approve = True
 
     def _adv_search(self, operator, value):
+        user = self.env.user
         if value == 'my_approvals':
             ids = set()
             for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
@@ -842,10 +843,18 @@ class hr_timekeeping_approval(models.Model):
             ids = list(ids)
         elif value == 'my_direct_approvals':
             ids = set()
+            ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
             for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
-                if approval_line.uid_can_approve and \
-                    ((approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id.id == self._uid) or approval_line.type != 'Manager'):
+                if approval_line.uid_can_approve:
+                    if approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id == user:
                         ids.add(approval_line.id)
+                    elif approval_line.type == 'Project' and user in approval_line.account_analytic_id.pm_ids:
+                        ids.add(approval_line.id)
+                    elif approval_line.type == 'Admin' and ts_admin in user.groups_id:
+                        ids.add(approval_line.id)
+                    elif approval_line.type == 'SeniorManagement' and user in approval_line.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
+                        ids.add(approval_line.id)
+
             ids = list(ids)
         else:
             ids = self.env['hr.timekeeping.approval'].search([]).ids

@@ -149,7 +149,7 @@ class account_analytic_account(models.Model):
         pm_group_id = self.env.ref('imsar_timekeeping.group_pms_user')
         for pm in self.pm_ids:
             if pm.id not in pm_group_id.users.ids:
-                pm_group_id.write({'users': [(4, pm.id)]})
+                pm_group_id.sudo().write({'users': [(4, pm.id)]})
         return res
 
     @api.model
