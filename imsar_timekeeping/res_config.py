@@ -31,7 +31,7 @@ class timekeeping_settings(models.TransientModel):
     pto_analytic_id = fields.Many2one('account.analytic.account', string="PTO Analytic")
     pto_liability_account_id = fields.Many2one('account.account', 'PTO Liability Account')
     pto_expense_account_id = fields.Many2one('account.account', 'PTO Expense Account')
-    in_absentia_id = fields.Many2one('account.analytic.account', string="In Absentia Analytic")
+    undetermined_id = fields.Many2one('account.analytic.account', string="Undetermined Labor Analytic")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'config_future_analytic_rel', 'config_id', 'analytic_id', string="Analytics allowed for future dates")
     global_approval_user_ids = fields.Many2many('res.users', 'config_global_approval_user_rel', 'config_id', 'user_id', string="Users with global approval rights")
 
@@ -46,7 +46,7 @@ class timekeeping_settings(models.TransientModel):
         res['pto_analytic_id'] = user.company_id.pto_analytic_id.id
         res['pto_liability_account_id'] = user.company_id.pto_liability_account_id.id
         res['pto_expense_account_id'] = user.company_id.pto_expense_account_id.id
-        res['in_absentia_id'] = user.company_id.in_absentia_id.id
+        res['undetermined_id'] = user.company_id.undetermined_id.id
         res['future_analytic_ids'] = user.company_id.future_analytic_ids.ids
         res['global_approval_user_ids'] = user.company_id.global_approval_user_ids.ids
         return res
@@ -61,7 +61,7 @@ class timekeeping_settings(models.TransientModel):
             'pto_analytic_id': self.pto_analytic_id.id,
             'pto_liability_account_id': self.pto_liability_account_id.id,
             'pto_expense_account_id': self.pto_expense_account_id.id,
-            'in_absentia_id': self.in_absentia_id.id,
+            'undetermined_id': self.undetermined_id.id,
             'future_analytic_ids': [(6,0, self.future_analytic_ids.ids)],
             'global_approval_user_ids': [(6,0, self.global_approval_user_ids.ids)],
         })
@@ -78,6 +78,6 @@ class res_company(models.Model):
     pto_analytic_id = fields.Many2one('account.analytic.account', string="PTO Analytic")
     pto_liability_account_id = fields.Many2one('account.account', 'PTO Liability Account')
     pto_expense_account_id = fields.Many2one('account.account', 'PTO Expense Account')
-    in_absentia_id = fields.Many2one('account.analytic.account', string="In Absentia Analytic")
+    undetermined_id = fields.Many2one('account.analytic.account', string="In Absentia Analytic")
 
 

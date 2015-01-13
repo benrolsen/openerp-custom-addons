@@ -317,13 +317,12 @@ class account_routing_subrouting(models.Model):
 
     def _viewable_search(self, operator, value):
         sheet_id = self.env['hr.timekeeping.sheet'].browse(value)
-        has_attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.timekeeping.sheet'), ('res_id','=',sheet_id.id)])
-        # under very specific circumstances, allow a proxy user to put in In Absentia or PTO time
-        if sheet_id.type == 'proxy' and not sheet_id.uid_is_user_id and self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids and not has_attachment:
+        # under very specific circumstances, allow an admin user to put in In Absentia or PTO time
+        if sheet_id.type == 'proxy' and self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids:
             pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
-            in_absentia_id = self.env.user.company_id.in_absentia_id.id
+            undetermined_id = self.env.user.company_id.undetermined_id.id
             subrouting_ids = self.env['account.routing.subrouting'].search([
-                ('account_analytic_id','in',[pto_analytic_id,in_absentia_id]),
+                ('account_analytic_id','in',[pto_analytic_id,undetermined_id]),
             ])
         else:
             aa_model = self.env['account.analytic.account']

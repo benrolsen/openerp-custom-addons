@@ -148,14 +148,44 @@ class hr_timesheet_proxy_wizard(models.TransientModel):
         sunday = week_date + relativedelta(weekday=SU(-1))
         saturday = sunday + timedelta(days=6)
 
-        sheet_ids = self.env['hr.timekeeping.sheet'].search([
+        # can't create a proxy TS if user has open regular TS for that week
+        reg_sheet_ids = self.env['hr.timekeeping.sheet'].search([
+            ('employee_id','=',self.employee.id),
+            ('payperiod_id','=',payperiod.id),
+            ('week_ab','=',week_ab),
+            ('type','=','regular'),
+            ('state', 'in', ['draft','confirm']),
+            ])
+        if len(reg_sheet_ids) > 0:
+            raise Warning(_("You cannot create a proxy timesheet if a regular timesheet for that week is in Open or Waiting state."))
+        # on the other hand, if a regular TS doesn't even exist, create one in a voided state
+        reg_sheet_ids = self.env['hr.timekeeping.sheet'].search([
+            ('employee_id','=',self.employee.id),
+            ('payperiod_id','=',payperiod.id),
+            ('week_ab','=',week_ab),
+            ('type','=','regular'),
+            ])
+        if len(reg_sheet_ids) == 0:
+            values = dict()
+            values['payperiod_id'] = payperiod.id
+            values['week_ab'] = week_ab
+            values['date_from'] = sunday
+            values['date_to'] = saturday
+            values['type'] = 'regular'
+            values['state'] = 'draft'
+            values['employee_id'] = self.employee.id
+            voided_sheet_id = self.env['hr.timekeeping.sheet'].sudo().create(values)
+            voided_sheet_id.button_void()
+
+        # now you can create a proxy TS
+        proxy_sheet_ids = self.env['hr.timekeeping.sheet'].search([
             ('employee_id','=',self.employee.id),
             ('payperiod_id','=',payperiod.id),
             ('week_ab','=',week_ab),
             ('type','=','proxy'),
             ('state', '!=', 'done'),
             ])
-        if len(sheet_ids) < 1:
+        if len(proxy_sheet_ids) < 1:
             values = dict()
             values['payperiod_id'] = payperiod.id
             values['week_ab'] = week_ab
@@ -164,7 +194,7 @@ class hr_timesheet_proxy_wizard(models.TransientModel):
             values['type'] = 'proxy'
             values['state'] = 'draft'
             values['employee_id'] = self.employee.id
-            sheet_ids = self.env['hr.timekeeping.sheet'].sudo().create(values)
+            proxy_sheet_ids = self.env['hr.timekeeping.sheet'].sudo().create(values)
 
         view = {
             'name': _('Open Proxy'),
@@ -173,7 +203,7 @@ class hr_timesheet_proxy_wizard(models.TransientModel):
             'res_model': 'hr.timekeeping.sheet',
             'view_id': False,
             'type': 'ir.actions.act_window',
-            'res_id': sheet_ids[0].id,
+            'res_id': proxy_sheet_ids[0].id,
         }
         return view
 

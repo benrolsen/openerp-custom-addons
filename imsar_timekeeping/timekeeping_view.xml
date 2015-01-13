@@ -116,21 +116,28 @@
                 <header>
                     <button name="button_confirm" string="Submit For Approval" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':[('submit_button_view','=',False)]}"
-                            confirm="Submit your weekly timesheet for approval?"/>
+                            confirm="By submitting this timecard, you are certifying that you have reviewed it for accuracy and have determined that it is complete, accurate, and correct.  Do you want to submit this timecard?"/>
                     <button name="button_confirm" string="Proxy Submit" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':[('proxy_button_view','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done" class="oe_left"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
                 </header>
                 <sheet>
-                    <div class="oe_title">
-                        <h1><field name="employee_id" class="oe_inline" readonly="True"/></h1>
-                        <field name="uid_is_user_id" invisible="1"/>
-                        <field name="uid_is_proxy" invisible="1"/>
-                        <field name="editable_view" invisible="1"/>
-                        <field name="submit_button_view" invisible="1"/>
-                        <field name="proxy_button_view" invisible="1"/>
+                    <field name="uid_is_user_id" invisible="1"/>
+                    <field name="editable_view" invisible="1"/>
+                    <field name="submit_button_view" invisible="1"/>
+                    <field name="proxy_button_view" invisible="1"/>
+                    <div>
+                        <h1><field name="employee_id" readonly="True"/></h1>
+                        <button name="%(past_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
+                                icon="fa-book" context="{'search_default_type':'proxy'}" attrs="{'invisible':['|',('type','!=','regular'),('proxy_count','=',0)]}">
+                            <field name="proxy_count" class="oe_inline" string="Proxies" widget="statinfo"/>
+                        </button>
+                        <button name="%(past_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
+                                icon="fa-book" context="{'search_default_type':'addendum'}" attrs="{'invisible':['|',('type','!=','regular'),('addendum_count','=',0)]}">
+                            <field name="addendum_count" class="oe_inline" string="Addendums" widget="statinfo"/>
+                        </button>
                     </div>
                     <group>
                         <group>
@@ -154,11 +161,16 @@
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll" />
                     </group>
-                    <group attrs="{'invisible':['|',('state','!=','done'),'|',('type','!=','regular'),('uid_is_user_id','=',False)]}">
+                    <group attrs="{'invisible':['|',('state','in',['draft','confirm']),'|',('type','!=','regular'),('uid_is_user_id','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <group attrs="{'invisible':['|',('type','!=','addendum'),'|',('state','!=','done'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Mark as Submitted to Payroll" name="button_process_addendum" />
+                    </group>
+                    <group attrs="{'invisible':['|',('type','!=','regular'),('state','!=','draft')]}" groups="imsar_timekeeping.group_timesheet_admin">
+                        <button class="oe_highlight" type="object" string="Void Current Timesheet" name="button_void"
+                                confirm="This will remove all entries from this timesheet and render it unusable (after saving a copy of the current entries).
+                                This should only be done if you intend to create a proxy timesheet for this user. Are you sure you want to do this?"/>
                     </group>
                     <notebook>
                         <!-- page for editable time entries -->
@@ -200,7 +212,7 @@
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
                                     <button name="button_details" string="Details" type="object" class="oe_edit_only"
-                                            attrs="{'invisible':['|',('sheet_state','!=','draft'),'&amp;',('uid_is_user_id','=',False),('uid_is_proxy','=',False)]}"/>
+                                            attrs="{'invisible':[('sheet_state','!=','draft')]}"/>
                                     <!-- invisible fields -->
                                     <field name="dcaa_allowable" invisible="True"/>
                                     <field name="worktype" invisible="True" />
@@ -213,7 +225,6 @@
                                     <field name="change_explanation" invisible="True" />
                                     <field name="user_id" invisible="1"/>
                                     <field name="uid_is_user_id" invisible="1"/>
-                                    <field name="uid_is_proxy" invisible="1"/>
                                 </tree>
                             </field>
                             <button name="%(action_timekeeping_line_details)d" string="Add Entry" type="action" class="oe_edit_only"/>
@@ -414,7 +425,7 @@
             <field name="model">hr.timekeeping.sheet</field>
             <field name="arch" type="xml">
                 <tree string="Timesheets" create="false" delete="false"
-                      colors="red:payroll_state=='failed';purple:type=='addendum';teal:type=='proxy';">
+                      colors="red:payroll_state=='failed';purple:type=='addendum';teal:type=='proxy';maroon:state=='void'">
                     <field name="employee_id" />
                     <field name="name" />
                     <field name="date_from" />
@@ -480,13 +491,15 @@
             <field name="name">hr.timekeeping.approval.tree</field>
             <field name="model">hr.timekeeping.approval</field>
             <field name="arch" type="xml">
-                <tree string="Approvals" create="false" delete="false">
+                <tree string="Approvals" create="false" delete="false"
+                        colors="maroon:overtime > 0;">
                     <field name="state" invisible="1"/>
                     <field name="adv_search" invisible="1"/>
                     <field name="employee_id"/>
                     <field name="type" invisible="1"/>
                     <field name="sheet_id" string="Week"/>
                     <field name="relevant_time" widget="float_time"/>
+                    <field name="overtime" widget="float_time"/>
                     <field name="account_analytic_id"/>
                     <field name="uid_can_approve" invisible="True"/>
                     <button name="button_approve" string="Approve" class="oe_highlight" type="object"

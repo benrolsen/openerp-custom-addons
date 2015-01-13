@@ -48,8 +48,8 @@
                                 <field name="pto_expense_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
-                                <label for="in_absentia_id"/>
-                                <field name="in_absentia_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                                <label for="undetermined_id"/>
+                                <field name="undetermined_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
                                 <label for="future_analytic_ids"/>

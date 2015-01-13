@@ -4,11 +4,15 @@ import dateutil.parser
 from collections import defaultdict
 import pytz
 import json
+import base64
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
+from openerp.addons.base.ir.ir_mail_server import MailDeliveryException
 import openerp.addons.decimal_precision as dp
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
+from openerp import netsvc
+from openerp.report import render_report
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -41,13 +45,12 @@ class hr_timekeeping_sheet(models.Model):
     week_ab = fields.Selection([('A','A'),('B','B'),], 'Pay Period Week A/B', required=True)
     date_from = fields.Date('Start Date', readonly=True, required=True)
     date_to = fields.Date('End Date', readonly=True, required=True)
-    state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
+    state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved'),('void','Voided')],
                              'Status', index=True, required=True, readonly=True,)
     payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt')],
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
-    uid_is_proxy = fields.Boolean(compute='_computed_fields', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
     user_id = fields.Many2one('res.users', related='employee_id.user_id', string='User', readonly=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
@@ -66,6 +69,8 @@ class hr_timekeeping_sheet(models.Model):
     editable_view = fields.Boolean(compute='_computed_fields', )
     submit_button_view = fields.Boolean(compute='_computed_fields', )
     proxy_button_view = fields.Boolean(compute='_computed_fields', )
+    addendum_count = fields.Integer(compute='_computed_fields', )
+    proxy_count = fields.Integer(compute='_computed_fields', )
 
     @api.one
     @api.depends('line_ids')
@@ -118,9 +123,6 @@ class hr_timekeeping_sheet(models.Model):
         self.uid_is_user_id = (self.user_id.id == self._context.get('uid'))
         self.adv_search = ''
         self.includes_task = ''
-        self.uid_is_proxy = False
-        if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
-            self.uid_is_proxy = True
         # whether or not a timesheet is editable/submittable has gotten complicated, so put the logic in python
         self.editable_view = False
         self.submit_button_view = False
@@ -129,9 +131,11 @@ class hr_timekeeping_sheet(models.Model):
             if self.uid_is_user_id:
                 self.editable_view = True
                 self.submit_button_view = True
-            elif self.uid_is_proxy and self.type == 'proxy':
+            elif self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids and self.type == 'proxy':
                 self.editable_view = True
                 self.proxy_button_view = True
+        self.addendum_count = self.search([('type','=','addendum'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
+        self.proxy_count = self.search([('type','=','proxy'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -205,6 +209,32 @@ class hr_timekeeping_sheet(models.Model):
         body = "{} set timesheet back to Open on {}".format(self.env.user.name, now.strftime('%c'))
         self.message_post(subject=subject, body=body,)
         return self.button_cancel()
+
+    @api.multi
+    def button_void(self):
+        # save existing TS as attachment
+        report, report_type = render_report(self._cr, self._uid, self.ids, 'imsar_timekeeping.tk_approval_report', {'model': self._name}, self._context)
+        report = base64.b64encode(report)
+        file_name = 'voided_timesheet.pdf'
+        att_id = self.env['ir.attachment'].create({
+            'name': file_name,
+            'datas': report,
+            'datas_fname': file_name,
+            'res_model': self._name,
+            'res_id': self.id,
+            'type': 'binary',
+        })
+        # remove all entries and approvals, then set TS to voided status
+        for line in self.line_ids:
+            line.sudo().unlink()
+        for line in self.approval_line_ids:
+            line.sudo().unlink()
+        self.signal_workflow('void')
+
+        subject = "Timesheet voided"
+        body = "{} voided existing timesheet. Please see attached PDF for previous details.".format(self.env.user.name)
+        self.message_post(subject=subject, body=body,)
+        return True
 
     @api.multi
     def button_addendum(self):
@@ -473,14 +503,12 @@ class hr_timekeeping_line(models.Model):
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
-    uid_is_proxy = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
     premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
     full_amount = fields.Float(string='Final Amount', digits=dp.get_precision('Account'), compute='_computed_fields', readonly=True, store=True)
     # NOTE: when using a functional default, make sure to use a lambda, or else the default will be a static value from the server start
-    # date = fields.Date(string='Date', required=True, default=lambda self: date.today().strftime(DATE_FORMAT))
     date = fields.Date(string='Date', required=True, default=lambda self: get_now_tz(self.env.user, self.env['ir.config_parameter']).strftime(DATE_FORMAT))
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
@@ -599,15 +627,12 @@ class hr_timekeeping_line(models.Model):
         # Guess again! Related field to computed field loses the self._uid of the function call
         self.uid_is_user_id = (self.user_id.id == self._uid)
         self.full_amount = self.amount + self.premium_amount
-        self.uid_is_proxy = False
-        if self.env.ref('imsar_timekeeping.group_tk_proxy_user').id in self.env.user.groups_id.ids:
-            self.uid_is_proxy = True
 
     @api.model
     def _safety_checks(self, sheet):
         if sheet.state != 'draft':
             raise Warning(_("You cannot make changes to this timesheet!"))
-        if not sheet.uid_is_user_id and not sheet.uid_is_proxy:
+        if not sheet.uid_is_user_id and not self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids:
             raise Warning(_("You cannot make changes to this timesheet!"))
 
     @api.multi
@@ -694,7 +719,7 @@ class hr_timekeeping_line(models.Model):
             if self.end_time != new_end_time_str:
                 self.end_time = new_end_time_str
         if self.unit_amount % 0.25 != 0:
-            return {'warning': {'title': 'Invalid time entry', 'message': 'You may only submit time in quarter-hour increments.'}}
+            self.unit_amount = round(self.unit_amount * 4) / 4
 
     @api.onchange('start_time')
     def onchange_start_time(self):
@@ -795,6 +820,7 @@ class hr_timekeeping_approval(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
     uid_can_approve = fields.Boolean(compute='_computed_fields', readonly=True)
     relevant_time = fields.Float(compute='_computed_fields', readonly=True)
+    overtime = fields.Float('OT', compute='_computed_fields', readonly=True)
     approved_by = fields.Many2one('res.users', 'Approved By')
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
 
@@ -803,7 +829,10 @@ class hr_timekeeping_approval(models.Model):
         # defaults to false unless condition is met
         self.uid_can_approve = False
         self.relevant_time = self.sheet_id.total_time
+        overtime_worktype_id = self.employee_id.user_id.company_id.overtime_worktype_id
         self.adv_search = ''
+        lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id)])
+        self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
 
         user = self.env.user
         # check to see if user is timesheet admin
@@ -817,6 +846,7 @@ class hr_timekeeping_approval(models.Model):
                 self.uid_can_approve = True
             lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('account_analytic_id','=',self.account_analytic_id.id),])
             self.relevant_time = sum(line.unit_amount for line in lines)
+            self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
         # check to see if user is manager for the timesheet's owner
         elif self.type == 'Manager':
             manager = self.sheet_id.employee_id.parent_id
@@ -829,35 +859,35 @@ class hr_timekeeping_approval(models.Model):
         elif self.type == 'SeniorManagement':
             lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('aa_dcaa_allowable','=',False),])
             self.relevant_time = sum(line.unit_amount for line in lines)
+            self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
         # check if the user has global approval rights (this includes SeniorManagement lines)
         if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
             self.uid_can_approve = True
 
     def _adv_search(self, operator, value):
         user = self.env.user
-        if value == 'my_approvals':
-            ids = set()
-            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
-                if approval_line.uid_can_approve:
-                        ids.add(approval_line.id)
-            ids = list(ids)
-        elif value == 'my_direct_approvals':
-            ids = set()
-            ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
-            for approval_line in self.env['hr.timekeeping.approval'].search([('state','=','confirm')]):
-                if approval_line.uid_can_approve:
-                    if approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id == user:
-                        ids.add(approval_line.id)
-                    elif approval_line.type == 'Project' and user in approval_line.account_analytic_id.pm_ids:
-                        ids.add(approval_line.id)
-                    elif approval_line.type == 'Admin' and ts_admin in user.groups_id:
-                        ids.add(approval_line.id)
-                    elif approval_line.type == 'SeniorManagement' and user in approval_line.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
-                        ids.add(approval_line.id)
-
-            ids = list(ids)
-        else:
-            ids = self.env['hr.timekeeping.approval'].search([]).ids
+        ids = set()
+        waiting_approvals = self.env['hr.timekeeping.approval'].search([('state','=','confirm')])
+        ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        for approval_line in waiting_approvals:
+            ts_end = datetime.strptime(approval_line.sheet_id.date_to, DATE_FORMAT) + timedelta(hours=23, minutes=59)
+            now_past_timesheet_end = now > ts_end
+            if approval_line.uid_can_approve and value == 'my_approvals' and now_past_timesheet_end:
+                ids.add(approval_line.id)
+            elif approval_line.uid_can_approve and value == 'my_direct_approvals':
+                # only admin can approve things early
+                if approval_line.type == 'Admin' and ts_admin in user.groups_id:
+                    ids.add(approval_line.id)
+                elif approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id == user and now_past_timesheet_end:
+                    ids.add(approval_line.id)
+                elif approval_line.type == 'Project' and user in approval_line.account_analytic_id.pm_ids and now_past_timesheet_end:
+                    ids.add(approval_line.id)
+                elif approval_line.type == 'SeniorManagement' and user in approval_line.sheet_id.employee_id.user_id.company_id.global_approval_user_ids and now_past_timesheet_end:
+                    ids.add(approval_line.id)
+        ids = list(ids)
+        # else:
+        #     ids = self.env['hr.timekeeping.approval'].search([]).ids
         return [('id','in',ids)]
 
     @api.multi
@@ -872,7 +902,10 @@ class hr_timekeeping_approval(models.Model):
         template = self.env.ref('imsar_timekeeping.reject_timesheet_email')
         ctx = self._context.copy()
         ctx.update({'body': body, 'comment': comment})
-        self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True, context=ctx)
+        try:
+            self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True, context=ctx)
+        except MailDeliveryException:
+            pass
         return self.sheet_id.button_cancel()
 
     @api.multi

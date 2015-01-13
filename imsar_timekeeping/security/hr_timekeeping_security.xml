@@ -6,14 +6,7 @@
         <record id="imsar_timekeeping.group_timesheet_admin" model="res.groups">
             <field name="name">Timesheet Admin</field>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="comment">This user will be able to review and approve Admin approval lines on timesheets.</field>
-        </record>
-
-        <!-- Group for users allowed to make edits to other people's timesheets -->
-        <record id="imsar_timekeeping.group_tk_proxy_user" model="res.groups">
-            <field name="name">Timekeeping Proxy Users</field>
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="comment">This user will be able to edit other employee's timesheets (for a limited number of task codes).</field>
+            <field name="comment">This user will be able to review and approve Admin approval lines on timesheets. They are also able to create proxy timesheets for other users.</field>
         </record>
 
         <!-- Group for Project Managers -->
