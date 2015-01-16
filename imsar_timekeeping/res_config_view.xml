@@ -48,8 +48,8 @@
                                 <field name="pto_expense_account_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
-                                <label for="undetermined_id"/>
-                                <field name="undetermined_id" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                                <label for="proxy_analytic_ids"/>
+                                <field name="proxy_analytic_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
                             <div>
                                 <label for="future_analytic_ids"/>

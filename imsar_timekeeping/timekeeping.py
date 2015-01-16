@@ -45,11 +45,14 @@ class hr_timekeeping_sheet(models.Model):
     week_ab = fields.Selection([('A','A'),('B','B'),], 'Pay Period Week A/B', required=True)
     date_from = fields.Date('Start Date', readonly=True, required=True)
     date_to = fields.Date('End Date', readonly=True, required=True)
+    deadline = fields.Datetime('Submission Deadline', compute='_computed_fields')
+    past_deadline = fields.Boolean(compute='_computed_fields', readonly=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved'),('void','Voided')],
                              'Status', index=True, required=True, readonly=True,)
     payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt')],
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
+    needs_correction = fields.Boolean('Needs Correction', index=True, default=False, readonly=True)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', index=True, required=True)
     user_id = fields.Many2one('res.users', related='employee_id.user_id', string='User', readonly=True)
@@ -136,6 +139,19 @@ class hr_timekeeping_sheet(models.Model):
                 self.proxy_button_view = True
         self.addendum_count = self.search([('type','=','addendum'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
         self.proxy_count = self.search([('type','=','proxy'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
+        # compute deadline, skipping weekends and holidays
+        holidays = [rec.holiday_date for rec in self.env['hr.timekeeping.holiday'].search([])]
+        holidays = [datetime.strptime(date_str, '%Y-%m-%d') + timedelta(hours=11) for date_str in holidays]
+        deadline = datetime.strptime(self.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
+        while deadline.weekday() in (5,6) or deadline in holidays:
+            deadline += timedelta(days=1)
+        self.deadline = pytz.timezone('America/Denver').localize(deadline).astimezone(pytz.utc)
+        # check if past timesheet's deadline
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        if now > datetime.strptime(self.deadline, '%Y-%m-%d %H:%M:%S'):
+            self.past_deadline = True
+        else:
+            self.past_deadline = False
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -292,6 +308,26 @@ class hr_timekeeping_sheet(models.Model):
     @api.multi
     def button_process_addendum(self):
         self.payroll_state = 'submitted'
+
+    @api.multi
+    def button_mark_corrected(self):
+        self.needs_correction = False
+
+    @api.multi
+    def button_view_comments(self):
+        ids = self.env['mail.message'].search([('model','=','hr.timekeeping.sheet'),('res_id','=',self.id),
+            ('subject','ilike','Comment')]).ids
+        view = {
+            'name': _('Timesheet comments'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'mail.message',
+            # 'view_id': self.env.ref('imsar_timekeeping.tk_mail_message_form').id,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'domain': [('id','in',list(ids))],
+        }
+        return view
 
     @api.multi
     def button_create_line(self):
@@ -547,11 +583,16 @@ class hr_timekeeping_line(models.Model):
     @api.depends('date', 'previous_date')
     def _check_state(self):
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        holidays = [rec.holiday_date for rec in self.env['hr.timekeeping.holiday'].search([])]
+        holidays = [datetime.strptime(date_str, '%Y-%m-%d') + timedelta(hours=11) for date_str in holidays]
         # if editing an existing record and the old date not within open window, require logging regardless
         self.logging_required = False
         if self.previous_date:
             prev_date = datetime.strptime(self.previous_date, '%Y-%m-%d')
             prev_deadline = prev_date + timedelta(days=1, hours=11)
+            # skip weekends and holidays
+            while prev_deadline.weekday() in (5,6) or prev_deadline in holidays:
+                prev_deadline += timedelta(days=1)
             if not (now < prev_deadline):
                 self.logging_required = True
         if not self.date:
@@ -563,6 +604,9 @@ class hr_timekeeping_line(models.Model):
             # self.logging_required = True
         else:
             deadline = check_date + timedelta(days=1, hours=11)
+            # skip weekends and holidays
+            while deadline.weekday() in (5,6) or deadline in holidays:
+                deadline += timedelta(days=1)
             if (check_date < now < deadline):
                 self.state = 'open'
             else:
@@ -815,6 +859,9 @@ class hr_timekeeping_approval(models.Model):
     employee_id = fields.Many2one('hr.employee', related='sheet_id.employee_id', store=True)
     type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    sheet_type = fields.Selection([('regular','Regular'),('addendum','Addendum'),('proxy','Proxy'),], related='sheet_id.type', string='Type', default='regular', required=True, readonly=True,)
+    sheet_deadline = fields.Datetime('Submission Deadline', related='sheet_id.deadline')
+    past_deadline = fields.Boolean(related='sheet_id.past_deadline')
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved')],
                              'Status', index=True, required=True, readonly=True,)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Contract/Project', readonly=True,)
@@ -891,10 +938,10 @@ class hr_timekeeping_approval(models.Model):
         return [('id','in',ids)]
 
     @api.multi
-    def log_rejection(self, comment=''):
+    def log_comment(self, comment=''):
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        subject = "Submission rejected"
-        body = "{} rejected timesheet for approval on {}".format(self.env.user.name, now.strftime('%c'))
+        subject = "Timesheet Comment"
+        body = "{} made comment for timesheet on {}".format(self.env.user.name, now.strftime('%c'))
         if comment:
             body += "<br><strong>Comment:</strong> {}".format(comment)
         self.sheet_id.message_post(subject=subject, body=body,)
@@ -906,12 +953,16 @@ class hr_timekeeping_approval(models.Model):
             self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True, context=ctx)
         except MailDeliveryException:
             pass
-        return self.sheet_id.button_cancel()
+        if self.sheet_id.type == 'regular' and self.past_deadline:
+            self.sheet_id.needs_correction = True
+            return self.button_approve()
+        else:
+            return self.sheet_id.button_cancel()
 
     @api.multi
     def button_reject(self):
         view = {
-            'name': _('Rejection Comment'),
+            'name': _('Correction Comment'),
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'hr.timekeeping.comment',
@@ -941,8 +992,8 @@ class hr_timekeeping_approval(models.Model):
     def button_approve(self):
         # log approval line approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        subject = "Submission approved"
-        body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
+        subject = "Submission reviewed"
+        body = "{} reviewed {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
         self.sheet_id.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
         self.approved_by = self.env.user
@@ -1041,3 +1092,12 @@ class hr_timekeeping_payperiod(models.Model):
         if search_date < mid_date:
             return 'A'
         return 'B'
+
+
+class hr_timekeeping_holiday(models.Model):
+    _name = "hr.timekeeping.holiday"
+    _description = "holidays"
+    _order = 'holiday_date'
+
+    name = fields.Char('Holiday name')
+    holiday_date = fields.Date('Holiday Date')

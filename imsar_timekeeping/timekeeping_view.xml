@@ -120,7 +120,7 @@
                     <button name="button_confirm" string="Proxy Submit" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':[('proxy_button_view','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
-                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_is_user_id','!=',True)]}"/>
+                            attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_is_user_id','!=',True),('past_deadline','=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
                 </header>
                 <sheet>
@@ -128,13 +128,15 @@
                     <field name="editable_view" invisible="1"/>
                     <field name="submit_button_view" invisible="1"/>
                     <field name="proxy_button_view" invisible="1"/>
+                    <field name="past_deadline" invisible="1"/>
+                    <field name="needs_correction" invisible="1"/>
                     <div>
                         <h1><field name="employee_id" readonly="True"/></h1>
-                        <button name="%(past_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
-                                icon="fa-book" context="{'search_default_type':'proxy'}" attrs="{'invisible':['|',('type','!=','regular'),('proxy_count','=',0)]}">
+                        <button name="%(other_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
+                                icon="fa-book" context="{'search_default_type':'proxy','employee_id':employee_id,'name':name}" attrs="{'invisible':['|',('type','!=','regular'),('proxy_count','=',0)]}">
                             <field name="proxy_count" class="oe_inline" string="Proxies" widget="statinfo"/>
                         </button>
-                        <button name="%(past_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
+                        <button name="%(other_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
                                 icon="fa-book" context="{'search_default_type':'addendum'}" attrs="{'invisible':['|',('type','!=','regular'),('addendum_count','=',0)]}">
                             <field name="addendum_count" class="oe_inline" string="Addendums" widget="statinfo"/>
                         </button>
@@ -148,6 +150,7 @@
                             <field name="name"/>
                             <label for="date_from" string="Timesheet Period"/>
                             <div><field name="date_from" class="oe_inline"/> to <field name="date_to" class="oe_inline"/></div>
+                            <field name="deadline"/>
                         </group>
                         <group>
                             <field name="employee_flsa_status" readonly="True"/>
@@ -172,6 +175,10 @@
                                 confirm="This will remove all entries from this timesheet and render it unusable (after saving a copy of the current entries).
                                 This should only be done if you intend to create a proxy timesheet for this user. Are you sure you want to do this?"/>
                     </group>
+                    <group attrs="{'invisible':['|',('needs_correction','=',False),('state','=','draft')]}" groups="imsar_timekeeping.group_timesheet_admin">
+                        <button class="oe_inline" type="object" string="View Comments" name="button_view_comments" />
+                        <button class="oe_highlight" type="object" string="Mark As Corrected" name="button_mark_corrected" />
+                    </group>
                     <notebook>
                         <!-- page for editable time entries -->
                         <page string="Entries" attrs="{'invisible':[('editable_view','=',False)]}">
@@ -182,9 +189,7 @@
                             <button name="button_oneclick_add" type="object" string="Add One-Click Tasks" class="oe_bounce_container oe_edit_only"
                                     attrs="{'invisible':['|',('state','!=','draft'),'|',('type','!=','regular'),('uid_is_user_id','!=',True)]}"/>
                             <field name="line_ids" nolabel="1" attrs="{'readonly':['|',('uid_is_user_id','!=',True),('state','!=','draft')]}">
-                                <!-- Editable views are sending [id, 'name'] instead of id for relational fields -->
-                                <!--<tree string="Timesheet Activities" editable="top" create="false" delete="false"-->
-                                <tree string="Timesheet Activities" create="false" delete="false"
+                                <tree string="Timesheet Activities" editable="top" create="false" delete="false"
                                     colors="black:display_color=='black';
                                             gray:display_color=='gray';
                                             maroon:display_color=='maroon';
@@ -266,12 +271,13 @@
                                     <field name="account_analytic_id"/>
                                     <field name="relevant_time" widget="float_time"/>
                                     <field name="state"/>
+                                    <field name="past_deadline" invisible="1"/>
                                     <field name="approved_by" readonly="True"/>
                                     <field name="uid_can_approve" invisible="True"/>
                                     <button name="button_approve" string="Approve" class="oe_highlight" type="object"
                                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
-                                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
-                                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                                    <button name="button_reject" string="Comment" class="oe_inline" type="object"
+                                            attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_can_approve','!=',True)]}"/>
                                 </tree>
                             </field>
                         </page>
@@ -312,14 +318,11 @@
                         <page string="Proxy Instructions" attrs="{'invisible':['|',('state','!=','draft'),('type','!=','proxy')]}">
                             <p><strong>Proxy Timesheets</strong></p>
                             <p>Proxy timesheets are intended to be filled out by someone other than the timesheet's owner. Because of this,
-                            a proxy timesheet is <strong>not</strong> considered authoritative. Initially, only two task codes are allowed
-                            on a proxy timesheet: In Absentia Unallowable Labor and PTO. In order to use any other task codes, an
-                            authoritative timesheet file must be attached to this proxy timesheet. The authoritative timesheet file
-                            may be various things, but it must fulfill the requirement of having been filled out and verified
-                            by the employee to whom it belongs. It could be something like a scanned document or a signed PDF.</p>
-                            <p>It is important to note that this proxy timesheet should <strong>exactly</strong> match the attached
-                            authoritative timesheet. If there are any discrepencies, it can result in severe consequences, including
-                            a labor audit failure for the entire company. Please be mindful when using this type of timesheet!</p>
+                            a proxy timesheet is <strong>not</strong> considered authoritative. If a proxy timesheet is to add time
+                            for payroll purposes, it should only include Holiday, PTO, and Unallowable task codes.</p>
+                            <p>Other task codes should only be used to deduct time from task codes, and possibly moving them to
+                            Unallowable task codes. In order to move time to other Allowable task codes, the employee should fill out
+                            and Addendum Timesheet as soon as he/she is capable of doing so.</p>
                         </page>
                     </notebook>
                     <group>
@@ -419,7 +422,7 @@
             <field name="name">Timesheet Addendum</field>
         </record>
 
-        <!-- Previous timesheets -->
+        <!-- Timesheets tree view-->
         <record id="past_timesheet_tree" model="ir.ui.view">
             <field name="name">hr.timekeeping.sheet.tree</field>
             <field name="model">hr.timekeeping.sheet</field>
@@ -437,6 +440,7 @@
                 </tree>
             </field>
         </record>
+        <!-- My Timesheets -->
         <record id="past_timesheets_view_form" model="ir.actions.act_window">
             <field name="name">My Timesheets</field>
             <field name="type">ir.actions.act_window</field>
@@ -451,6 +455,8 @@
             <field name="view_id" ref="past_timesheet_tree"/>
             <field name="act_window_id" ref="past_timesheets_view_form"/>
         </record>
+        <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" sequence="2"/>
+        <!-- All Timesheets -->
         <record id="all_timesheets_view_form" model="ir.actions.act_window">
             <field name="name">All Timesheets</field>
             <field name="type">ir.actions.act_window</field>
@@ -465,8 +471,38 @@
             <field name="view_id" ref="past_timesheet_tree"/>
             <field name="act_window_id" ref="all_timesheets_view_form"/>
         </record>
-        <menuitem id="menu_past_timesheets_view" action="past_timesheets_view_form" parent="menu_hr_timekeeping" name="My Timesheets" sequence="2"/>
-        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user,account.group_account_user" name="All Timesheets" sequence="1"/>
+        <menuitem id="menu_all_timesheets_view" action="all_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user,account.group_account_user" sequence="1"/>
+        <!-- Need correction Timesheets -->
+        <record id="correction_timesheets_view_form" model="ir.actions.act_window">
+            <field name="name">Need Correction</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','done'),('needs_correction','=',True)]</field>
+            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
+        </record>
+        <record id="action_correction_timesheets_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="past_timesheet_tree"/>
+            <field name="act_window_id" ref="correction_timesheets_view_form"/>
+        </record>
+        <menuitem id="menu_correction_timesheets_view" action="correction_timesheets_view_form" parent="menu_hr_timekeeping_reports" groups="base.group_hr_user,account.group_account_user" sequence="2"/>
+        <!-- Addendums/Proxies -->
+        <record id="other_timesheets_view_form" model="ir.actions.act_window">
+            <field name="name">Related Timesheets</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.sheet</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
+            <field name="domain">[('type','in',['addendum','proxy']),('employee_id','=',employee_id),('name','=',name)]</field>
+        </record>
+        <record id="action_other_timesheets_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="past_timesheet_tree"/>
+            <field name="act_window_id" ref="other_timesheets_view_form"/>
+        </record>
 
         <!-- Approval lines and My Approvals -->
         <record id="view_hr_timekeeping_approval_filter" model="ir.ui.view">
@@ -497,15 +533,17 @@
                     <field name="adv_search" invisible="1"/>
                     <field name="employee_id"/>
                     <field name="type" invisible="1"/>
+                    <field name="past_deadline" invisible="1"/>
                     <field name="sheet_id" string="Week"/>
+                    <field name="sheet_type" string="Type"/>
                     <field name="relevant_time" widget="float_time"/>
                     <field name="overtime" widget="float_time"/>
                     <field name="account_analytic_id"/>
                     <field name="uid_can_approve" invisible="True"/>
                     <button name="button_approve" string="Approve" class="oe_highlight" type="object"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
-                    <button name="button_reject" string="Reject" class="oe_inline" type="object"
-                            attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
+                    <button name="button_reject" string="Comment" class="oe_inline" type="object"
+                            attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_can_approve','!=',True)]}"/>
                     <button name="button_view_timesheet" string="View Timesheet" type="object"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
                 </tree>
@@ -649,6 +687,39 @@
         </record>
         <menuitem id="menu_payperiod_view" action="payperiod_view" parent="hr.menu_hr_configuration" name="Pay Periods" sequence="5"/>
 
+        <!-- Holidays -->
+        <record id="holiday_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.holiday.tree</field>
+            <field name="model">hr.timekeeping.holiday</field>
+            <field name="arch" type="xml">
+                <tree string="Holidays" >
+                    <field name="name" />
+                    <field name="holiday_date" />
+                </tree>
+            </field>
+        </record>
+        <record id="holiday_form" model="ir.ui.view">
+            <field name="name">hr.timekeeping.holiday.form</field>
+            <field name="model">hr.timekeeping.holiday</field>
+            <field name="arch" type="xml">
+                <form string="Holidays" >
+                    <group>
+                        <field name="name" />
+                        <field name="holiday_date" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        <record id="holiday_view" model="ir.actions.act_window">
+            <field name="name">Holidays</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.holiday</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="holiday_tree"/>
+        </record>
+        <menuitem id="menu_holiday_view" action="holiday_view" parent="hr.menu_hr_configuration" name="Holidays" sequence="6"/>
+
         <!-- Timesheet lines for inventory report -->
         <record id="timesheet_inventory_report_tree" model="ir.ui.view">
             <field name="name">hr.timekeeping.line.inventory.tree</field>
@@ -695,6 +766,28 @@
         </record>
         <menuitem id="menu_action_timekeeping_proxy_wizard" action="action_timekeeping_proxy_wizard" parent="hr.menu_hr_main" groups="base.group_hr_user" sequence="15"/>
 
+        <!-- mail.message view for timesheets -->
+        <record id="tk_mail_message_tree" model="ir.ui.view">
+            <field name="name">hr.mail.message.tree</field>
+            <field name="model">mail.message</field>
+            <field name="arch" type="xml">
+                <tree string="Comments">
+                    <field name="body" widget="html" string="Comment"/>
+                </tree>
+            </field>
+        </record>
+        <record id="tk_mail_message_form" model="ir.ui.view">
+            <field name="name">hr.mail.message.form</field>
+            <field name="model">mail.message</field>
+            <field name="arch" type="xml">
+                <form string="Comments" >
+                    <group>
+                        <field name="subject"/>
+                        <field name="body" widget="html"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>

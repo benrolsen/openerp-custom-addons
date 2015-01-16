@@ -317,23 +317,18 @@ class account_routing_subrouting(models.Model):
 
     def _viewable_search(self, operator, value):
         sheet_id = self.env['hr.timekeeping.sheet'].browse(value)
-        # under very specific circumstances, allow an admin user to put in In Absentia or PTO time
+        aa_model = self.env['account.analytic.account']
+        reviewed_ids = aa_model.search([('type','!=','view'),('user_review_ids','in',sheet_id.user_id.id)])
+        auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
+        shown_ids = aa_model.search([('hide_from_users','not in',sheet_id.user_id.id)])
+        intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids), set(shown_ids.ids))
+        subrouting_ids = self.env['account.routing.subrouting'].search([('account_analytic_id','in',list(intersection))]).ids
+        # proxy timesheets have a set of always allowed tasks
         if sheet_id.type == 'proxy' and self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids:
-            pto_analytic_id = self.env.user.company_id.pto_analytic_id.id
-            undetermined_id = self.env.user.company_id.undetermined_id.id
-            subrouting_ids = self.env['account.routing.subrouting'].search([
-                ('account_analytic_id','in',[pto_analytic_id,undetermined_id]),
-            ])
-        else:
-            aa_model = self.env['account.analytic.account']
-            reviewed_ids = aa_model.search([('type','!=','view'),('user_review_ids','in',sheet_id.user_id.id)])
-            auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
-            shown_ids = aa_model.search([('hide_from_users','not in',sheet_id.user_id.id)])
-            intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids), set(shown_ids.ids))
-            subrouting_ids = self.env['account.routing.subrouting'].search([
-                ('account_analytic_id','in',list(intersection)),
-            ])
-        return [('id','in', subrouting_ids.ids)]
+            ids = self.env.user.company_id.proxy_analytic_ids.ids
+            proxy_ids = self.env['account.routing.subrouting'].search([('account_analytic_id','in',ids)]).ids
+            subrouting_ids += proxy_ids
+        return [('id','in', subrouting_ids)]
 
 
 class employee_adjust_pto(models.TransientModel):

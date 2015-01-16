@@ -219,7 +219,7 @@ class hr_timesheet_comment(models.TransientModel):
         model = self._context['active_model']
         id = self._context['active_id']
         approval = self.env[model].browse(id)
-        approval.log_rejection(comment=self.comment)
+        approval.log_comment(comment=self.comment)
         return { 'type': 'ir.actions.client', 'tag': 'reload' }
 
 
