@@ -49,7 +49,7 @@ class hr_timekeeping_sheet(models.Model):
     past_deadline = fields.Boolean(compute='_computed_fields', readonly=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved'),('void','Voided')],
                              'Status', index=True, required=True, readonly=True,)
-    payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt')],
+    payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt'),('paid','Paid')],
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
     needs_correction = fields.Boolean('Needs Correction', index=True, default=False, readonly=True)
@@ -74,6 +74,16 @@ class hr_timekeeping_sheet(models.Model):
     proxy_button_view = fields.Boolean(compute='_computed_fields', )
     addendum_count = fields.Integer(compute='_computed_fields', )
     proxy_count = fields.Integer(compute='_computed_fields', )
+    payment_date = fields.Date('Payment Date')
+    payment_comment = fields.Text('Payment Comment')
+
+    @api.one
+    @api.constrains('type', 'payperiod_id', 'week_ab', 'employee_id')
+    def _one_reg_per_week(self):
+        if self.type == 'regular':
+            dupes = self.search([('type','=','regular'),('payperiod_id','=',self.payperiod_id.id),('week_ab','=',self.week_ab),('employee_id','=',self.employee_id.id),])
+            if len(dupes) > 1:
+                raise Warning(_("You have a duplicate regular timecard for this period. Please contact the system administrator."))
 
     @api.one
     @api.depends('line_ids')
@@ -304,10 +314,6 @@ class hr_timekeeping_sheet(models.Model):
     def button_retry_payroll(self):
         self.payroll_state = 'pending'
         self.payroll_comment = ''
-
-    @api.multi
-    def button_process_addendum(self):
-        self.payroll_state = 'submitted'
 
     @api.multi
     def button_mark_corrected(self):

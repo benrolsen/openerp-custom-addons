@@ -233,7 +233,29 @@ class hr_timekeeping_sheet_payroll_confirm(models.TransientModel):
         sheets = self.env['hr.timekeeping.sheet'].browse(ids)
         # just using a pseudo-workflow for payroll_state
         for sheet in sheets:
-            if sheet.state == 'done' and sheet.payroll_state == 'draft' and sheet.type == 'regular':
+            if sheet.state == 'done' and sheet.payroll_state == 'draft':
                 sheet.payroll_state = 'pending'
+        return {'type': 'ir.actions.act_window_close'}
+
+
+class hr_timekeeping_sheet_payment_confirm(models.TransientModel):
+    _name = "hr.timekeeping.sheet.payment.confirm"
+    _description = "Confirm payment"
+
+    payment_date = fields.Date('Payment Date', required=True, default=lambda self: datetime.now())
+    comment = fields.Char('Comment', required=True)
+
+    @api.multi
+    def submit_confirm(self):
+        ids = self._context['active_ids']
+        sheets = self.env['hr.timekeeping.sheet'].browse(ids)
+        # just using a pseudo-workflow for payroll_state
+        for sheet in sheets:
+            if sheet.state == 'done' and sheet.payroll_state == 'submitted':
+                vals = dict()
+                vals['payroll_state'] = 'paid'
+                vals['payment_date'] = self.payment_date
+                vals['payment_comment'] = self.comment
+                sheet.write(vals)
         return {'type': 'ir.actions.act_window_close'}
 

@@ -157,8 +157,6 @@
                             <field name="employee_full_time" invisible="True"/>
                             <field name="type" string="Timesheet Type"/>
                             <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
-                            <field name="payroll_state" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user"/>
-                            <field name="payroll_comment" attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user"/>
                         </group>
                     </group>
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
@@ -166,9 +164,6 @@
                     </group>
                     <group attrs="{'invisible':['|',('state','in',['draft','confirm']),'|',('type','!=','regular'),('uid_is_user_id','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
-                    </group>
-                    <group attrs="{'invisible':['|',('type','!=','addendum'),'|',('state','!=','done'),('payroll_state','!=','draft')]}" groups="base.group_hr_user">
-                        <button class="oe_highlight" type="object" string="Mark as Submitted to Payroll" name="button_process_addendum" />
                     </group>
                     <group attrs="{'invisible':['|',('type','!=','regular'),('state','!=','draft')]}" groups="imsar_timekeeping.group_timesheet_admin">
                         <button class="oe_highlight" type="object" string="Void Current Timesheet" name="button_void"
@@ -256,6 +251,7 @@
                                     <field name="name"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
                                     <field name="worktype" />
+                                    <field name="location" />
                                 </tree>
                             </field>
                         </page>
@@ -324,6 +320,16 @@
                             Unallowable task codes. In order to move time to other Allowable task codes, the employee should fill out
                             and Addendum Timesheet as soon as he/she is capable of doing so.</p>
                         </page>
+                        <page string="Payroll" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user">
+                            <group>
+                                <field name="payroll_state" attrs="{'invisible':[('state','!=','done')]}"/>
+                                <field name="payroll_comment" attrs="{'invisible':[('payroll_state','!=','failed')]}"/>
+                            </group>
+                            <group>
+                                <field name="payment_date"/>
+                                <field name="payment_comment"/>
+                            </group>
+                        </page>
                     </notebook>
                     <group>
                         <field name="subtotal_line"/>
@@ -366,7 +372,7 @@
             <field name="target">new</field>
         </record>
 
-        <!-- search filters -->
+        <!-- Timesheet search filters -->
         <record id="view_hr_timekeeping_sheet_filter" model="ir.ui.view">
             <field name="name">hr.timekeeping.sheet.filter</field>
             <field name="model">hr.timekeeping.sheet</field>
@@ -384,7 +390,10 @@
                     <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
                     <filter name="this_payperiod" string="This Payperiod" domain="[('adv_search','=','this_payperiod')]"/>
                     <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
-                    <filter name="pending_payroll" string="Pending Payroll" domain="[('state','=','done'),('payroll_state','!=','submitted')]"/>
+                    <filter name="pending_payroll" string="Pending Payroll" domain="[('state','=','done'),('payroll_state','in',['draft','pending','failed'])]"
+                            groups="base.group_hr_user,account.group_account_user" />
+                    <filter name="unpaid" string="Pending Payment" domain="[('state','=','done'),('payroll_state','=','submitted')]"
+                            groups="base.group_hr_user,account.group_account_user" />
                     <group expand="0" string="Group By">
                         <filter name="group_by_employee" string="Employees" icon="terp-personal" context="{'group_by':'employee_id'}"/>
                         <filter name="group_by_name" string="Sheet Name" icon="terp-personal" context="{'group_by':'name'}"/>
@@ -622,9 +631,7 @@
             <field name="model">hr.timekeeping.sheet.payroll.confirm</field>
             <field name="arch" type="xml">
                 <form string="Confirm Payroll Submission">
-                    <p class="oe_grey">
-                        Submit the selected timesheets for payroll processing.
-                    </p>
+                    Submit the selected timesheets for payroll processing.
                     <footer>
                         <button string="Submit" name="submit_confirm" type="object" default_focus="1" class="oe_highlight"/>
                         or
@@ -636,6 +643,32 @@
         <!-- Puts an option in the More button that calls a wizard -->
         <act_window id="timesheet_send_to_payroll" name="Submit to Payroll"
             res_model="hr.timekeeping.sheet.payroll.confirm" src_model="hr.timekeeping.sheet"
+            multi="True" key2="client_action_multi"
+            view_mode="form" target="new" view_type="form"
+            groups="base.group_hr_user" />
+
+        <!-- Mark timesheets as paid -->
+        <record id="timesheet_mark_paid_view" model="ir.ui.view">
+            <field name="name">hr.timekeeping.sheet.payment.form</field>
+            <field name="model">hr.timekeeping.sheet.payment.confirm</field>
+            <field name="arch" type="xml">
+                <form string="Confirm Payment">
+                    Enter the payment date and payment comment (including reference) to apply to the selected timesheets.
+                    <group>
+                        <field name="payment_date"/>
+                        <field name="comment"/>
+                    </group>
+                    <footer>
+                        <button string="Submit" name="submit_confirm" type="object" default_focus="1" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <!-- Puts an option in the More button that calls a wizard -->
+        <act_window id="timesheet_mark_paid" name="Mark as Paid"
+            res_model="hr.timekeeping.sheet.payment.confirm" src_model="hr.timekeeping.sheet"
             multi="True" key2="client_action_multi"
             view_mode="form" target="new" view_type="form"
             groups="base.group_hr_user" />
