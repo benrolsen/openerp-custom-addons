@@ -79,8 +79,8 @@ class hr_timekeeping_wizards(models.TransientModel):
         if not regular_timesheet_id:
             raise Warning(_('Error!'), _("You must create a regular timesheet before you can create an addendum."))
         regular_timesheet = self.env['hr.timekeeping.sheet'].browse(regular_timesheet_id)
-        if regular_timesheet.state != 'done':
-            raise Warning(_('Error!'), _("You cannot create an addendum on an unapproved timesheet."))
+        if regular_timesheet.state == 'draft':
+            raise Warning(_('Error!'), _("You cannot create an addendum on an open timesheet."))
 
         sheet_ids = self.env['hr.timekeeping.sheet'].search([
             ('employee_id', '=', regular_timesheet.employee_id.id),
