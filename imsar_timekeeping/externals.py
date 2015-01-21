@@ -280,6 +280,16 @@ class res_users(models.Model):
     hide_analytics = fields.Many2many('account.analytic.account', 'analytic_user_hide_rel', 'user_id', 'analytic_id', string='Tasks hidden from timesheets')
     timesheet_prefs = fields.One2many('hr.timekeeping.preferences', 'user_id', string='Preferences')
 
+    @api.multi
+    def write(self, vals):
+        # ensure that all users listed as PMs are in the Project Manager group
+        res = super(res_users, self).write(vals)
+        if len(self.pm_analytics) > 0:
+            pm_group_id = self.env.ref('imsar_timekeeping.group_pms_user')
+            if self.id not in pm_group_id.users.ids:
+                pm_group_id.sudo().write({'users': [(4, self.id)]})
+        return res
+
 
 class account_move_line(models.Model):
     _inherit = "account.move.line"

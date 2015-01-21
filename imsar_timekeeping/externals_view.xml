@@ -150,7 +150,6 @@
             <field name="context">{'search_default_active':1}</field>
         </record>
 
-
         <!-- Analytic Account view, add extra functions -->
         <record id="account_analytic_account_overtime_override_form" model="ir.ui.view">
             <field name="name">account.analytic.account.overtime.form</field>
@@ -224,6 +223,34 @@
                 </xpath>
             </field>
         </record>
+
+        <!-- Project authorizations for the user view -->
+        <record id="view_users_form" model="ir.ui.view">
+            <field name="name">res.users.form</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//page[@string="Preferences"]' position='after'>
+                    <page string="Authorizations">
+                        <group>
+                            <field name="pm_analytics" domain="[('limit_to_auth','=',True),('state','=','open')]">
+                                <tree>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group>
+                            <field name="auth_analytics" domain="[('limit_to_auth','=',True),('state','=','open')]">
+                                <tree>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
 
     </data>
 </openerp>
