@@ -72,6 +72,7 @@ class hr_timekeeping_sheet(models.Model):
     editable_view = fields.Boolean(compute='_computed_fields', )
     submit_button_view = fields.Boolean(compute='_computed_fields', )
     proxy_button_view = fields.Boolean(compute='_computed_fields', )
+    addendum_button_view = fields.Boolean(compute='_computed_fields', )
     addendum_count = fields.Integer(compute='_computed_fields', )
     proxy_count = fields.Integer(compute='_computed_fields', )
     payment_date = fields.Date('Payment Date')
@@ -162,6 +163,13 @@ class hr_timekeeping_sheet(models.Model):
             self.past_deadline = True
         else:
             self.past_deadline = False
+        # check if the addendum button should be viewable
+        self.addendum_button_view = False
+        if self.uid_is_user_id and self.type == 'regular':
+            if self.state in ['done','void']:
+                self.addendum_button_view = True
+            if self.state == 'confirm' and self.past_deadline:
+                self.addendum_button_view = True
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -227,6 +235,20 @@ class hr_timekeeping_sheet(models.Model):
                 appr_line.state = 'draft'
                 appr_line.create_workflow()
         return { 'type': 'ir.actions.client', 'tag': 'reload' }
+
+    @api.multi
+    def button_return_to_regular(self):
+        reg_ts = self.search([('name','=',self.name),('type','=','regular'),('employee_id','=',self.employee_id.id)])
+        view = {
+            # 'name': _('Open Proxy'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.sheet',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'res_id': reg_ts[0].id,
+        }
+        return view
 
     @api.multi
     def button_self_cancel(self):

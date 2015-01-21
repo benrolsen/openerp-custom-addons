@@ -128,6 +128,7 @@
                     <field name="editable_view" invisible="1"/>
                     <field name="submit_button_view" invisible="1"/>
                     <field name="proxy_button_view" invisible="1"/>
+                    <field name="addendum_button_view" invisible="1"/>
                     <field name="past_deadline" invisible="1"/>
                     <field name="needs_correction" invisible="1"/>
                     <div>
@@ -140,6 +141,8 @@
                                 icon="fa-book" context="{'search_default_type':'addendum'}" attrs="{'invisible':['|',('type','!=','regular'),('addendum_count','=',0)]}">
                             <field name="addendum_count" class="oe_inline" string="Addendums" widget="statinfo"/>
                         </button>
+                        <button name="button_return_to_regular" class="oe_inline oe_right" type="object" string="Return to Regular"
+                                attrs="{'invisible':[('type','=','regular')]}"/>
                     </div>
                     <group>
                         <group>
@@ -162,7 +165,7 @@
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll" />
                     </group>
-                    <group attrs="{'invisible':['|',('state','in',['draft','confirm']),'|',('type','!=','regular'),('uid_is_user_id','=',False)]}">
+                    <group attrs="{'invisible':[('addendum_button_view','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
                     </group>
                     <group attrs="{'invisible':['|',('type','!=','regular'),('state','!=','draft')]}" groups="imsar_timekeeping.group_timesheet_admin">

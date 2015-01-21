@@ -166,7 +166,7 @@
                         </group>
                         <group>
                             <field name="linked_worktype" widget="selection" attrs="{'invisible':[('is_labor_code','=',False)]}"/>
-                            <field name="overtime_account" widget="selection" attrs="{'invisible':[('type','!=','contract')]}"/>
+                            <field name="overtime_account" options="{'create': false, 'create_edit': false}" attrs="{'invisible':[('type','!=','contract')]}"/>
                         </group>
                     </group>
                 </xpath>
