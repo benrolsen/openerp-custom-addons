@@ -131,6 +131,9 @@
                     <field name="addendum_button_view" invisible="1"/>
                     <field name="past_deadline" invisible="1"/>
                     <field name="needs_correction" invisible="1"/>
+                    <div class="oe_inline oe_right">
+                        <a href="http://wiki.imsar.us/wiki/Human_Resources" target="_blank">Timekeeping instructions</a>
+                    </div>
                     <div>
                         <h1><field name="employee_id" readonly="True"/></h1>
                         <button name="%(other_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
