@@ -110,16 +110,16 @@
         <menuitem id="menu_action_timekeeping_by_task_wizard" action="action_timekeeping_by_task_wizard" parent="menu_hr_timekeeping_reports"
                   groups="base.group_hr_user" sequence="15"/>
 
-        <!-- Timesheet Approval report -->
+        <!-- Timesheet print report -->
         <report
-            id="action_report_timekeeping_sheet_approval"
+            id="action_report_timekeeping_sheet_print"
             model="hr.timekeeping.sheet"
-            string="Timesheet Approval report"
+            string="Timesheet PDF"
             report_type="qweb-pdf"
-            name="imsar_timekeeping.tk_approval_report"
-            file="tk_approval_report"
+            name="imsar_timekeeping.tk_print_report"
+            file="tk_print_report"
         />
-        <template id="tk_approval_report">
+        <template id="tk_print_report">
             <t t-call="report.html_container">
                 <t t-set="data_report_margin_top" t-value="8"/>
                 <t t-set="data_report_header_spacing" t-value="8"/>
@@ -180,7 +180,6 @@
                                     <tr>
                                         <th>Approval Type</th>
                                         <th>Contract/Project</th>
-                                        <!--<th>Relevant Time</th>-->
                                         <th>Status</th>
                                         <th>Approved By</th>
                                     </tr>
@@ -188,9 +187,26 @@
                                 <tr t-foreach="sheet.approval_line_ids" t-as="appr">
                                     <td><span t-field="appr.type"/></td>
                                     <td><span t-field="appr.account_analytic_id"/></td>
-                                    <!--<td><span t-field="appr.relevant_time"/></td>-->
                                     <td><span t-field="appr.state"/></td>
                                     <td><span t-field="appr.approved_by"/></td>
+                                </tr>
+                            </table>
+
+                            <h3>Logs</h3>
+                            <table class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Author</th>
+                                        <th>Subject</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tr t-foreach="sheet.message_logs" t-as="log">
+                                    <td><span t-field="log.date"/></td>
+                                    <td><span t-field="log.author_id"/></td>
+                                    <td><span t-field="log.subject"/></td>
+                                    <td><span t-field="log.body"/></td>
                                 </tr>
                             </table>
 

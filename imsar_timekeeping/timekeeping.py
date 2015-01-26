@@ -75,6 +75,7 @@ class hr_timekeeping_sheet(models.Model):
     addendum_button_view = fields.Boolean(compute='_computed_fields', )
     addendum_count = fields.Integer(compute='_computed_fields', )
     proxy_count = fields.Integer(compute='_computed_fields', )
+    message_logs = fields.One2many('mail.message', 'res_id', string='Logs', compute='_messages', readonly=True)
     payment_date = fields.Date('Payment Date')
     payment_comment = fields.Text('Payment Comment')
 
@@ -170,6 +171,10 @@ class hr_timekeeping_sheet(models.Model):
                 self.addendum_button_view = True
             if self.state == 'confirm' and self.past_deadline:
                 self.addendum_button_view = True
+
+    @api.one
+    def _messages(self):
+        self.message_logs = self.env['mail.message'].search([('model','=','hr.timekeeping.sheet'),('res_id','=',self.id)])
 
     def _adv_search(self, operator, value):
         today = date.today()
@@ -832,6 +837,12 @@ class hr_timekeeping_line(models.Model):
             'res_id': self.id,
         }
         return view
+
+    @api.multi
+    def button_yesterday(self):
+        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
+        yesterday = now - timedelta(days=1)
+        self.date = yesterday
 
     @api.model
     def _get_timekeeping_routing_line(self, routing_id):

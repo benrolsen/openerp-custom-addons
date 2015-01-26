@@ -120,7 +120,9 @@
                                 <field name="wage_rate" />
                                 <field name="pto_accrual_rate" />
                                 <field name="accrued_pto" />
+                                <label for="%(action_adjust_pto)d" string="Adjust PTO"/>
                                 <button name="%(action_adjust_pto)d" string="Adjust PTO" type="action"/>
+                                <field name="max_pto" />
                             </group>
                             <group>
                                 <field name="is_owner" />

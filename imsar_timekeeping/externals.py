@@ -182,6 +182,7 @@ class employee(models.Model):
     pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)', required=True, default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
+    max_pto = fields.Float('Maximum PTO', default=0.0, digits=(10,4))
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
     employee_number = fields.Integer('Employee Number', default=0)
@@ -217,7 +218,15 @@ class employee(models.Model):
         # owners can't accrue PTO
         if self.is_owner:
             return None
-        self.accrued_pto += hours
+        new_pto = self.accrued_pto + hours
+        # can't go over max PTO
+        if new_pto > self.max_pto:
+            hours = self.max_pto - self.accrued_pto
+            self.accrued_pto = self.max_pto
+        else:
+            self.accrued_pto += hours
+        if hours <= 0.0:
+            return None
         # credit pto liability, debit pto expense
         amount = hours * self.wage_rate
         liability_account = self.user_id.company_id.pto_liability_account_id.id
