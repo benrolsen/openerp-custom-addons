@@ -47,8 +47,8 @@
                 <form string="Timesheet Activities">
                     <group>
                         <group>
-                            <label for="button_yesterday" string="Click for Yesterday"/>
-                            <button name="button_yesterday" type="object" string="Yesterday"/>
+                            <!--<label for="button_yesterday" string="Click for Yesterday"/>-->
+                            <!--<button name="button_yesterday" type="object" string="Yesterday"/>-->
                             <field name="date" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="name" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('unit_amount','!=',0.0)]}"
                                     autofocus="autofocus"/>
