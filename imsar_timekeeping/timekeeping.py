@@ -838,12 +838,6 @@ class hr_timekeeping_line(models.Model):
         }
         return view
 
-    @api.multi
-    def button_yesterday(self):
-        now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        yesterday = now - timedelta(days=1)
-        self.date = yesterday
-
     @api.model
     def _get_timekeeping_routing_line(self, routing_id):
         timekeeping_id = self.env['ir.model.data'].xmlid_to_res_id('imsar_timekeeping.ar_section_timekeeping')
