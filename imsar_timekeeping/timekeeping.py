@@ -1025,8 +1025,8 @@ class hr_timekeeping_approval(models.Model):
     def button_approve(self):
         # log approval line approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        subject = "Submission reviewed"
-        body = "{} reviewed {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
+        subject = "Submission approved"
+        body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
         self.sheet_id.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
         self.approved_by = self.env.user
