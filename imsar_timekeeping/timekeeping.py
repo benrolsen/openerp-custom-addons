@@ -160,7 +160,7 @@ class hr_timekeeping_sheet(models.Model):
         self.deadline = pytz.timezone('America/Denver').localize(deadline).astimezone(pytz.utc)
         # check if past timesheet's deadline
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
-        if now > datetime.strptime(self.deadline, '%Y-%m-%d %H:%M:%S'):
+        if pytz.timezone('America/Denver').localize(now).astimezone(pytz.utc) > pytz.timezone('America/Denver').localize(deadline).astimezone(pytz.utc):
             self.past_deadline = True
         else:
             self.past_deadline = False
