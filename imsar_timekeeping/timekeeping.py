@@ -226,6 +226,13 @@ class hr_timekeeping_sheet(models.Model):
         # mark all approval lines as confirm status
         for appr_line in self.approval_line_ids:
             appr_line.signal_workflow('confirm')
+        # email manager if this submission is late
+        if self.past_deadline and self.employee_id.parent_id:
+            template = self.env.ref('imsar_timekeeping.late_timesheet_email')
+            try:
+                self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, self.id, force_send=True, raise_exception=True)
+            except MailDeliveryException:
+                pass
         return True
 
     @api.multi

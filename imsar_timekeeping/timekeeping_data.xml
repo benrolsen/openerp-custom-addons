@@ -56,14 +56,26 @@
 
         <!-- Email template for timesheet rejection -->
         <record id="reject_timesheet_email" model="email.template">
-            <field name="name">Timesheet Rejected</field>
+            <field name="name">Timesheet Comment</field>
             <field name="model_id" ref="model_hr_timekeeping_approval"/>
             <field name="email_from"><![CDATA[<${(user.email or object.sheet_id.user_id.company_id.email)|safe}>]]></field>
             <field name="email_to">${object.sheet_id.user_id.email|safe}</field>
-            <field name="subject">Timesheet Rejected</field>
-            <field name="body_html"><![CDATA[Approval line for ${object.type} was rejected on timesheet ${object.sheet_id.name}.
-Rejection reason:
+            <field name="subject">Timesheet Comment</field>
+            <field name="body_html"><![CDATA[Approval line for ${object.type} had a comment noted on timesheet ${object.sheet_id.name}.
+Comment:
 ${ctx.get('comment')}
+                ]]></field>
+        </record>
+
+        <!-- Email template for timesheet late submission -->
+        <record id="late_timesheet_email" model="email.template">
+            <field name="name">Late Timesheet Submission</field>
+            <field name="model_id" ref="model_hr_timekeeping_sheet"/>
+            <field name="email_from"><![CDATA[<${(user.email or object.user_id.company_id.email)|safe}>]]></field>
+            <field name="email_to">${object.employee_id.parent_id.user_id.email|safe}</field>
+            <field name="subject">Late timesheet submission from ${object.user_id}</field>
+            <field name="body_html"><![CDATA[${object.user_id} submitted a late timesheet (or timesheet correction) for ${object.name}.
+Please follow up on management and PM approvals for this timesheet.
                 ]]></field>
         </record>
 
