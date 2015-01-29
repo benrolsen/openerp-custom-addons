@@ -30,7 +30,7 @@ class account_routing(models.Model):
     _description = 'Account Routing'
     _order = "name"
 
-    name = fields.Char('Routing Category', size=128, required=True)
+    name = fields.Char('Task Category', size=128, required=True)
     routing_lines = fields.One2many('account.routing.line', 'routing_id', 'Account Type Routes', ondelete='cascade')
     section_ids = fields.Many2many('account.routing.section','account_routing_section_rel', 'routing_id', 'section_id', string="Applies to sections")
 
@@ -41,11 +41,11 @@ class account_routing(models.Model):
 
 class account_routing_line(models.Model):
     _name = 'account.routing.line'
-    _description = 'Account Routing Line'
+    _description = 'Task Type'
     _order = "account_type_id"
 
-    name = fields.Char(related='account_type_id.name')
-    routing_id = fields.Many2one('account.routing', 'Account Routing', required=True, ondelete='cascade')
+    name = fields.Char(string='Task Type', related='account_type_id.name')
+    routing_id = fields.Many2one('account.routing', 'Task Category', required=True, ondelete='cascade')
     account_type_id = fields.Many2one('account.account.type', 'Account Type', required=True, select=True, ondelete='cascade')
     subrouting_ids = fields.One2many('account.routing.subrouting', 'routing_line_id', 'Analytic Routes', ondelete='cascade')
     section_ids = fields.Many2many('account.routing.section','account_routing_line_section_rel', 'routing_line_id', 'section_id', string="Applies to sections")
@@ -69,10 +69,10 @@ class account_routing_subrouting(models.Model):
     _description = 'Account Subrouting'
     _order = "account_analytic_id"
 
-    name = fields.Char(string='Task Code', related='account_analytic_id.name', store=True)
+    name = fields.Char(string='Task Identifier', related='account_analytic_id.name', store=True)
     fullname = fields.Char(string="Full Name", compute='_fullname', readonly=True,)
     routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', store=True, readonly=True)
-    routing_line_id =  fields.Many2one('account.routing.line', 'Account Routing Line', required=True)
+    routing_line_id =  fields.Many2one('account.routing.line', 'Task Type', required=True)
     account_type_id = fields.Many2one('account.account.type', related='routing_line_id.account_type_id', readonly=True)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, select=True)
     account_id = fields.Many2one('account.account', 'Real Account', required=True, select=True)

@@ -527,6 +527,8 @@ class hr_timekeeping_sheet(models.Model):
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
         approval_vars.update({'type': 'Manager'})
         self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
+        approval_vars.update({'type': 'HR'})
+        self.env['hr.timekeeping.approval'].sudo().create(approval_vars)
         return new_id
 
     @api.multi
@@ -576,7 +578,7 @@ class hr_timekeeping_line(models.Model):
     _order = 'date desc, create_date desc'
 
     # model columns
-    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='restrict')
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
@@ -589,8 +591,8 @@ class hr_timekeeping_line(models.Model):
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
     routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route())
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True, default=lambda self: self._get_user_default_subroute())
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_user_default_subroute())
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
@@ -897,8 +899,8 @@ class hr_timekeeping_approval(models.Model):
     _order = 'sheet_id desc, create_date desc'
 
     employee_id = fields.Many2one('hr.employee', related='sheet_id.employee_id', store=True)
-    type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management')], string="Approval Type", required=True, readonly=True)
-    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True)
+    type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management'),('HR','HR')], string="Approval Type", required=True, readonly=True)
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='cascade')
     sheet_type = fields.Selection([('regular','Regular'),('addendum','Addendum'),('proxy','Proxy'),], related='sheet_id.type', string='Type', default='regular', required=True, readonly=True,)
     sheet_deadline = fields.Datetime('Submission Deadline', related='sheet_id.deadline')
     past_deadline = fields.Boolean(related='sheet_id.past_deadline')
@@ -922,6 +924,11 @@ class hr_timekeeping_approval(models.Model):
         self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
 
         user = self.env.user
+        # check to see if user is in HR
+        if self.type == 'HR':
+            hr_user = self.env.ref('base.group_hr_user')
+            if hr_user in user.groups_id:
+                self.uid_can_approve = True
         # check to see if user is timesheet admin
         if self.type == 'Admin':
             ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])

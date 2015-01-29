@@ -6,7 +6,7 @@
             <field name="name">account.routing.tree</field>
             <field name="model">account.routing</field>
             <field name="arch" type="xml">
-                <tree string="Account Routing">
+                <tree string="Task Category">
                     <field name="name" />
                     <field name="routing_lines" />
                     <field name="section_ids" />
@@ -17,7 +17,7 @@
             <field name="name">account.routing.form</field>
             <field name="model">account.routing</field>
             <field name="arch" type="xml">
-                <form string="Account Routing">
+                <form string="Task Category">
                     <group>
                         <field name="name" string="Routing Category"/>
                         <field name="section_ids" widget="many2many_tags" options="{'create':false}"/>
@@ -33,7 +33,7 @@
             </field>
         </record>
         <record id="account_routing_view_form" model="ir.actions.act_window">
-            <field name="name">Account Routing</field>
+            <field name="name">Task Category</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.routing</field>
             <field name="view_type">form</field>
@@ -75,7 +75,7 @@
             <field name="name">account.routing.line.form</field>
             <field name="model">account.routing.line</field>
             <field name="arch" type="xml">
-                <form string="Account Routing lines">
+                <form string="Task Type">
                     <group>
                         <field name="account_type_id" widget="selection" domain="[('allow_routing','=','true')]" />
                         <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
@@ -93,7 +93,7 @@
             </field>
         </record>
         <record id="account_routing_line_view" model="ir.actions.act_window">
-            <field name="name">Account Routing Line</field>
+            <field name="name">Task Type</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.routing.line</field>
             <field name="view_type">form</field>
@@ -132,7 +132,7 @@
             <field name="name">account.routing.subrouting.form</field>
             <field name="model">account.routing.subrouting</field>
             <field name="arch" type="xml">
-                <form string="Account Routing Subroutes (Task Codes)">
+                <form string="Task Identifier">
                     <group name="ars_view">
                         <group>
                             <field name="routing_id" />
@@ -145,7 +145,7 @@
             </field>
         </record>
         <record id="account_routing_subrouting_view" model="ir.actions.act_window">
-            <field name="name">Account Routing Subrouting</field>
+            <field name="name">Task Identifier</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.routing.subrouting</field>
             <field name="view_type">form</field>
@@ -175,7 +175,7 @@
             <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <xpath expr='//notebook' position='inside'>
-                    <page string="Analytic Routing" attrs="{'invisible':[('type','in',['view', 'template'])]}">
+                    <page string="Task Code Routing" attrs="{'invisible':[('type','in',['view', 'template'])]}">
                         <group name="subrouting">
                             <field name="account_routing_subrouting_ids">
                                 <tree>
@@ -185,10 +185,19 @@
                                 </tree>
                                 <form>
                                     <group>
-                                        <field name="routing_id" string="Routing Category" widget="selection" readonly="False"/>
-                                        <field name="routing_line_id" string="Account Type" widget="selection" domain="[('routing_id','=',routing_id)]"/>
-                                        <field name="account_type_id" invisible="True"/>
-                                        <field name="account_id" widget="selection" domain="[('user_type','=',account_type_id),('type','not in',['view','closed'])]"/>
+                                        <group>
+                                            <field name="routing_id" string="Category" widget="selection" readonly="False"/>
+                                            <field name="routing_line_id" string="Type" widget="selection" domain="[('routing_id','=',routing_id)]"/>
+                                            <field name="account_type_id" invisible="True"/>
+                                            <field name="account_id" widget="selection" domain="[('user_type','=',account_type_id),('type','not in',['view','closed'])]"/>
+                                        </group>
+                                        <group>
+                                            <field name="old_task_code"/>
+                                            <field name="qb_company_job"/>
+                                            <field name="qb_service_item"/>
+                                            <field name="qb_payroll_item_st"/>
+                                            <field name="qb_payroll_item_ot"/>
+                                        </group>
                                     </group>
                                 </form>
                             </field>
