@@ -60,6 +60,7 @@
                 <search>
                     <field name="week_name"/>
                     <field name="employee_id"/>
+                    <field name="manager_id"/>
                     <filter name="first_sub_early" string="First Submit Early" domain="[('adv_sub_search','=','first_sub_early')]"/>
                     <filter name="first_sub_ontime" string="First Submit On Time" domain="[('adv_sub_search','=','first_sub_ontime')]"/>
                     <filter name="first_sub_late" string="First Submit Late" domain="[('adv_sub_search','=','first_sub_late')]"/>
@@ -68,6 +69,11 @@
                     <filter name="last_sub_late" string="Last Submit Late" domain="[('adv_sub_search','=','last_sub_late')]"/>
                     <filter name="all_changes" string="All Logged Changes" domain="[('adv_change_search','=','all_changes')]"/>
                     <filter name="correction" string="Change Reason: Correction" domain="[('adv_change_search','=','correction')]"/>
+                    <filter name="working" string="Change Reason: Next Working" domain="[('adv_change_search','=','working')]"/>
+                    <filter name="travel" string="Change Reason: Travel" domain="[('adv_change_search','=','travel')]"/>
+                    <filter name="forgot" string="Change Reason: Forgot" domain="[('adv_change_search','=','forgot')]"/>
+                    <filter name="other" string="Change Reason: Other" domain="[('adv_change_search','=','other')]"/>
+                    <filter name="comments" string="Comments" domain="[('adv_change_search','=','comments')]"/>
                     <group expand="0" string="Group By">
                         <filter name="group_by_employee" string="Employee" context="{'group_by':'employee_id'}"/>
                         <filter name="group_by_week" string="Week Number" context="{'group_by':'week_name'}"/>

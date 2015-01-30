@@ -95,6 +95,7 @@ class timekeeping_log_report(models.Model):
     date = fields.Datetime('Date', readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Sheet', readonly=True,)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
+    manager_id = fields.Many2one('hr.employee', related='employee_id.parent_id', string='Manager', readonly=True)
     sheet_type = fields.Char('Sheet Type', readonly=True)
     state = fields.Char('Sheet State', readonly=True)
     week_name = fields.Char('Week Name', readonly=True)
@@ -220,6 +221,8 @@ class timekeeping_log_report(models.Model):
             for log in all_changes:
                 if 'Change reason:</strong> Other' in log.body:
                     ids.append(log.id)
+        elif value == 'comments':
+            ids = self.search([('subject','ilike','Timesheet Comment')]).ids
         else:
             ids = self.search([]).ids
         return [('id','in',ids)]
