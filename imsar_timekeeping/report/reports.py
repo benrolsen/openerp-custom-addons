@@ -3,7 +3,9 @@ from datetime import datetime, date, timedelta
 from openerp import tools, models, fields, api, _
 import openerp.addons.decimal_precision as dp
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
-
+import pytz
+import logging
+logger = logging.getLogger(__name__)
 
 class timekeeping_lines_report(models.Model):
     _name = "hr.timekeeping.lines.report"
@@ -130,6 +132,7 @@ class timekeeping_log_report(models.Model):
         holidays = [datetime.strptime(date_str, '%Y-%m-%d').date() for date_str in holidays_str]
         while deadline.weekday() in (5,6) or deadline.date() in holidays:
             deadline += timedelta(days=1)
+        deadline = pytz.timezone('America/Denver').localize(deadline).astimezone(pytz.utc).replace(tzinfo=None)
         return deadline
 
     def _get_logged_changes(self):
