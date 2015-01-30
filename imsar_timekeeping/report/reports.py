@@ -83,6 +83,176 @@ class timekeeping_lines_report(models.Model):
         """)
 
 
+class timekeeping_log_report(models.Model):
+    _name = "hr.timekeeping.log.report"
+    _description = "Timekeeping Log Report"
+    _auto = False
+
+    rec_count = fields.Integer('Hits', readonly=True)
+    author = fields.Char('Author', readonly=True)
+    subject = fields.Char('Subject', readonly=True)
+    body = fields.Char('Message', readonly=True)
+    date = fields.Datetime('Date', readonly=True)
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Sheet', readonly=True,)
+    employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
+    sheet_type = fields.Char('Sheet Type', readonly=True)
+    state = fields.Char('Sheet State', readonly=True)
+    week_name = fields.Char('Week Name', readonly=True)
+    payperiod_id = fields.Many2one('hr.timekeeping.payperiod', 'Pay Period', readonly=True)
+    adv_sub_search = fields.Char('Advanced Submit Search', compute='_computed_fields', search='_adv_sub_search')
+    adv_change_search = fields.Char('Advanced Change Search', compute='_computed_fields', search='_adv_change_search')
+
+    def _get_first_submission_ids(self):
+        sql = """select id from
+                  (select m.*, row_number() over (partition by sheet_id order by date asc) as rn
+                    from hr_timekeeping_log_report m
+                    where subject ='Submitted for approval'
+                  ) m2
+                  where m2.rn=1;
+            """
+        self.env.cr.execute(sql)
+        return [row[0] for row in self.env.cr.fetchall()]
+
+    def _get_last_submission_ids(self):
+        sql = """select id from
+                  (select m.*, row_number() over (partition by sheet_id order by date desc) as rn
+                    from hr_timekeeping_log_report m
+                    where subject ='Submitted for approval'
+                  ) m2
+                  where m2.rn=1;
+            """
+        self.env.cr.execute(sql)
+        return [row[0] for row in self.env.cr.fetchall()]
+
+    def _get_next_valid_deadline(self, deadline):
+        holidays_str = [rec.holiday_date for rec in self.env['hr.timekeeping.holiday'].search([])]
+        holidays = [datetime.strptime(date_str, '%Y-%m-%d').date() for date_str in holidays_str]
+        while deadline.weekday() in (5,6) or deadline.date() in holidays:
+            deadline += timedelta(days=1)
+        return deadline
+
+    def _get_logged_changes(self):
+        return self.search(['|',('subject','ilike','New record'),('subject','ilike','Changes made to')])
+
+    @api.one
+    def _computed_fields(self):
+        self.adv_sub_search = ''
+        self.adv_change_search = ''
+        if 'Change reason:' in self.body:
+            self.change_reason = 'some reason'
+        else:
+            self.change_reason = ''
+
+    def _adv_sub_search(self, operator, value):
+        ids = list()
+        first_subs = self.browse(self._get_first_submission_ids())
+        last_subs = self.browse(self._get_last_submission_ids())
+        # first submissions
+        if value == 'first_sub_early':
+            for log in first_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=8)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date < deadline:
+                    ids.append(log.id)
+        elif value == 'first_sub_ontime':
+            for log in first_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date <= deadline:
+                    ids.append(log.id)
+        elif value == 'first_sub_late':
+            for log in first_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date > deadline:
+                    ids.append(log.id)
+        # last submissions
+        elif value == 'last_sub_early':
+            for log in last_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=8)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date < deadline:
+                    ids.append(log.id)
+        elif value == 'last_sub_ontime':
+            for log in last_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date <= deadline:
+                    ids.append(log.id)
+        elif value == 'last_sub_late':
+            for log in last_subs:
+                deadline = datetime.strptime(log.sheet_id.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
+                deadline = self._get_next_valid_deadline(deadline)
+                log_date = datetime.strptime(log.date, '%Y-%m-%d %H:%M:%S')
+                if log_date > deadline:
+                    ids.append(log.id)
+        else:
+            ids = self.search([]).ids
+        return [('id','in',ids)]
+
+    def _adv_change_search(self, operator, value):
+        ids = list()
+        all_changes = self._get_logged_changes()
+        if value == 'all_changes':
+            ids = all_changes.ids
+        elif value == 'correction':
+            for log in all_changes:
+                if 'Change reason:</strong> Correction' in log.body:
+                    ids.append(log.id)
+        elif value == 'working':
+            for log in all_changes:
+                if 'Change reason:</strong> Working' in log.body:
+                    ids.append(log.id)
+        elif value == 'travel':
+            for log in all_changes:
+                if 'Change reason:</strong> Travel' in log.body:
+                    ids.append(log.id)
+        elif value == 'forgot':
+            for log in all_changes:
+                if 'Change reason:</strong> Forgot' in log.body:
+                    ids.append(log.id)
+        elif value == 'other':
+            for log in all_changes:
+                if 'Change reason:</strong> Other' in log.body:
+                    ids.append(log.id)
+        else:
+            ids = self.search([]).ids
+        return [('id','in',ids)]
+
+    @api.cr
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'hr_timekeeping_log_report')
+        cr.execute("""
+            create or replace view hr_timekeeping_log_report as (
+                select
+                    min(mm.id) as id,
+                    count(distinct mm.id) as rec_count,
+                    mm.author_id as author,
+                    mm.subject as subject,
+                    mm.body as body,
+                    mm.date as date,
+                    ts.id as sheet_id,
+                    ts.employee_id as employee_id,
+                    ts.type as sheet_type,
+                    ts.state as state,
+                    ts.name as week_name,
+                    ts.payperiod_id as payperiod_id
+                from
+                    mail_message mm
+                join hr_timekeeping_sheet ts on mm.res_id = ts.id and mm.model = 'hr.timekeeping.sheet'
+                where
+                    ts.type = 'regular'
+                group by
+                    sheet_id, author, subject, body, date, employee_id, sheet_type, state, week_name, payperiod_id
+            )
+        """)
+
+
 class timekeeping_inventory_wizard(models.TransientModel):
     _name = "hr.timekeeping.inventory.wizard"
     _description = "Timekeeping Inventory List"

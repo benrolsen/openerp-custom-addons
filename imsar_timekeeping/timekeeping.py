@@ -60,6 +60,8 @@ class hr_timekeeping_sheet(models.Model):
     employee_full_time = fields.Boolean(related='employee_id.full_time', string='Full Time', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
     view_line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
+    # this should be removed when we're done w/ Excel (maybe, or maybe HR will still want serial #s
+    view_line_ids2 = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
     subtotal_line = fields.Char(string="Subtotals: ", compute='_compute_subtotals')
     subtotal_json = fields.Char(string="internal only", compute='_compute_subtotals')
     total_time = fields.Float(string="Total Time", compute='_compute_subtotals', store=True)
@@ -152,10 +154,10 @@ class hr_timekeeping_sheet(models.Model):
         self.addendum_count = self.search([('type','=','addendum'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
         self.proxy_count = self.search([('type','=','proxy'), ('employee_id','=',self.employee_id.id), ('name','=',self.name)], count=True)
         # compute deadline, skipping weekends and holidays
-        holidays = [rec.holiday_date for rec in self.env['hr.timekeeping.holiday'].search([])]
-        holidays = [datetime.strptime(date_str, '%Y-%m-%d') + timedelta(hours=11) for date_str in holidays]
+        holidays_str = [rec.holiday_date for rec in self.env['hr.timekeeping.holiday'].search([])]
+        holidays = [datetime.strptime(date_str, '%Y-%m-%d').date() for date_str in holidays_str]
         deadline = datetime.strptime(self.date_to, '%Y-%m-%d') + timedelta(days=1, hours=11)
-        while deadline.weekday() in (5,6) or deadline in holidays:
+        while deadline.weekday() in (5,6) or deadline.date() in holidays:
             deadline += timedelta(days=1)
         self.deadline = pytz.timezone('America/Denver').localize(deadline).astimezone(pytz.utc)
         # check if past timesheet's deadline

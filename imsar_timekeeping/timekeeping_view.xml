@@ -55,10 +55,11 @@
                             <field name="start_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="end_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
-                            <field name="state" invisible="True"/>
+                            <field name="id" invisible="1"/>
+                            <field name="state" invisible="1"/>
                             <field name="logging_required" invisible="1"/>
-                            <field name="amount" invisible="True" />
-                            <field name="premium_amount" invisible="True" />
+                            <field name="amount" invisible="1" />
+                            <field name="premium_amount" invisible="1" />
                             <field name="sheet_id" invisible="1"/>
                             <field name="user_id" invisible="1"/>
                             <field name="uid_is_user_id" invisible="1"/>
@@ -92,7 +93,9 @@
                     </group>
                     <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
-                        <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?" />
+                        <!--<button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?" />-->
+                        <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?"
+                                attrs="{'invisible':[('id','=',False)]}"/>
                     </footer>
                 </form>
             </field>
@@ -258,6 +261,33 @@
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
                                     <field name="worktype" />
                                     <field name="location" />
+                                </tree>
+                            </field>
+                        </page>
+                        <!-- page for HR comparison time entries, should probably be removed when we're done with Excel -->
+                        <page string="HR Entries" groups="base.group_hr_user">
+                            <field name="view_line_ids2" nolabel="1" readonly="True">
+                                <tree string="Timesheet Activities" create="false" edit="false" delete="false"
+                                    colors="black:display_color=='black';
+                                            gray:display_color=='gray';
+                                            maroon:display_color=='maroon';
+                                            red:display_color=='red';
+                                            purple:display_color=='purple';
+                                            green:display_color=='green';
+                                            olive:display_color=='olive';
+                                            navy:display_color=='navy';
+                                            teal:display_color=='teal';" >
+                                    <field name="display_color" invisible="True"/>
+                                    <field name="date" />
+                                    <field name="routing_id"/>
+                                    <field name="routing_line_id" invisible="True"/>
+                                    <field name="routing_subrouting_id"/>
+                                    <field name="name"/>
+                                    <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
+                                    <field name="worktype" />
+                                    <field name="location" />
+                                    <field name="old_task_code" />
+                                    <field name="serial_reference" />
                                 </tree>
                             </field>
                         </page>
