@@ -275,7 +275,7 @@ class hr_timekeeping_sheet(models.Model):
     @api.multi
     def button_void(self):
         # save existing TS as attachment
-        report, report_type = render_report(self._cr, self._uid, self.ids, 'imsar_timekeeping.tk_approval_report', {'model': self._name}, self._context)
+        report, report_type = render_report(self._cr, self._uid, self.ids, 'imsar_timekeeping.tk_print_report', {'model': self._name}, self._context)
         report = base64.b64encode(report)
         file_name = 'voided_timesheet.pdf'
         att_id = self.env['ir.attachment'].create({
