@@ -973,7 +973,7 @@ class hr_timekeeping_approval(models.Model):
                 ids.add(approval_line.id)
             elif approval_line.uid_can_approve and value == 'my_direct_approvals':
                 # only admin can approve things early
-                if approval_line.type == 'Admin' and ts_admin in user.groups_id:
+                if (approval_line.type == 'Admin' or approval_line.type == 'HR') and ts_admin in user.groups_id:
                     ids.add(approval_line.id)
                 elif approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id == user and now_past_timesheet_end:
                     ids.add(approval_line.id)

@@ -123,7 +123,7 @@
                     <button name="button_confirm" string="Proxy Submit" type="object" class="oe_highlight oe_right"
                             attrs="{'invisible':[('proxy_button_view','=',False)]}"/>
                     <button name="button_self_cancel" string="Set back to Open" type="object" class="oe_right"
-                            attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_is_user_id','!=',True),('past_deadline','=',True)]}"/>
+                            attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_is_user_id','!=',True),'&amp;',('past_deadline','=',True),('type','=','regular')]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
                 </header>
                 <sheet>
