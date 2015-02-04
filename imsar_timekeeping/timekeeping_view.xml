@@ -54,8 +54,9 @@
                                     attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="start_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="end_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
-                            <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
+                            <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('require_serial','=',True)]}"/>
                             <field name="id" invisible="1"/>
+                            <field name="require_serial" invisible="1"/>
                             <field name="state" invisible="1"/>
                             <field name="logging_required" invisible="1"/>
                             <field name="amount" invisible="1" />
@@ -140,11 +141,11 @@
                     <div>
                         <h1><field name="employee_id" readonly="True"/></h1>
                         <button name="%(other_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
-                                icon="fa-book" context="{'search_default_type':'proxy','employee_id':employee_id,'name':name}" attrs="{'invisible':['|',('type','!=','regular'),('proxy_count','=',0)]}">
+                                icon="fa-book" context="{'search_default_type':'proxy','search_default_name':name}" attrs="{'invisible':['|',('type','!=','regular'),('proxy_count','=',0)]}">
                             <field name="proxy_count" class="oe_inline" string="Proxies" widget="statinfo"/>
                         </button>
                         <button name="%(other_timesheets_view_form)d" class="oe_inline oe_right oe_stat_button" type="action"
-                                icon="fa-book" context="{'search_default_type':'addendum','employee_id':employee_id,'name':name}" attrs="{'invisible':['|',('type','!=','regular'),('addendum_count','=',0)]}">
+                                icon="fa-book" context="{'search_default_type':'addendum','search_default_name':name}" attrs="{'invisible':['|',('type','!=','regular'),('addendum_count','=',0)]}">
                             <field name="addendum_count" class="oe_inline" string="Addendums" widget="statinfo"/>
                         </button>
                         <button name="button_return_to_regular" class="oe_inline oe_right" type="object" string="Return to Regular"
@@ -540,8 +541,8 @@
             <field name="res_model">hr.timekeeping.sheet</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" eval="hr_timekeeping_sheet_form"/>
-            <field name="domain">[('type','in',['addendum','proxy']),('employee_id','=',employee_id),('name','=',name)]</field>
+            <field name="view_id" ref="hr_timekeeping_sheet_form"/>
+            <field name="domain">[('type','in',['addendum','proxy']),('user_id','=',uid)]</field>
         </record>
         <record id="action_other_timesheets_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>

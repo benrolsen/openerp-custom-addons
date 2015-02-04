@@ -7,6 +7,7 @@ import pytz
 import logging
 logger = logging.getLogger(__name__)
 
+
 class timekeeping_lines_report(models.Model):
     _name = "hr.timekeeping.lines.report"
     _description = "Timekeeping Entries Statistics"
@@ -257,35 +258,6 @@ class timekeeping_log_report(models.Model):
                     sheet_id, author, subject, body, date, employee_id, sheet_type, state, week_name, payperiod_id
             )
         """)
-
-
-class timekeeping_inventory_wizard(models.TransientModel):
-    _name = "hr.timekeeping.inventory.wizard"
-    _description = "Timekeeping Inventory List"
-
-    date_from = fields.Date('Start Date', required=True, default=lambda self: self.default_date_from())
-    date_to = fields.Date('End Date', required=True, default=lambda self: self.default_date_to())
-
-    @api.model
-    def default_date_from(self):
-        return datetime.today() - timedelta(days=7)
-
-    @api.model
-    def default_date_to(self):
-        return datetime.today()
-
-    @api.multi
-    def open_report(self):
-        report_view = self.env.ref('imsar_timekeeping.timesheet_inventory_report_tree', False)
-        return {
-            'name': _('Inventory Report'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.timekeeping.line',
-            'view_id': report_view.id,
-            'view_type': 'form',
-            'view_mode': 'tree',
-            'domain': "[('date', '>=', '{}'),('date','<=','{}'),('serial_reference','!=','')]".format(self.date_from, self.date_to),
-        }
 
 
 class timekeeping_search_sheets_by_task(models.TransientModel):

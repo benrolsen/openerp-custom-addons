@@ -317,6 +317,7 @@ class account_routing_subrouting(models.Model):
     oneclick_filter = fields.Boolean(store=False, compute='_dummy', search='_filter_oneclick')
     oneclick_prefs = fields.Many2many('hr.timekeeping.preferences', 'user_pref_subroute_rel', 'subrouting_id', 'user_pref', string='One Click Prefs')
     view_on_timesheet = fields.Boolean(store=False, compute='_dummy', search='_viewable_search')
+    require_serial = fields.Boolean('Require Serial/Repair #', default=False)
 
     @api.one
     def _dummy(self):

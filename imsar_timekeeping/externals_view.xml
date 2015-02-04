@@ -222,6 +222,9 @@
                         <field name="qb_payroll_item_st" />
                         <field name="qb_payroll_item_ot" />
                     </group>
+                    <group>
+                        <field name="require_serial" />
+                    </group>
                 </xpath>
             </field>
         </record>

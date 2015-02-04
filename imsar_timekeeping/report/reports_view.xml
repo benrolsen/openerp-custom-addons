@@ -104,35 +104,54 @@
         <menuitem id="menu_timekeeping_log_report" action="action_timekeeping_log_report" parent="menu_hr_timekeeping_reports"
                   groups="base.group_hr_user" sequence="6"/>
 
-
         <!-- Inventory report -->
-        <record id="view_timekeeping_inventory_wizard" model="ir.ui.view">
-             <field name="name">hr.timekeeping.inventory.wizard</field>
-             <field name="model">hr.timekeeping.inventory.wizard</field>
-             <field name="arch" type="xml">
-                <form string="Choose date range">
-                    <group>
-                        <field name="date_from"/>
-                        <field name="date_to"/>
+        <record id="view_timekeeping_inventory_report_search" model="ir.ui.view">
+            <field name="name">hr.timekeeping.inventory.report.search</field>
+            <field name="model">hr.timekeeping.line</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="user_id"/>
+                    <field name="serial_reference"/>
+                    <filter name="not_recorded" string="Not Recorded" domain="[('inventory_recorded','=',False)]"/>
+                    <filter name="recorded" string="Recorded" domain="[('inventory_recorded','=',True)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_user" string="User" context="{'group_by':'user_id'}"/>
+                        <filter name="group_by_serial" string="Serial" context="{'group_by':'serial_reference'}"/>
+                        <filter name="group_by_taskid" string="Task ID" context="{'group_by':'routing_subrouting_id'}"/>
                     </group>
+                </search>
+            </field>
+        </record>
+        <record id="action_timekeeping_inventory_report" model="ir.actions.act_window">
+            <field name="name">Inventory Report</field>
+            <field name="res_model">hr.timekeeping.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="timesheet_inventory_report_tree"/>
+            <field name="context">{'search_default_not_recorded':1}</field>
+            <field name="domain">[('serial_reference','!=',''),('sheet_state','=','done')]</field>
+        </record>
+        <menuitem id="menu_timekeeping_inventory_report" action="action_timekeeping_inventory_report" parent="menu_hr_timekeeping_reports"
+                  groups="account.group_account_user" sequence="10"/>
+        <!-- Mark lines as inventory recorded -->
+        <record id="timekeeping_inventory_record_view" model="ir.ui.view">
+            <field name="name">hr.timekeeping.line.inventory.form</field>
+            <field name="model">hr.timekeeping.line.inventory.confirm</field>
+            <field name="arch" type="xml">
+                <form string="Confirm Inventory Recorded">
+                    Click Submit to mark these timesheet entries as recorded for inventory.
                     <footer>
-                        <button name="open_report" string="Get Report" type="object"  class="oe_highlight"/>
+                        <button string="Submit" name="submit_confirm" type="object" default_focus="1" class="oe_highlight"/>
                         or
-                        <button string="Cancel" class="oe_link" special="cancel" />
+                        <button string="Cancel" class="oe_link" special="cancel"/>
                     </footer>
                 </form>
-             </field>
+            </field>
         </record>
-        <record id="action_timekeeping_inventory_wizard" model="ir.actions.act_window">
-            <field name="name">Inventory Report</field>
-            <field name="res_model">hr.timekeeping.inventory.wizard</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="view_timekeeping_inventory_wizard"/>
-            <field name="target">new</field>
-        </record>
-        <menuitem id="menu_action_timekeeping_inventory_wizard" action="action_timekeeping_inventory_wizard" parent="menu_hr_timekeeping_reports"
-                  groups="base.group_hr_user" sequence="10"/>
+        <!-- Puts an option in the More button that calls a wizard -->
+        <act_window id="timekeeping_inventory_report_mark_recorded" name="Mark as Recorded"
+            res_model="hr.timekeeping.line.inventory.confirm" src_model="hr.timekeeping.line" multi="True" key2="client_action_multi"
+            view_mode="form" target="new" view_type="form" groups="account.group_account_user" />
 
         <!-- Sheets by week/task report -->
         <record id="view_timekeeping_by_task_wizard" model="ir.ui.view">

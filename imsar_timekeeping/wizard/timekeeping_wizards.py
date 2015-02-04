@@ -259,3 +259,17 @@ class hr_timekeeping_sheet_payment_confirm(models.TransientModel):
                 sheet.write(vals)
         return {'type': 'ir.actions.act_window_close'}
 
+
+class hr_timekeeping_line_inventory_confirm(models.TransientModel):
+    _name = "hr.timekeeping.line.inventory.confirm"
+    _description = "Confirm Inventory Recorded"
+
+    @api.multi
+    def submit_confirm(self):
+        ids = self._context['active_ids']
+        lines = self.env['hr.timekeeping.line'].browse(ids)
+        for line in lines:
+            line.write_override({'inventory_recorded':True})
+        return {'type': 'ir.actions.act_window_close'}
+
+
