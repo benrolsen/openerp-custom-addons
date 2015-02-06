@@ -269,7 +269,7 @@ class employee(models.Model):
             'narration': '',
             'company_id': self.user_id.company_id.id,
         }
-        move = self.env['account.move'].with_context(self._context).create(move_vals)
+        move = self.env['account.move'].with_context(self._context).sudo().create(move_vals)
         move.post()
 
 
