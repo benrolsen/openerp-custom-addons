@@ -221,6 +221,7 @@
                                     <field name="name" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
+                                    <field name="location" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}"/>
                                     <button name="button_details" string="Details" type="object" class="oe_edit_only"
                                             attrs="{'invisible':[('sheet_state','!=','draft')]}"/>
                                     <!-- invisible fields -->
