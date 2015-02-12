@@ -81,7 +81,6 @@ openerp.imsar_timekeeping = function (instance) {
         }
     });
 
-
     instance.web.form.custom_widgets.add('timekeeping_weekly_summary', 'instance.imsar_timekeeping.WeeklySummary');
 
 
@@ -195,4 +194,30 @@ openerp.imsar_timekeeping = function (instance) {
         }
     });
     instance.web.form.widgets.add('time', 'instance.web.form.FieldTime');
+
+    function approval_check() {
+        var self = this;
+        var uid = openerp.session.uid;
+        try {
+            app_ids = new openerp.Model("hr.timekeeping.approval").call("ajax_approval_count", ['my_direct_approvals']).then(function(num){
+                if(num > 0) {
+                    $.titleAlert(num + " approvals waiting!", {interval:1000});
+                }
+            }, function(unused, e) {
+                // no error popup if request is interrupted or fails for any reason
+                e.preventDefault();
+            });
+        }
+        catch (error) {}
+    }
+
+    if(openerp.web && openerp.web.UserMenu) {
+        openerp.web.UserMenu.include({
+            do_update: function(){
+                approval_check();
+                var tid = setInterval(approval_check, 90000);
+                return this._super.apply(this, arguments);
+            }
+        });
+    }
 };

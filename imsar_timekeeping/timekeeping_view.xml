@@ -170,7 +170,8 @@
                         </group>
                     </group>
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
-                        <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll" />
+                        <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll"
+                                confirm="Make sure you have fully deleted all entries from this timesheet entry in Quickbooks before retrying!"/>
                     </group>
                     <group attrs="{'invisible':[('addendum_button_view','=',False)]}">
                         <button class="oe_highlight" type="object" string="Create/Edit Addendum" name="button_addendum" />
@@ -263,6 +264,7 @@
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
                                     <field name="worktype" />
                                     <field name="location" />
+                                    <field name="serial_reference" />
                                 </tree>
                             </field>
                         </page>
@@ -314,49 +316,6 @@
                                             attrs="{'invisible':['|',('state','!=','confirm'),'|',('uid_can_approve','!=',True)]}"/>
                                 </tree>
                             </field>
-                        </page>
-                        <page string="Instructions" attrs="{'invisible':['|',('state','!=','draft'),('type','=','proxy')]}">
-                            <p><strong>How to keep time</strong></p>
-                            <p>Timesheets are intended to be filled out every day, on the day that work is done. You may edit entries for other days,
-                            but you will be required to provide an explanation for the change. You may not create work entries for days
-                            outside of this timesheet's work week.</p>
-                            <p>First, you must review the Statement of Work for any task that you want to work on. The link to review task S.O.W.s is
-                            on the left menu. Please read the description before clicking the acknowledgement button. Note that on the S.O.W. review page,
-                            you may click the left and right buttons in the upper right corner to go to the previous/next S.O.W. page.</p>
-                            <p>On the timesheet page, you may add new work entries with the "Add Entry" button. You can set a default Billing Category
-                            and/or Task on the Preferences page (left menu link). Also in the Preferences page, you can set "One-click Tasks" which
-                            are typically tasks you work on every day. After setting these, you can click the "Add One-click Tasks" button on the timesheet,
-                            which will add those tasks for the current day. Additionally, you may only delete an entry from a line entry Detail page.</p>
-                            <p>Note that for any entries in the future, there is a very limited set of tasks that you may choose. (Typically
-                            PTO and Holiday, under the Benefits category).</p>
-                            <p>Entries edited in-line are not saved until you click Validate and Save! Make a habit of clicking this button frequently
-                            so as not to lose data.</p>
-                            <p><strong>Approvals</strong></p>
-                            <p>Once your timesheet is completely filled out for a given week, click the red "Submit For Approval" button in the
-                            upper right corner. The timesheet may no longer be edited while it's waiting for approval (or once approved).
-                            While waiting for approval, you have the option to set the timesheet back to an Open state, but doing so
-                            will reset all approval lines.</p>
-                            <p>Every timesheet needs to be approved by at least two people: someone from Admin and someone in your management chain.
-                            Additionally, if you work on a contract or IRaD project, there will be additional approval lines added that must
-                            be approved by a PM for that contract/project. Once all approval lines are approved, the timesheet goes into
-                            a finished state, and it can no longer be edited in any way.</p>
-                            <p><strong>Addendums</strong></p>
-                            <p>When a timesheet is fully approved, an additional button will appear to make any work entry addendums, should
-                            the need arise. A timesheet addendum is effectively the same as a regular timesheet, only without some of the
-                            overtime rules for non-exempt employees. Negative hours are allowed. If you need to move hours from one
-                            project to another, you would make two entries: one with negative hours on the incorrect task, and one
-                            with positive hours on the correct task. The approval process for addendums is the same as for regular timesheets.</p>
-                            <p>If an addendum is submitted with non-zero total hours, please notify HR so they can make the appropriate
-                            payroll adjustments!</p>
-                        </page>
-                        <page string="Proxy Instructions" attrs="{'invisible':['|',('state','!=','draft'),('type','!=','proxy')]}">
-                            <p><strong>Proxy Timesheets</strong></p>
-                            <p>Proxy timesheets are intended to be filled out by someone other than the timesheet's owner. Because of this,
-                            a proxy timesheet is <strong>not</strong> considered authoritative. If a proxy timesheet is to add time
-                            for payroll purposes, it should only include Holiday, PTO, and Unallowable task codes.</p>
-                            <p>Other task codes should only be used to deduct time from task codes, and possibly moving them to
-                            Unallowable task codes. In order to move time to other Allowable task codes, the employee should fill out
-                            and Addendum Timesheet as soon as he/she is capable of doing so.</p>
                         </page>
                         <page string="Payroll" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user">
                             <group>
@@ -420,6 +379,7 @@
                     <field name="name"/>
                     <field name="type"/>
                     <field name="includes_task"/>
+                    <field name="employee_manager"/>
                     <filter name="draft" string="In Draft" domain="[('state','=','draft')]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state','=','confirm')]"/>
                     <filter name="my_approvals" string="My Approvals" domain="[('adv_search','=','my_approvals')]"/>

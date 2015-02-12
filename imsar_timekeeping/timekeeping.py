@@ -58,6 +58,7 @@ class hr_timekeeping_sheet(models.Model):
     user_id = fields.Many2one('res.users', related='employee_id.user_id', string='User', readonly=True)
     employee_flsa_status = fields.Selection(related='employee_id.flsa_status', string='FLSA Status', readonly=True)
     employee_full_time = fields.Boolean(related='employee_id.full_time', string='Full Time', readonly=True)
+    employee_manager = fields.Many2one('res.users', related='employee_id.parent_id', string='Employee Manager', readonly=True)
     line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', readonly=True, states={'draft':[('readonly', False)]})
     view_line_ids = fields.One2many('hr.timekeeping.line', 'sheet_id', 'Timesheet lines', related='line_ids', readonly=True,)
     # this should be removed when we're done w/ Excel (maybe, or maybe HR will still want serial #s
@@ -955,7 +956,7 @@ class hr_timekeeping_approval(models.Model):
         elif self.type == 'Manager':
             manager = self.sheet_id.employee_id.parent_id
             while manager:
-                if user == manager.resource_id.user_id:
+                if user == manager.resource_id.user_id or manager.parent_id.id == manager.id:
                     self.uid_can_approve = True
                     break
                 manager = manager.parent_id
@@ -993,6 +994,11 @@ class hr_timekeeping_approval(models.Model):
         # else:
         #     ids = self.env['hr.timekeeping.approval'].search([]).ids
         return [('id','in',ids)]
+
+    @api.model
+    def ajax_approval_count(self, value):
+        res = self._adv_search(None, value)
+        return len(res[0][2])
 
     @api.multi
     def log_comment(self, comment=''):
