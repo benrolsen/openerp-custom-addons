@@ -4,6 +4,7 @@
         <template id="assets_backend" name="imsar_ui_assets" inherit_id="web.assets_backend">
             <xpath expr="." position="inside">
                 <script type="text/javascript" src="/imsar_ui/static/src/js/imsar_ui.js"></script>
+                <script type="text/javascript" src="/imsar_ui/static/src/js/jquery.titlealert.js"></script>
             </xpath>
         </template>
     </data>
