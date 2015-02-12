@@ -169,6 +169,10 @@
                             <field name="move_id" string="Journal Entry" attrs="{'invisible':[('state','!=','done')]}" groups="base.group_hr_user,account.group_account_user"/>
                         </group>
                     </group>
+                    <group attrs="{'invisible':[('payroll_state','!=','pending')]}" groups="base.group_hr_user">
+                        <button class="oe_highlight" type="object" string="Mark Submitted to Payroll" name="button_mark_payroll"
+                                confirm="Confirm that you have manually made all the necessary adjustments in Quickbooks."/>
+                    </group>
                     <group attrs="{'invisible':[('payroll_state','!=','failed')]}" groups="base.group_hr_user">
                         <button class="oe_highlight" type="object" string="Retry Payroll" name="button_retry_payroll"
                                 confirm="Make sure you have fully deleted all entries from this timesheet entry in Quickbooks before retrying!"/>

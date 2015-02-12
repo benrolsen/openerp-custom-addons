@@ -49,7 +49,7 @@ class hr_timekeeping_sheet(models.Model):
     past_deadline = fields.Boolean(compute='_computed_fields', readonly=True)
     state = fields.Selection([('draft','Open'),('confirm','Waiting For Approval'),('done','Approved'),('void','Voided')],
                              'Status', index=True, required=True, readonly=True,)
-    payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submt'),('paid','Paid')],
+    payroll_state = fields.Selection([('draft','Open'),('pending','Pending'),('submitted','Submitted to Payroll'),('failed','Failed to Submit'),('paid','Paid')],
                              'Payroll Status', default="draft", index=True, required=True, readonly=True,)
     payroll_comment = fields.Char('Payroll Comment')
     needs_correction = fields.Boolean('Needs Correction', index=True, default=False, readonly=True)
@@ -350,6 +350,11 @@ class hr_timekeeping_sheet(models.Model):
     @api.multi
     def button_retry_payroll(self):
         self.payroll_state = 'pending'
+        self.payroll_comment = ''
+
+    @api.multi
+    def button_mark_payroll(self):
+        self.payroll_state = 'submitted'
         self.payroll_comment = ''
 
     @api.multi
