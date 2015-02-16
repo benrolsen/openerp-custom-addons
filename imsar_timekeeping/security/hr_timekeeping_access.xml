@@ -74,6 +74,13 @@
             <field name="perm_read">1</field>
         </record>
 
+        <record id="access_timekeeping_approval_by_user" model="ir.model.access">
+            <field name="name">hr.timekeeping.approval_by_user</field>
+            <field name="model_id" ref="model_hr_timekeeping_approval_by_user"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
         <!-- HR Officer access rights (inherits all HR Employee rights) -->
         <record id="access_timekeeping_sheet_officer" model="ir.model.access">
             <field name="name">hr.timekeeping.sheet.officer</field>

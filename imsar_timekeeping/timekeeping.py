@@ -5,6 +5,7 @@ from collections import defaultdict
 import pytz
 import json
 import base64
+import time
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
@@ -85,6 +86,8 @@ class hr_timekeeping_sheet(models.Model):
     @api.one
     @api.constrains('type', 'payperiod_id', 'week_ab', 'employee_id')
     def _one_reg_per_week(self):
+        # this still isn't stopping occasional dupes, can't find where they're coming from. Use this to find them:
+        # select tk.name,hr.name as employee,count(tk.id) as num from hr_timekeeping_sheet tk join hr_employee hr on tk.employee_id = hr.id where type='regular' group by tk.name,employee having count(tk.id) > 1;
         if self.type == 'regular':
             dupes = self.search([('type','=','regular'),('payperiod_id','=',self.payperiod_id.id),('week_ab','=',self.week_ab),('employee_id','=',self.employee_id.id),])
             if len(dupes) > 1:
@@ -940,64 +943,52 @@ class hr_timekeeping_approval(models.Model):
         self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
 
         user = self.env.user
-        # check to see if user is in HR
-        if self.type == 'HR':
-            hr_user = self.env.ref('base.group_hr_user')
-            if hr_user in user.groups_id:
+        user_approvals_rec = self.env['hr.timekeeping.approval_by_user'].search([('user_id','=',user.id)])
+        if user_approvals_rec:
+            approvals = eval(user_approvals_rec.approval_ids)
+            if self.id in approvals:
                 self.uid_can_approve = True
-        # check to see if user is timesheet admin
-        if self.type == 'Admin':
-            ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
-            if ts_admin in user.groups_id:
-                self.uid_can_approve = True
-        # check to see if user is PM on this project
-        elif self.type == 'Project':
-            if user in self.account_analytic_id.pm_ids:
-                self.uid_can_approve = True
+        # check if the user has global approval rights (this includes SeniorManagement lines)
+        if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
+            self.uid_can_approve = True
+
+        # calculate relevant project time
+        if self.type == 'Project':
             lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('account_analytic_id','=',self.account_analytic_id.id),])
             self.relevant_time = sum(line.unit_amount for line in lines)
             self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
-        # check to see if user is manager for the timesheet's owner
-        elif self.type == 'Manager':
-            manager = self.sheet_id.employee_id.parent_id
-            while manager:
-                if user == manager.resource_id.user_id or manager.parent_id.id == manager.id:
-                    self.uid_can_approve = True
-                    break
-                manager = manager.parent_id
         # calculate relevant unallowable time
         elif self.type == 'SeniorManagement':
             lines = self.env['hr.timekeeping.line'].search([('sheet_id','=',self.sheet_id.id),('aa_dcaa_allowable','=',False),])
             self.relevant_time = sum(line.unit_amount for line in lines)
             self.overtime = sum(line.unit_amount for line in lines if line.worktype == overtime_worktype_id)
-        # check if the user has global approval rights (this includes SeniorManagement lines)
-        if user in self.sheet_id.employee_id.user_id.company_id.global_approval_user_ids:
-            self.uid_can_approve = True
 
     def _adv_search(self, operator, value):
         user = self.env.user
+        user_approvals_rec = self.env['hr.timekeeping.approval_by_user'].search([('user_id','=',user.id)])
+        try:
+            user_approvals = eval(user_approvals_rec.approval_ids)
+        except TypeError:
+            return [('id','in',[])]
         ids = set()
-        waiting_approvals = self.env['hr.timekeeping.approval'].search([('state','=','confirm')])
-        ts_admin = self.env['res.groups'].search([('name','=','Timesheet Admin')])
+        waiting_approvals = self.env['hr.timekeeping.approval'].search([('id','in',user_approvals)])
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         for approval_line in waiting_approvals:
             ts_end = datetime.strptime(approval_line.sheet_id.date_to, DATE_FORMAT) + timedelta(hours=23, minutes=59)
             now_past_timesheet_end = now > ts_end
-            if approval_line.uid_can_approve and value == 'my_approvals' and now_past_timesheet_end:
+            if value == 'my_approvals':
                 ids.add(approval_line.id)
-            elif approval_line.uid_can_approve and value == 'my_direct_approvals':
-                # only admin can approve things early
-                if (approval_line.type == 'Admin' or approval_line.type == 'HR') and ts_admin in user.groups_id:
+            elif value == 'my_direct_approvals':
+                # only admin should see approvals early
+                if (approval_line.type == 'Admin' or approval_line.type == 'HR'):
                     ids.add(approval_line.id)
                 elif approval_line.type == 'Manager' and approval_line.sheet_id.employee_id.parent_id.user_id == user and now_past_timesheet_end:
                     ids.add(approval_line.id)
-                elif approval_line.type == 'Project' and user in approval_line.account_analytic_id.pm_ids and now_past_timesheet_end:
+                elif approval_line.type == 'Project' and now_past_timesheet_end:
                     ids.add(approval_line.id)
-                elif approval_line.type == 'SeniorManagement' and user in approval_line.sheet_id.employee_id.user_id.company_id.global_approval_user_ids and now_past_timesheet_end:
+                elif approval_line.type == 'SeniorManagement' and now_past_timesheet_end:
                     ids.add(approval_line.id)
         ids = list(ids)
-        # else:
-        #     ids = self.env['hr.timekeeping.approval'].search([]).ids
         return [('id','in',ids)]
 
     @api.model
@@ -1061,7 +1052,10 @@ class hr_timekeeping_approval(models.Model):
         # log approval line approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submission approved"
-        body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
+        if self.account_analytic_id:
+            body = "{} approved {} line for {} on {}".format(self.env.user.name, self.type, self.account_analytic_id.name, now.strftime('%c'))
+        else:
+            body = "{} approved {} line on {}".format(self.env.user.name, self.type, now.strftime('%c'))
         self.sheet_id.message_post(subject=subject, body=body,)
         self.signal_workflow('done')
         self.approved_by = self.env.user
@@ -1169,3 +1163,40 @@ class hr_timekeeping_holiday(models.Model):
 
     name = fields.Char('Holiday name')
     holiday_date = fields.Date('Holiday Date')
+
+
+class hr_timekeeping_approval_by_user(models.Model):
+    _name = "hr.timekeeping.approval_by_user"
+    _description = "Approvals by User"
+
+    user_id = fields.Many2one('res.users', string='User', readonly=True)
+    approval_ids = fields.Char('Approval list as string')
+
+    @api.model
+    def recalc(self):
+        for user in self.env['res.users'].search([('id','!=',1)]):
+            user_approvals = self.search([('user_id','=',user.id)])
+            if not user_approvals:
+                user_approvals = self.create({'user_id':user.id, 'approval_ids':''})
+            ids = set()
+            tk_admin_user = self.env.ref('base.group_hr_user')
+            if tk_admin_user in user.groups_id:
+                admin_approvals = self.env['hr.timekeeping.approval'].search([('type','=','Admin'),('state','=','confirm')])
+                ids.update(admin_approvals.ids)
+            hr_user = self.env.ref('imsar_timekeeping.group_timesheet_admin')
+            if hr_user in user.groups_id:
+                hr_approvals = self.env['hr.timekeeping.approval'].search([('type','=','HR'),('state','=','confirm')])
+                ids.update(hr_approvals.ids)
+            for employee_id in self.env['hr.employee'].search([('user_id','=',user.id)]):
+                subs = employee_id.get_all_children()
+                subs = subs - employee_id
+                manager_approvals = self.env['hr.timekeeping.approval'].search([('type','=','Manager'),('state','=','confirm'),('employee_id','in',subs.ids)])
+                ids.update(manager_approvals.ids)
+            projects = user.pm_analytics
+            if projects:
+                project_approvals = self.env['hr.timekeeping.approval'].search([('type','=','Project'),('state','=','confirm'),('account_analytic_id','in',projects.ids)])
+                ids.update(project_approvals.ids)
+            if user in user.company_id.global_approval_user_ids:
+                senior_approvals = self.env['hr.timekeeping.approval'].search([('type','=','SeniorManagement'),('state','=','confirm')])
+                ids.update(senior_approvals.ids)
+            user_approvals.approval_ids = str(list(ids))

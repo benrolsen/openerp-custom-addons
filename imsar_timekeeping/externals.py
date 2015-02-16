@@ -213,6 +213,20 @@ class employee(models.Model):
         if self.env.ref('imsar_timekeeping.group_pms_user').id in self.user_id.groups_id.ids:
             self.user_is_pm = True
 
+    def _recursive_children(self, emp, result=[]):
+        result += [emp.id]
+        if emp.child_ids:
+            for child in emp.child_ids:
+                if emp.id != child.id:
+                    self._recursive_children(child, result)
+        return result
+
+    @api.multi
+    def get_all_children(self):
+        result_list = self._recursive_children(self, [])
+        result = self.browse(result_list)
+        return result
+
     @api.multi
     def accrue_pto(self, hours):
         # owners can't accrue PTO

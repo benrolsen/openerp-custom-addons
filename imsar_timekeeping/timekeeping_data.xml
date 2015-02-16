@@ -89,6 +89,19 @@ Please follow up on management and PM approvals for this timesheet.
             <field name="body_html"><![CDATA[The Statement of Work for "${ctx.aa_name}" has been modified. You must review and sign this task Statement of Work again before you will be able to use it.]]></field>
         </record>
 
+        <record id="ir_cron_approvals" forcecreate="True" model="ir.cron">
+            <field name="name">Recalc Timekeeping Approvals</field>
+            <field name="active">True</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model" eval="'hr.timekeeping.approval_by_user'"/>
+            <field name="function" eval="'recalc'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
     </data>
 </openerp>
 
