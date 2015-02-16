@@ -215,7 +215,7 @@ openerp.imsar_timekeeping = function (instance) {
         openerp.web.UserMenu.include({
             do_update: function(){
                 approval_check();
-                var tid = setInterval(approval_check, 90000);
+                var tid = setInterval(approval_check, 300000);
                 return this._super.apply(this, arguments);
             }
         });
