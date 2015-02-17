@@ -2,6 +2,7 @@ from datetime import datetime, date, timedelta
 from dateutil.relativedelta import *
 import dateutil.parser
 from collections import defaultdict
+from copy import copy
 import pytz
 import json
 import base64
@@ -589,10 +590,11 @@ class hr_timekeeping_line(models.Model):
     _order = 'date desc, create_date desc'
 
     # model columns
-    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='restrict')
-    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user)
+    sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='restrict', copy=True)
+    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user, copy=True)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
+    type = fields.Selection([('Regular','Regular'),('Correction','Correction'),], 'Line Entry Type', default="Regular", required=True)
     unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
     amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
     premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
@@ -601,9 +603,9 @@ class hr_timekeeping_line(models.Model):
     date = fields.Date(string='Date', required=True, default=lambda self: get_now_tz(self.env.user, self.env['ir.config_parameter']).strftime(DATE_FORMAT))
     previous_date = fields.Date(string='Previous Date', invisible=True)
     day_name = fields.Char(compute='_day_name', string='Day')
-    routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route())
-    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_user_default_subroute())
+    routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route(), copy=True)
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True, copy=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_user_default_subroute(), copy=True)
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
@@ -613,7 +615,7 @@ class hr_timekeeping_line(models.Model):
     state = fields.Char(compute='_check_state', default='open') # 'past','open','future'
     sheet_state = fields.Selection(related='sheet_id.state', readonly=True)
     logging_required = fields.Boolean(compute='_check_state')
-    worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, default=lambda self: self._get_default_worktype())
+    worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", ondelete='restrict', required=True, default=lambda self: self._get_default_worktype(), copy=True)
     # this timekeeping_line_move_line_rel table is going to get massive, but I don't know of another way to do it
     move_line_ids = fields.Many2many('account.move.line', 'timekeeping_line_move_line_rel', 'timekeeping_line_id', 'move_line_id', string='Related move lines')
     dcaa_allowable = fields.Boolean("FAR 31.2 Allowable", default=True)
@@ -745,6 +747,22 @@ class hr_timekeeping_line(models.Model):
             return True
         self._safety_checks(self.sheet_id)
         vals['previous_date'] = vals.get('date') or self.date
+        unit_amount = vals.get('unit_amount') or self.unit_amount
+        worktype_id = vals.get('worktype') or self.worktype.id
+        worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
+        vals['amount'] = self.sheet_id.employee_id.wage_rate * unit_amount
+        vals['premium_amount'] = vals['amount'] * worktype.premium_rate
+        # if this is a correction, make reverse correcting entry and save this as normal
+        line_type = vals.get('type') or self.type
+        if line_type == 'Correction':
+            neg_vals = dict()
+            neg_vals['unit_amount'] = -1.0 * float(self.unit_amount)
+            neg_vals['type'] = 'Regular'
+            if self.logging_required:
+                neg_vals['change_explanation'] = vals.get('change_explanation')
+                neg_vals['change_reason'] = vals.get('change_reason')
+            neg_line = self.copy(default=neg_vals)
+            vals['type'] = 'Regular'
         if self.logging_required:
             vals['change_explanation_log'] = vals.get('change_explanation')
             vals['change_explanation'] = ''
@@ -753,11 +771,6 @@ class hr_timekeeping_line(models.Model):
             self._log_changes(vals)
             del vals['change_explanation_log']
             del vals['change_reason_log']
-        unit_amount = vals.get('unit_amount') or self.unit_amount
-        worktype_id = vals.get('worktype') or self.worktype.id
-        worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
-        vals['amount'] = self.sheet_id.employee_id.wage_rate * unit_amount
-        vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         return super(hr_timekeeping_line, self).write(vals)
 
     @api.multi
@@ -864,6 +877,26 @@ class hr_timekeeping_line(models.Model):
             'target': 'new',
             'readonly': True,
             'res_id': self.id,
+        }
+        return view
+
+    @api.multi
+    def button_correction(self):
+        ctx = {'regular_timesheet_id': self.sheet_id.id}
+        ctx.update(self._context)
+        res = self.env['hr.timekeeping.wizards'].with_context(ctx).open_addendum()
+        new_sheet_id = res['res_id']
+        new_line = self.copy(default={'sheet_id':new_sheet_id, 'type':'Correction'})
+        view = {
+            'name': _('Entry Details'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.timekeeping.line',
+            'view_id': self.env.ref('imsar_timekeeping.hr_timekeeping_line_form_editable').id,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'readonly': True,
+            'res_id': new_line.id,
         }
         return view
 
