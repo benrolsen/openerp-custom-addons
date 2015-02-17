@@ -762,6 +762,7 @@
             <field name="arch" type="xml">
                 <tree string="Timesheet lines" >
                     <field name="user_id" />
+                    <field name="employee_number" />
                     <field name="date" />
                     <field name="name" />
                     <field name="serial_reference" />
