@@ -192,6 +192,12 @@ class hr_timekeeping_sheet(models.Model):
 
         if value == 'this_week':
             sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id), ('week_ab','=',week_ab)]).ids
+        elif value == 'last_week':
+            prev_week_date = today - timedelta(days=7)
+            prev_week_pp = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_week_date)
+            prev_week_ab = prev_week_pp.get_week_ab(prev_week_date)
+            prev_week = prev_payperiod.name + '-' + prev_week_ab
+            sheets = self.search([('name','=',prev_week)]).ids
         elif value == 'this_payperiod':
             sheets = self.env['hr.timekeeping.sheet'].search([('payperiod_id','=',this_payperiod.id)]).ids
         elif value == 'prev_payperiod':

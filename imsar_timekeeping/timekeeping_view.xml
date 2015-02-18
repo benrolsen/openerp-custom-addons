@@ -367,6 +367,7 @@
                     <filter name="my_direct_approvals" string="My Direct Approvals" domain="[('adv_search','=','my_direct_approvals')]"/>
                     <filter name="my_user_id" string="My Timesheets" domain="[('user_id','=',uid)]"/>
                     <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
+                    <filter name="last_week" string="Last Week" domain="[('adv_search','=','last_week')]"/>
                     <filter name="this_payperiod" string="This Payperiod" domain="[('adv_search','=','this_payperiod')]"/>
                     <filter name="prev_payperiod" string="Previous Payperiod" domain="[('adv_search','=','prev_payperiod')]"/>
                     <filter name="pending_payroll" string="Pending Payroll" domain="[('state','=','done'),('payroll_state','in',['draft','pending','failed'])]"
@@ -453,6 +454,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" eval="hr_timekeeping_sheet_form"/>
             <field name="context">{'search_default_group_by_name':1}</field>
+            <field name="domain">[('user_id','!=',1)]</field>
         </record>
         <record id="action_all_timesheets_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>
