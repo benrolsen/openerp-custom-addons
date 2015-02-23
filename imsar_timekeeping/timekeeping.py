@@ -597,7 +597,7 @@ class hr_timekeeping_line(models.Model):
 
     # model columns
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='restrict', copy=True)
-    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user, copy=True)
+    user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user, copy=False)
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     type = fields.Selection([('Regular','Regular'),('Correction','Correction'),], 'Line Entry Type', default="Regular", required=True)
@@ -767,7 +767,7 @@ class hr_timekeeping_line(models.Model):
             if self.logging_required:
                 neg_vals['change_explanation'] = vals.get('change_explanation')
                 neg_vals['change_reason'] = vals.get('change_reason')
-            neg_line = self.copy(default=neg_vals)
+            neg_line = self.sudo().copy(default=neg_vals)
             vals['type'] = 'Regular'
         if self.logging_required:
             vals['change_explanation_log'] = vals.get('change_explanation')
@@ -892,7 +892,7 @@ class hr_timekeeping_line(models.Model):
         ctx.update(self._context)
         res = self.env['hr.timekeeping.wizards'].with_context(ctx).open_addendum()
         new_sheet_id = res['res_id']
-        new_line = self.copy(default={'sheet_id':new_sheet_id, 'type':'Correction'})
+        new_line = self.sudo().copy(default={'sheet_id':new_sheet_id, 'type':'Correction'})
         view = {
             'name': _('Entry Details'),
             'view_type': 'form',
