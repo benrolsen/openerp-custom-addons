@@ -529,13 +529,13 @@ class hr_timekeeping_sheet(models.Model):
             pp_total = 0
             for sheet in self.search([('payperiod_id','=',self.payperiod_id.id), ('employee_id','=',self.employee_id.id), ('state','=','done')]):
                 pp_total += sheet.total_time
-            # full-time employees accrue PTO
-            self.accrue_pto(pp_total)
-            # also need to decrement PTO if they used it
+            # need to decrement PTO first, so they can use it on the same week they're at the max
             pto_analytic_id = self.employee_id.user_id.company_id.pto_analytic_id.id
             for line in self.line_ids:
                 if line.account_analytic_id.id == pto_analytic_id:
                     self.employee_id.accrued_pto -= line.unit_amount
+            # full-time employees accrue PTO
+            self.accrue_pto(pp_total)
         return True
 
     @api.model
