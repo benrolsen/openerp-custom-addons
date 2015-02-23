@@ -220,87 +220,11 @@ class sale_order_line(models.Model):
         return res
 
 
-class account_routing_purchase_preferences(models.TransientModel):
-    # This is a temporary model that lets purchase.order.line entries "remember"
-    # the last used routing info, so that new lines auto-fill with it
-    _name = "account.routing.purchase.preferences"
-    _description = "Account routing preference for purchase order lines"
-
-    user_id = fields.Many2one('res.users', 'User', )
-    routing_id = fields.Many2one('account.routing', 'Category',)
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type',)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code',)
-
-
-class purchase_order(models.Model):
-    _inherit = "purchase.order"
-
-    @api.model
-    def view_init(self, fields_list):
-        # this makes sure that the current user has an account.routing.purchase.preferences line
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if not pref:
-            pref = self.env['account.routing.purchase.preferences'].create({'user_id':self._uid})
-
-    @api.v7
-    def _prepare_inv_line(self, cr, uid, account_id, order_line, context=None):
-        account_id = order_line.routing_subrouting_id.account_id.id
-        res = super(purchase_order, self)._prepare_inv_line(cr, uid, account_id, order_line, context)
-        res['routing_id'] = order_line.routing_id.id
-        res['routing_line_id'] = order_line.routing_line_id.id
-        res['routing_subrouting_id'] = order_line.routing_subrouting_id.id
-        res['account_analytic_id'] = order_line.routing_subrouting_id.account_analytic_id.id
-        return res
-
-
 class purchase_order_line(models.Model):
-    _inherit = "purchase.order.line"
+    _inherit = 'purchase.order.line'
 
-    routing_id = fields.Many2one('account.routing', 'Category', required=True,)
-    routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
+    routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_routing_id())
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True, default=lambda self: self._get_routing_line_id())
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_routing_subrouting_id())
 
-    @api.onchange('routing_id')
-    def onchange_routing_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_id:
-            pref.write({'routing_id': self.routing_id.id})
-        if self.routing_line_id not in self.routing_id.routing_lines:
-            self.routing_line_id = ''
-            # self.routing_subrouting_id = ''
-
-    @api.onchange('routing_line_id')
-    def onchange_routing_line_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_line_id:
-            pref.write({'routing_line_id': self.routing_line_id.id})
-        if self.routing_subrouting_id not in self.routing_line_id.subrouting_ids:
-            self.routing_subrouting_id = ''
-
-    @api.onchange('routing_subrouting_id')
-    def onchange_routing_subrouting_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_subrouting_id:
-            pref.write({'routing_subrouting_id': self.routing_subrouting_id.id})
-
-    @api.model
-    def _get_routing_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_id.id
-
-    @api.model
-    def _get_routing_line_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_line_id.id
-
-    @api.model
-    def _get_routing_subrouting_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_subrouting_id.id
-
-    _defaults = {
-        'routing_id': _get_routing_id,
-        'routing_line_id': _get_routing_line_id,
-        'routing_subrouting_id': _get_routing_subrouting_id,
-    }
 
