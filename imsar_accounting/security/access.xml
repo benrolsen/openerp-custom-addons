@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- Financial Reporting access rights -->
+        <record id="access_charts_user" model="ir.model.access">
+            <field name="name">account.chart.user</field>
+            <field name="model_id" ref="account.model_account_chart"/>
+            <field name="group_id" ref="imsar_accounting.group_finance_reports"/>
+            <field name="perm_read">1</field>
+        </record>
+        <record id="access_period_user" model="ir.model.access">
+            <field name="name">account.period.user</field>
+            <field name="model_id" ref="account.model_account_period"/>
+            <field name="group_id" ref="imsar_accounting.group_finance_reports"/>
+            <field name="perm_read">1</field>
+        </record>
+
+
+    </data>
+</openerp>

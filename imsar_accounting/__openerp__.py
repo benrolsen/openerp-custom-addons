@@ -27,6 +27,8 @@
     'description': "Customized IMSAR accounts and analytics",
     'category': "Uncategorized",
     'data': [
+            'security/security.xml',
+            'security/access.xml',
             'account_view.xml',
             'imsar_accounting_wizard.xml',
             'accounting_data.xml',

@@ -20,7 +20,7 @@ class timekeeping_lines_report(models.Model):
     user_id = fields.Many2one('res.users', string='User', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
     unit_amount = fields.Float('Quantity', readonly=True)
-    # amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account')) # removed because this report shouldn't contain financials
+    amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account'), groups="imsar_accounting.group_finance_reports,account.group_account_user")
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", readonly=True)
     state = fields.Char('Timesheet State', readonly=True)
     task_code = fields.Char('Task Code', readonly=True)

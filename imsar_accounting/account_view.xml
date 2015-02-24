@@ -2,6 +2,68 @@
 <openerp>
 <data>
 
+    <!-- Add some menus to new view-only group -->
+    <menuitem name="Accounting" id="menu_finance" sequence="50"
+            groups="account.group_account_user,account.group_account_manager,account.group_account_invoice,imsar_accounting.group_finance_reports" />
+    <menuitem id="account.menu_finance_charts" name="Charts" parent="account.menu_finance" sequence="6"
+            groups="account.group_account_user,imsar_accounting.group_finance_reports" />
+
+    <!-- Vendor/Supplier invoices -->
+    <record id="category_view_customer_supplier_invoice" model="ir.ui.view">
+        <field name="name">category_account.invoice.supplier.form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_line_id','=',routing_line_id)]"/>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='attributes'>
+                <attribute name="invisible">False</attribute>
+                <attribute name="readonly">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
+                <attribute name="invisible">False</attribute>
+                <attribute name="readonly">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Customer invoices -->
+    <record id="category_view_customer_invoice" model="ir.ui.view">
+        <field name="name">category_account.invoice</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr='//field[@name="invoice_line"]//field[@name="name"]' position='after'>
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_line_id','=',routing_line_id)]"/>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+                <attribute name="readonly">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
+                <attribute name="readonly">False</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
     <record id="view_budget_post_tree" model="ir.ui.view">
         <field name="name">account.budget.post.tree</field>
         <field name="model">account.budget.post</field>

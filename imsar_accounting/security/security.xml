@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <!-- Group for Financial Report users -->
+        <record id="imsar_accounting.group_finance_reports" model="res.groups">
+            <field name="name">Financial Reports</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">This user has view access to company financials</field>
+        </record>
+
+    </data>
+</openerp>
