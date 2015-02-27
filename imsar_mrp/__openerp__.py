@@ -20,24 +20,19 @@
 ############################################################################################################################################################
 
 {
-    "name" : "IMSAR WMS/MRP",
+    "name" : "IMSAR MRP",
     "version" : "1.0",
     "author" : "IMSAR LLC",
     "category": 'Uncategorized',
     'complexity': "normal",
     "description": """
-    Warehouse and Manufacturing customizations
+    Manufacturing customizations
     """,
     'website': 'http://www.imsar.com',
     "depends" : ['base', 'stock', 'mrp','account_routing','stock_account',],
     'data': [
         'ar_section_data.xml',
         'mrp_view.xml',
-        'wms_view.xml',
-        'product_view.xml',
-        'purchase_view.xml',
-        'ir_property.xml',
-        'security/access.xml',
     ],
     'installable': True,
     'auto_install': False,

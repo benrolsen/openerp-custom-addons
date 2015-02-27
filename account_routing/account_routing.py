@@ -174,12 +174,10 @@ class account_invoice_line(models.Model):
     def onchange_routing_id(self):
         self.routing_line_id = ''
         self.routing_subrouting_id = ''
-        self.account_id = ''
 
     @api.onchange('routing_line_id')
     def onchange_routing_line_id(self):
         self.routing_subrouting_id = ''
-        self.account_id = ''
 
     @api.onchange('routing_subrouting_id')
     def onchange_analytic_id(self):

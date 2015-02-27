@@ -25,11 +25,11 @@
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_analytic_id"]' position='attributes'>
                 <attribute name="invisible">False</attribute>
-                <attribute name="readonly">True</attribute>
+                <!--<attribute name="readonly">True</attribute>-->
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="account_id"]' position='attributes'>
                 <attribute name="invisible">False</attribute>
-                <attribute name="readonly">True</attribute>
+                <!--<attribute name="readonly">True</attribute>-->
             </xpath>
             <xpath expr='//field[@name="invoice_line"]//field[@name="uos_id"]' position='attributes'>
                 <attribute name="invisible">True</attribute>

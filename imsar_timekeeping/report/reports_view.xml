@@ -252,6 +252,7 @@
                                     <tr>
                                         <th>Approval Type</th>
                                         <th>Contract/Project</th>
+                                        <th>Relevant Time</th>
                                         <th>Status</th>
                                         <th>Approved By</th>
                                     </tr>
@@ -259,6 +260,7 @@
                                 <tr t-foreach="sheet.approval_line_ids" t-as="appr">
                                     <td><span t-field="appr.type"/></td>
                                     <td><span t-field="appr.account_analytic_id"/></td>
+                                    <td><span t-field="appr.relevant_time"/></td>
                                     <td><span t-field="appr.state"/></td>
                                     <td><span t-field="appr.approved_by"/></td>
                                 </tr>
