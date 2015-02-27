@@ -35,7 +35,6 @@
              'data.xml',
              'account_routing_view.xml',
              'security/account_routing_access.xml',
-             'sale_view.xml',
             ],
 	'css' : [
 		"static/src/css/txn_category_style.css",

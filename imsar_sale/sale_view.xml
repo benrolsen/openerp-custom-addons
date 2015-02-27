@@ -5,8 +5,38 @@
     <record id="imsar_sale_order_view" model="ir.ui.view">
         <field name="name">imsar_sale.view.form</field>
         <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="inherit_id" ref="sale_stock.view_order_form_inherit"/>
         <field name="arch" type="xml">
+
+            <!-- Account routing stuff -->
+            <xpath expr='//field[@name="project_id"]' position='attributes'>
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/form/group/group' position='inside'>
+                <label for="routing_id" />
+                <div name="routing_id" >
+                    <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                </div>
+                <label for="routing_line_id" />
+                <div name="routing_line_id" >
+                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                </div>
+                <label for="routing_subrouting_id" />
+                <div name="routing_subrouting_id" >
+                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]"/>
+                </div>
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
+                <field name="routing_id" domain="[('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                <field name="routing_line_id" domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_sale)d])]"/>
+                <field name="routing_subrouting_id" domain="[('routing_line_id','=',routing_line_id)]"/>
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="product_uom"]' position='attributes'>
+                    <attribute name="invisible">True</attribute>
+            </xpath>
 
             <field name="price_subtotal" position="after">
                 <!-- "invoiced" seems broken at the moment, using this instead until it's fixed -->

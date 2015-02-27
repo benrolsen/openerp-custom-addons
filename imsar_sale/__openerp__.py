@@ -29,7 +29,7 @@
     Sales customizations:
     """,
     'website': 'http://www.imsar.com',
-    "depends" : ['base', 'imsar_accounting', 'sale'],
+    "depends" : ['base', 'imsar_accounting', 'sale', 'sale_stock'],
     'data': ['sale_view.xml'],
     'installable': True,
     'auto_install': False,
