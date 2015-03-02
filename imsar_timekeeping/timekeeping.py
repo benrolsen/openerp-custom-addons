@@ -125,8 +125,8 @@ class hr_timekeeping_sheet(models.Model):
                 raise Warning(_("You have more than 24 hours entered for {}, please fix before saving.".format(day)))
 
         subtotals = json.loads(self.subtotal_json)
-        regular_worktype_id = str(self.employee_id.user_id.company_id.regular_worktype_id.id)
-        overtime_worktype_id = str(self.employee_id.user_id.company_id.overtime_worktype_id.id)
+        regular_worktype_id = str(self.user_id.company_id.regular_worktype_id.id)
+        overtime_worktype_id = str(self.user_id.company_id.overtime_worktype_id.id)
         regular = subtotals.get(regular_worktype_id, 0.0)
         overtime = subtotals.get(overtime_worktype_id, 0.0)
         if self.employee_flsa_status != 'exempt':
@@ -788,9 +788,9 @@ class hr_timekeeping_line(models.Model):
     def create(self, vals, override=False):
         vals['previous_date'] = vals['date']
         vals['change_explanation_log'] = vals['change_explanation']
-        vals['change_explanation'] = ''
+        # vals['change_explanation'] = ''
         vals['change_reason_log'] = vals.get('change_reason')
-        vals['change_reason'] = ''
+        # vals['change_reason'] = ''
         unit_amount = vals.get('unit_amount', 0.0)
         worktype_id = vals.get('worktype')
         worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
