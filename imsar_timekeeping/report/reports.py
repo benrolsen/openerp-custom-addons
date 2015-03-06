@@ -19,10 +19,12 @@ class timekeeping_lines_report(models.Model):
     date = fields.Date('Date', readonly=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
+    manager_id = fields.Many2one('hr.employee', string='Manager', readonly=True)
     unit_amount = fields.Float('Quantity', readonly=True)
     amount = fields.Float('Amount', readonly=True, default=0.0, digits_compute=dp.get_precision('Account'), groups="imsar_accounting.group_finance_reports,account.group_account_user")
     worktype = fields.Many2one('hr.timekeeping.worktype', string="Work Type", readonly=True)
     state = fields.Char('Timesheet State', readonly=True)
+    task_category = fields.Char('Task Category', readonly=True)
     task_code = fields.Char('Task Code', readonly=True)
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
 
@@ -67,12 +69,14 @@ class timekeeping_lines_report(models.Model):
                     tl.date as date,
                     tl.user_id as user_id,
                     ts.employee_id as employee_id,
+                    hre.parent_id as manager_id,
                     sum(tl.unit_amount) as unit_amount,
                     sum(tl.amount + tl.premium_amount) as amount,
                     tl.worktype as worktype,
                     ts.state as state,
                     ts.name as week_name,
                     ts.payperiod_id as payperiod_id,
+                    ar.name as task_category,
                     (ar.name || ' - ' || aa.name) as task_code
                 from
                     hr_timekeeping_line tl
@@ -80,8 +84,9 @@ class timekeeping_lines_report(models.Model):
                 join account_routing ar on tl.routing_id = ar.id
                 join account_routing_subrouting ars on tl.routing_subrouting_id = ars.id
                 join account_analytic_account aa on ars.account_analytic_id = aa.id
+                join hr_employee hre on hre.id = ts.employee_id
                 group by
-                    tl.date, tl.user_id, employee_id, tl.worktype, ts.state, ts.payperiod_id, week_name, task_code
+                    tl.date, tl.user_id, employee_id, hre.parent_id, tl.worktype, ts.state, ts.payperiod_id, week_name, task_category, task_code
             )
         """)
 
