@@ -634,6 +634,7 @@ class hr_timekeeping_line(models.Model):
     display_color = fields.Selection(related='routing_subrouting_id.account_analytic_id.display_color', readonly=True)
     old_task_code = fields.Char("Old Task Code", related="routing_subrouting_id.old_task_code", readonly=True)
     sow = fields.Text(related='routing_subrouting_id.account_analytic_id.description', readonly=True)
+    sow_examples = fields.Text(related='routing_subrouting_id.account_analytic_id.sow_examples', readonly=True)
     require_serial = fields.Boolean(related='routing_subrouting_id.require_serial', readonly=True)
     # these fields should be removed when we stop using Quickbooks
     inventory_recorded = fields.Boolean('Inv Value Recorded', default=False)

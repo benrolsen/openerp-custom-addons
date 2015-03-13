@@ -71,7 +71,7 @@ class account_routing_subrouting(models.Model):
 
     name = fields.Char(string='Task Identifier', related='account_analytic_id.name', store=True)
     fullname = fields.Char(string="Full Name", compute='_fullname', readonly=True,)
-    routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', store=True, readonly=True)
+    routing_id = fields.Many2one('account.routing', related='routing_line_id.routing_id', store=True)
     routing_line_id =  fields.Many2one('account.routing.line', 'Task Type', required=True)
     account_type_id = fields.Many2one('account.account.type', related='routing_line_id.account_type_id', readonly=True)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account', required=True, select=True)

@@ -45,7 +45,8 @@
             <field name="view_mode">tree</field>
             <field name="act_window_id" ref="account_routing_view_form"/>
         </record>
-        <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
+        <!-- The form on task identifier makes this unnecessary -->
+        <!--<menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />-->
 
         <!-- Account routing lines -->
         <record id="account_routing_line_filter" model="ir.ui.view">
@@ -79,8 +80,8 @@
                     <group>
                         <field name="account_type_id" widget="selection" domain="[('allow_routing','=','true')]" />
                         <field name="section_ids" class="oe_inline" widget="many2many_tags" options="{'create':false}"/>
-                        <field name="subrouting_ids">
-                            <tree editable="bottom">
+                        <field name="subrouting_ids" invisible="1">
+                            <tree>
                                 <field name="account_analytic_id" domain="[('state','not in',['template','close','cancelled']),('type','not in',['template'])]"
                                         attrs="{'readonly':[('from_parent','=',True)]}" options="{'create':false, 'create_edit':false}"/>
                                 <field name="account_id" domain="[('user_type','=',parent.account_type_id),('type','not in',['view','closed'])]"
@@ -100,7 +101,8 @@
             <field name="view_mode">tree,form</field>
             <field name="context">{'search_default_group_by_category':1}</field>
         </record>
-        <menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21" />
+        <!-- The form on task identifier makes this unnecessary -->
+        <!--<menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21"/>-->
 
         <!-- Account routing subrouting -->
         <record id="account_routing_subrouting_filter" model="ir.ui.view">
@@ -135,22 +137,23 @@
                 <form string="Task Identifier">
                     <group name="ars_view">
                         <group>
-                            <field name="routing_id" />
-                            <field name="routing_line_id" readonly="True"/>
+                            <field name="routing_id"/>
+                            <field name="routing_line_id" domain="[('routing_id','=',routing_id)]"/>
+                            <field name="account_type_id" invisible="1"/>
                             <field name="account_analytic_id" options="{'create':false, 'create_edit':false}"/>
-                            <field name="account_id" options="{'create':false, 'create_edit':false}"/>
+                            <field name="account_id" options="{'create':false, 'create_edit':false}" domain="[('user_type','=',account_type_id)]" />
                         </group>
                     </group>
                 </form>
             </field>
         </record>
         <record id="account_routing_subrouting_view" model="ir.actions.act_window">
-            <field name="name">Task Identifier</field>
+            <field name="name">Task Codes</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">account.routing.subrouting</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_group_by_category':1}</field>
+            <field name="context">{'search_default_group_by_category':1,'search_default_group_by_bill_type':1}</field>
         </record>
         <menuitem id="menu_account_routing_subrouting_view" action="account_routing_subrouting_view" parent="account.account_account_menu" sequence="22" />
 

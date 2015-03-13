@@ -23,6 +23,7 @@ class account_analytic_account(models.Model):
     hide_from_uid = fields.Boolean(compute='_computed_fields', search='_search_hidden_ids', string="Hide from my timesheet", readonly=True, store=False)
     linked_worktype = fields.Many2one('hr.timekeeping.worktype', string="Limit to worktype", domain="[('limited_use','=',True)]")
     project_header = fields.Boolean(string="Contract/Project Header?", default=False)
+    sow_examples = fields.Text('SOW Examples')
 
     @api.one
     @api.depends('user_review_ids','hide_from_users','pm_ids')
@@ -191,6 +192,7 @@ class employee(models.Model):
     personal_phone = fields.Char('Personal Phone')
     uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')
     user_is_pm = fields.Boolean('User is PM', compute='_uid_is_user_id')
+    uid_is_hr = fields.Boolean('UID is HR', compute='_uid_is_user_id')
     user_active = fields.Boolean(related='resource_id.user_id.active', string="User Active")
     address_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Working Address')
     address_home_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Home Address')
@@ -209,9 +211,12 @@ class employee(models.Model):
     @api.depends('user_id')
     def _uid_is_user_id(self):
         self.user_is_pm = False
+        self.uid_is_hr = False
         self.uid_is_user_id = (self.user_id.id == self.env.user.id)
         if self.env.ref('imsar_timekeeping.group_pms_user').id in self.user_id.groups_id.ids:
             self.user_is_pm = True
+        if self.env.ref('base.group_hr_user').id in self.env.user.groups_id.ids:
+            self.uid_is_hr = True
 
     def _recursive_children(self, emp, result=[]):
         result += [emp.id]
@@ -285,6 +290,33 @@ class employee(models.Model):
         }
         move = self.env['account.move'].with_context(self._context).sudo().create(move_vals)
         move.post()
+
+    @api.multi
+    def button_edit_info(self):
+        self_edit = self.env['hr.employee.self.edit'].create({'notes':self.notes, 'employee_id':self.id})
+        view = {
+            'name': _('Notes'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'hr.employee.self.edit',
+            'view_id': self.env.ref('imsar_timekeeping.view_employee_self_edit_form').id,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_id': self_edit.id,
+        }
+        return view
+
+
+class employee_self_edit(models.TransientModel):
+    _name = "hr.employee.self.edit"
+
+    notes = fields.Text('Notes')
+    employee_id = fields.Many2one('hr.employee')
+
+    @api.multi
+    def button_save(self):
+        employee = self.env['hr.employee'].browse(self.employee_id.id)
+        employee.sudo().write({'notes': self.notes})
 
 
 class resource(models.Model):

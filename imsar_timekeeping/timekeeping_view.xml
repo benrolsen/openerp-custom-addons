@@ -92,6 +92,7 @@
                     </group>
                     <group name="sow">
                         <field name="sow" string="Task SOW" readonly="1"/>
+                        <field name="sow_examples" readonly="1"/>
                     </group>
                     <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
                         <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>

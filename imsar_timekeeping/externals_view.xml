@@ -71,6 +71,7 @@
                             <field name="qb_name" groups="base.group_hr_user"/>
                             <field name="uid_is_user_id" invisible="1"/>
                             <field name="user_is_pm" invisible="1"/>
+                            <field name="uid_is_hr" invisible="1"/>
                             <field name="accrued_pto_personal" attrs="{'invisible':[('uid_is_user_id','=',False)]}"/>
                         </group>
                     </group>
@@ -94,6 +95,12 @@
                             </field>
                         </group>
                     </page>
+                </xpath>
+                <xpath expr='//page[@string="Public Information"]//field[@name="notes"]' position='replace'>
+                    <group name="notes" string="Other Information" attrs="{'invisible':[('uid_is_user_id','=',False),('uid_is_hr','=',False)]}">
+                        <field name="notes" placeholder="Other Information ..." colspan="4"/>
+                        <button name="button_edit_info" string="Edit Info" type="object" class="oe_highlight"/>
+                    </group>
                 </xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Citizenship &amp; Other Info"]' position='replace'>
                 </xpath>
@@ -131,6 +138,23 @@
                         </group>
                     </page>
                 </xpath>
+            </field>
+        </record>
+
+        <!--Employee form for employees to edit their own notes and info -->
+        <record id="view_employee_self_edit_form" model="ir.ui.view">
+            <field name="name">hr.employee.self.edit.form</field>
+            <field name="model">hr.employee.self.edit</field>
+            <field name="arch" type="xml">
+                <form string="Notes">
+                    <group name="notes" string="Other Information">
+                        <field name="employee_id" invisible="True"/>
+                        <field name="notes" placeholder="Other Information ..." colspan="4"/>
+                    </group>
+                    <footer>
+                        <button name="button_save" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
             </field>
         </record>
 
@@ -191,6 +215,8 @@
                 <xpath expr='//group[@name="main"]' position='after'>
                     <separator string="Description / S.O.W." name="description"/>
                     <field name="description" attrs="{'required':[('is_labor_code','=',True)]}"/>
+                    <label for="sow_examples"/>
+                    <field name="sow_examples"/>
                 </xpath>
 
                 <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
