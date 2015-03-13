@@ -32,10 +32,10 @@
     "depends" : ['base', 'stock', 'account_routing','stock_account',],
     'data': [
         'wms_view.xml',
-        'product_view.xml',
-        'purchase_view.xml',
+        'externals_view.xml',
         'ir_property.xml',
         'security/access.xml',
+        'res_config_view.xml',
     ],
     'installable': True,
     'auto_install': False,

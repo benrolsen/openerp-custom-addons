@@ -2,6 +2,22 @@
 <openerp>
     <data>
 
+        <!-- Add location to material subrouting -->
+        <record id="account_routing_subrouting_form" model="ir.ui.view">
+            <field name="name">account.routing.subrouting.form</field>
+            <field name="model">account.routing.subrouting</field>
+            <field name="inherit_id" ref="account_routing.account_routing_subrouting_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//group[@name="ars_view"]' position='after'>
+                    <group attrs="{'invisible':[('material_type','=',False)]}">
+                        <field name="material_type" invisible="1"/>
+                        <field name="location_id" attrs="{'required':[('material_type','=',True)]}"
+                                options="{'create': false, 'create_edit': false}" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
         <!-- Product Category -->
         <record id="view_category_property_form" model="ir.ui.view">
             <field name="name">product.category.stock.property.form.inherit</field>
@@ -9,15 +25,8 @@
             <field name="inherit_id" ref="stock_account.view_category_property_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <group name="account_stock_property" position="replace">
-                        <group name="account_stock_property" string="Account Stock Properties" colspan="2">
-                            <field name="property_stock_account_input_categ" domain="[('type','!=','view')]"/>
-                            <field name="property_stock_account_output_categ" domain="[('type','!=','view')]"/>
-                            <field name="analytic_input_categ" domain="[('type','!=','view')]"/>
-                            <field name="analytic_output_categ" domain="[('type','!=','view')]"/>
-                            <field name="property_stock_valuation_account_id" domain="[('type','!=','view')]" invisible="1"/>
-                            <field name="property_stock_journal" invisible="1"/>
-                        </group>
+                    <group name="account_stock_property" position="attributes">
+                        <attribute name="invisible">1</attribute>
                     </group>
                 </data>
             </field>
@@ -47,6 +56,7 @@
 
             </field>
         </record>
+
 
     </data>
 </openerp>

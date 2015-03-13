@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="imsar_wms_config_settings" model="ir.ui.view">
+            <field name="name">wms settings for imsar</field>
+            <field name="model">stock.config.settings</field>
+            <field name="inherit_id" ref="stock.view_stock_config_settings"/>
+            <field name="arch" type="xml">
+                <xpath expr="//separator[@string='Accounting']" position="after">
+                    <group name="imsar_wms">
+                        <label for="id" string="Task Codes"/>
+                        <div>
+                            <div>
+                                <label for="material_account_type_ids"/>
+                                <field name="material_account_type_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
+                            <div>
+                                <label for="interim_receiving"/>
+                                <field name="interim_receiving" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="interim_shipping"/>
+                                <field name="interim_shipping" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="stock_journal"/>
+                                <field name="stock_journal" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                        </div>
+                    </group>
+
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

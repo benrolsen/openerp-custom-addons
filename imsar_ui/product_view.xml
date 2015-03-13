@@ -35,16 +35,5 @@
         </field>
     </record>
 
-    <record id="imsar_purchase_order_view" model="ir.ui.view">
-        <field name="name">imsar_purchase.view.form</field>
-        <field name="model">purchase.order</field>
-        <field name="inherit_id" ref="purchase.purchase_order_form"/>
-        <field name="arch" type="xml">
-            <field name="price_subtotal" position="after">
-                <field name="invoiced" />
-            </field>
-        </field>
-    </record>
-
 </data>
 </openerp>
