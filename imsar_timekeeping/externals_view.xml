@@ -110,6 +110,7 @@
                     <field name="personal_phone"/>
                     <field name="employee_number"/>
                     <field name="hire_date"/>
+                    <field name="ft_hire_date" attrs="{'required':[('full_time','=',True)],'invisible':[('full_time','=',False)]}"/>
                 </xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Status"]' position='inside'>
                     <field name="birthday"/>

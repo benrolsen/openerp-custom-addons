@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from openerp import models, fields, api, _
 from openerp.addons.base.ir.ir_mail_server import MailDeliveryException
+from openerp import SUPERUSER_ID
 
 
 # I sometimes question the wisdom of using analytics to represent work tasks, but it does make managing
@@ -131,7 +132,7 @@ class account_analytic_account(models.Model):
                 ctx = self._context.copy()
                 ctx.update({'aa_name': self.name})
                 try:
-                    self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, user.id, force_send=True, raise_exception=True, context=ctx)
+                    self.pool.get('email.template').send_mail(self._cr, SUPERUSER_ID, template.id, user.id, force_send=True, raise_exception=True, context=ctx)
                 except MailDeliveryException:
                     pass
                 self.write({'user_review_ids': [(3,user.id)]})
@@ -188,6 +189,7 @@ class employee(models.Model):
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
     employee_number = fields.Integer('Employee Number', default=0)
     hire_date = fields.Date('Hire Date')
+    ft_hire_date = fields.Date('FT Hire Date')
     personal_email = fields.Char('Personal Email')
     personal_phone = fields.Char('Personal Phone')
     uid_is_user_id = fields.Boolean('Uid is User', compute='_uid_is_user_id')

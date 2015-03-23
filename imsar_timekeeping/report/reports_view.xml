@@ -233,6 +233,7 @@
                                         <th>Hours</th>
                                         <th>Work Type</th>
                                         <th>Location</th>
+                                        <th>Serial</th>
                                     </tr>
                                 </thead>
                                 <tr t-foreach="sheet.line_ids" t-as="line">
@@ -243,6 +244,7 @@
                                     <td><span t-field="line.unit_amount"/></td>
                                     <td><span t-field="line.worktype"/></td>
                                     <td><span t-field="line.location"/></td>
+                                    <td><span t-field="line.serial_reference"/></td>
                                 </tr>
                             </table>
 

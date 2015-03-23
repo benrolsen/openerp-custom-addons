@@ -32,13 +32,12 @@
                     """,
     'category': "Uncategorized",
     'data': [
-             'data.xml',
-             'account_routing_view.xml',
-             'security/account_routing_access.xml',
+            'data.xml',
+            'account_routing_view.xml',
+            'security/account_routing_access.xml',
+            'views/account_routing.xml',
             ],
-	'css' : [
-		"static/src/css/txn_category_style.css",
-	],
+    'qweb': ['static/src/xml/templates.xml',],
     'installable': True,
     'auto_install': False,
 }

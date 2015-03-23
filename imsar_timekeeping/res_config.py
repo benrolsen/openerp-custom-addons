@@ -34,6 +34,9 @@ class timekeeping_settings(models.TransientModel):
     proxy_analytic_ids = fields.Many2many('account.analytic.account', 'config_proxy_analytic_rel', 'config_id', 'analytic_id', string="Analytics always allowed on proxy timesheets")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'config_future_analytic_rel', 'config_id', 'analytic_id', string="Analytics allowed for future dates")
     global_approval_user_ids = fields.Many2many('res.users', 'config_global_approval_user_rel', 'config_id', 'user_id', string="Users with global approval rights")
+    pto_accrual_rate_under_5 = fields.Float('PTO Accrual Rate (per hour): under 5 years', required=True, default=0.0, digits=(1,4))
+    pto_accrual_rate_5_to_15 = fields.Float('PTO Accrual Rate (per hour): 5 to 15 years', required=True, default=0.0, digits=(1,4))
+    pto_accrual_rate_over_15 = fields.Float('PTO Accrual Rate (per hour): over 15 years', required=True, default=0.0, digits=(1,4))
 
     @api.model
     def get_default_timekeeping(self, fields):
@@ -49,6 +52,9 @@ class timekeeping_settings(models.TransientModel):
         res['proxy_analytic_ids'] = user.company_id.proxy_analytic_ids.ids
         res['future_analytic_ids'] = user.company_id.future_analytic_ids.ids
         res['global_approval_user_ids'] = user.company_id.global_approval_user_ids.ids
+        res['pto_accrual_rate_under_5'] = user.company_id.pto_accrual_rate_under_5
+        res['pto_accrual_rate_5_to_15'] = user.company_id.pto_accrual_rate_5_to_15
+        res['pto_accrual_rate_over_15'] = user.company_id.pto_accrual_rate_over_15
         return res
 
     @api.one
@@ -64,6 +70,9 @@ class timekeeping_settings(models.TransientModel):
             'proxy_analytic_ids': [(6,0, self.proxy_analytic_ids.ids)],
             'future_analytic_ids': [(6,0, self.future_analytic_ids.ids)],
             'global_approval_user_ids': [(6,0, self.global_approval_user_ids.ids)],
+            'pto_accrual_rate_under_5': self.pto_accrual_rate_under_5,
+            'pto_accrual_rate_5_to_15': self.pto_accrual_rate_5_to_15,
+            'pto_accrual_rate_over_15': self.pto_accrual_rate_over_15,
         })
 
 class res_company(models.Model):
@@ -79,5 +88,8 @@ class res_company(models.Model):
     proxy_analytic_ids = fields.Many2many('account.analytic.account', 'company_proxy_analytic_rel', 'config_id', 'analytic_id', string="Analytics always allowed on proxy timesheets")
     future_analytic_ids = fields.Many2many('account.analytic.account', 'company_future_analytic_rel', 'company_id', 'analytic_id', string="Analytics allowed for future dates")
     global_approval_user_ids = fields.Many2many('res.users', 'company_global_approval_user_rel', 'company_id', 'user_id', string="Users with global approval rights")
+    pto_accrual_rate_under_5 = fields.Float('PTO Accrual Rate (per hour): under 5 years', required=True, default=0.0, digits=(1,4))
+    pto_accrual_rate_5_to_15 = fields.Float('PTO Accrual Rate (per hour): 5 to 15 years', required=True, default=0.0, digits=(1,4))
+    pto_accrual_rate_over_15 = fields.Float('PTO Accrual Rate (per hour): over 15 years', required=True, default=0.0, digits=(1,4))
 
 

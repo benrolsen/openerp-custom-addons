@@ -59,6 +59,15 @@
                                 <label for="global_approval_user_ids"/>
                                 <field name="global_approval_user_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
+                            <div>
+                                <label for="pto_accrual_rate_under_5"/><field name="pto_accrual_rate_under_5" class="oe_inline"/>
+                            </div>
+                            <div>
+                                <label for="pto_accrual_rate_5_to_15"/><field name="pto_accrual_rate_5_to_15" class="oe_inline"/>
+                            </div>
+                            <div>
+                                <label for="pto_accrual_rate_over_15"/><field name="pto_accrual_rate_over_15" class="oe_inline"/>
+                            </div>
                         </div>
                     </group>
 
