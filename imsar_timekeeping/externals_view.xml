@@ -108,9 +108,6 @@
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Contact Information"]' position='inside'>
                     <field name="personal_email" widget="email"/>
                     <field name="personal_phone"/>
-                    <field name="employee_number"/>
-                    <field name="hire_date"/>
-                    <field name="ft_hire_date" attrs="{'required':[('full_time','=',True)],'invisible':[('full_time','=',False)]}"/>
                 </xpath>
                 <xpath expr='//page[@string="Personal Information"]//group[@string="Status"]' position='inside'>
                     <field name="birthday"/>
@@ -119,13 +116,17 @@
                     <page string="HR Settings" groups="base.group_hr_user">
                         <group>
                             <group name="active_group">
+                    <field name="employee_number"/>
                                 <field name="active"/>
                                 <field name="full_time"/>
                                 <field name="full_time_hours" attrs="{'invisible':[('full_time','=',False)]}"/>
+                                <field name="hire_date"/>
+                                <field name="ft_hire_date" attrs="{'required':[('full_time','=',True)],'invisible':[('full_time','=',False)]}"/>
                                 <field name="flsa_status" />
                             </group>
                             <group>
                                 <field name="wage_rate" />
+                                <field name="employment_length_credit" />
                                 <field name="pto_accrual_rate" />
                                 <field name="accrued_pto" />
                                 <label for="%(action_adjust_pto)d" string="Adjust PTO"/>

@@ -188,6 +188,7 @@ class employee(models.Model):
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
     employee_number = fields.Integer('Employee Number', default=0)
+    employment_length_credit = fields.Float('Employment Length Credit (years)', default=0.0)
     hire_date = fields.Date('Hire Date')
     ft_hire_date = fields.Date('FT Hire Date')
     personal_email = fields.Char('Personal Email')
