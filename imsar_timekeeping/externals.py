@@ -1,4 +1,7 @@
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 from openerp import models, fields, api, _
 from openerp.addons.base.ir.ir_mail_server import MailDeliveryException
 from openerp import SUPERUSER_ID
@@ -181,7 +184,7 @@ class employee(models.Model):
     full_time = fields.Boolean('Full Time', default=True)
     full_time_hours = fields.Integer('Full Time Hours (pay period)', default=80)
     wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0)
-    pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)', required=True, default=0.0, digits=(1,4))
+    pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)',compute='_computed_pto_rate', default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
     max_pto = fields.Float('Maximum PTO', default=0.0, digits=(10,4))
@@ -209,6 +212,34 @@ class employee(models.Model):
         else:
             self.name = "{}, {}".format(self.last_name, self.first_name)
         self.name_related = self.name
+
+    @api.one
+    @api.depends('full_time','ft_hire_date','employment_length_credit')
+    def _computed_pto_rate(self):
+        """
+        This checks for the length of employment (including credit) based on month. So once someone hits an
+        effective employment length of 60 months, they get the increased PTO rate.
+        """
+        credit_months = float(self.employment_length_credit) * 12.0
+        if self.full_time:
+            if self.ft_hire_date:
+                ft_date = datetime.strptime(self.ft_hire_date, DATE_FORMAT)
+            else:
+                ft_date = datetime.today()
+            today = datetime.today()
+            ft_employment_months = (relativedelta(today,ft_date).years * 12) + relativedelta(today,ft_date).months
+            effective_months = credit_months + ft_employment_months
+            if effective_months < 60:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_under_5
+            elif effective_months >= 60 and effective_months < 180:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_5_to_15
+            elif effective_months >= 180:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_over_15
+            else:
+                self.pto_accrual_rate = 0
+        else:
+            self.pto_accrual_rate = 0
+
 
     @api.one
     @api.depends('user_id')

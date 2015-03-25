@@ -116,7 +116,7 @@
                     <page string="HR Settings" groups="base.group_hr_user">
                         <group>
                             <group name="active_group">
-                    <field name="employee_number"/>
+                                <field name="employee_number"/>
                                 <field name="active"/>
                                 <field name="full_time"/>
                                 <field name="full_time_hours" attrs="{'invisible':[('full_time','=',False)]}"/>

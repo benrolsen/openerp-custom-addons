@@ -21,6 +21,7 @@
                                 teal:display_color=='teal';" >
                     <field name="name" string="Task Code"/>
                     <field name="parent_id" string="Parent"/>
+                    <field name="hide_from_uid" string="Hidden" invisible="0"/>
                     <field name="type" invisible="1"/>
                     <field name="display_color" invisible="1"/>
                     <!--<field name="user_review_ids" />-->
@@ -41,7 +42,7 @@
                         <field name="name"/>
                         <field name="description"/>
                         <field name="pm_ids" widget="many2many_tags" attrs="{'invisible':[('type','!=','contract')]}"/>
-                        <field name="hide_from_uid" invisible="True"/>
+                        <field name="hide_from_uid" string="Hidden" invisible="1"/>
                         <field name="type" invisible="True"/>
                         <field name="user_has_reviewed" invisible="True"/>
                     </group>
