@@ -101,6 +101,9 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@string='Reverse Transfer']" position='attributes'>
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//field[@name='partner_id']" position='attributes'>
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -110,6 +113,7 @@
             <xpath expr="//field[@name='partner_id']" position='before'>
                 <field name="picking_type_id"/>
                 <field name="picking_type_code" invisible="1"/>
+                <field name="is_incoming_type" invisible="1"/>
             </xpath>
             <xpath expr="//page[@string='Additional Info']" position='replace'>
                 <page string="Additional Info">
@@ -128,6 +132,9 @@
                         </group>
                     </group>
                 </page>
+            </xpath>
+            <xpath expr="//field[@name='origin']" position='attributes'>
+                <attribute name="attrs">{'required':[('is_incoming_type','=',True)]}</attribute>
             </xpath>
         </field>
     </record>
@@ -169,6 +176,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position='after'>
                 <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+                <field name="price_unit"/>
             </xpath>
             <xpath expr="//button[@name='%(stock.move_scrap)d']" position="attributes">
                 <attribute name="invisible">1</attribute>
@@ -225,6 +233,7 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//field[@name='location_dest_id']" position='after'>
+                <field name="price_unit" attrs="{'required':True}"/>
                 <field name="dest_employee"/>
                 <field name="target_task_name"/>
             </xpath>
@@ -237,6 +246,10 @@
         <field name="model">stock.move</field>
         <field name="inherit_id" ref="stock.view_move_picking_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position='before'>
+                <field name="picking_is_incoming_type" invisible="1"/>
+                <field name="price_unit" attrs="{'required':True, 'invisible':[('picking_is_incoming_type','=',False)]}"/>
+            </xpath>
             <xpath expr="//field[@name='name']" position='after'>
                 <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
             </xpath>
@@ -261,6 +274,46 @@
                             domain="[('routing_line_id','=',target_routing_line_id),('type','!=','view')]" />
                 </group>
             </xpath>
+            <xpath expr="//group[@string='Locations']" position='attributes'>
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Lot/serial -->
+    <record id="view_production_lot_form" model="ir.ui.view">
+        <field name="name">stock.production.lot.form</field>
+        <field name="model">stock.production.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ref']" position='after'>
+                <field name="base_cost"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- stock details transfer wizard -->
+    <record id="view_stock_enter_transfer_details" model="ir.ui.view">
+        <field name="name">Enter transfer details</field>
+        <field name="model">stock.transfer_details</field>
+        <field name="inherit_id" ref="stock.view_stock_enter_transfer_details"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='item_ids']" position='replace'>
+                <field name="item_ids" nolabel="1"
+                        context="{'default_sourceloc_id':picking_source_location_id,'default_destinationloc_id':picking_destination_location_id}">
+                    <tree string="Inventory Details" editable="bottom" create="false">
+                        <field name="package_id" groups="stock.group_tracking_lot"/>
+                        <field name="product_id" required="True"  context="{'uom':product_uom_id}" attrs="{'readonly':True}"/>
+                        <field name="quantity"/>
+                        <field name="product_uom_id" invisible="1" groups="product.group_uom"/>
+                        <field name="sourceloc_id" domain="[('id', 'child_of', parent.picking_source_location_id)]" invisible="1"/>
+                        <field name="destinationloc_id" domain="[('id', 'child_of', parent.picking_destination_location_id)]" invisible="1"/>
+                        <field name="result_package_id" groups="stock.group_tracking_lot" context="{'location_id': destinationloc_id}"/>
+                        <button name="put_in_pack" string="Pack" type="object" icon="terp-product" attrs="{'invisible': [('result_package_id', '!=', False)]}" groups="stock.group_tracking_lot"/>
+                        <field name="lot_id" groups="stock.group_production_lot" domain="[('product_id','=?', product_id)]" context="{'product_id': product_id}"/>
+                    </tree>
+                </field>
+            </xpath>
         </field>
     </record>
 
@@ -275,6 +328,7 @@
         </field>
     </record>
 
+    <!-- Quant view form -->
     <record id="view_stock_quant_form" model="ir.ui.view">
         <field name="name">stock.quant.form</field>
         <field name="model">stock.quant</field>
@@ -296,6 +350,78 @@
         </field>
     </record>
 
+    <!-- add task codes to inventory adjustment wizard -->
+    <record id="view_change_product_quantity" model="ir.ui.view">
+        <field name="name">Change Product Quantity</field>
+        <field name="model">stock.change.product.qty</field>
+        <field name="inherit_id" ref="stock.view_change_product_quantity"/>
+        <field name="arch" type="xml">
+            <field name="new_quantity" position="attributes">
+                <attribute name="string">Adjustment Qty</attribute>
+            </field>
+            <field name="location_id" position="before">
+                <field name="routing_id" options="{'create': false, 'create_edit': false}"
+                        domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_line_id" options="{'create': false, 'create_edit': false}"
+                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}"
+                        domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+            </field>
+        </field>
+    </record>
+
+    <!-- add task codes to inventory adjustment full page -->
+    <record id="view_inventory_form" model="ir.ui.view">
+        <field name="name">stock.inventory.form</field>
+        <field name="model">stock.inventory</field>
+        <field name="inherit_id" ref="stock.view_inventory_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']" position='replace'>
+                <field name="line_ids" string="Inventory Details" context="{'default_location_id': location_id,  'default_product_id': product_id, 'default_prod_lot_id': lot_id, 'default_package_id': package_id, 'default_partner_id': partner_id}">
+                    <tree string="Inventory Details" editable="bottom" colors="blue: product_qty != theoretical_qty; red: theoretical_qty &lt; 0">
+                        <field name="product_id" context="{'location':location_id, 'uom':product_uom_id, 'to_date':parent.date}" on_change="on_change_product_id(product_id,product_uom_id,theoretical_qty,context)" domain="[('type','=','product')]"/>
+                        <field name="product_uom_id" groups="product.group_uom" on_change="restrict_change(theoretical_qty)" invisible="1"/>
+                        <field name="location_id" domain="[('usage','=','internal')]" groups="stock.group_locations" on_change="restrict_change(theoretical_qty)" invisible="1"/>
+                        <field name="routing_id" options="{'create': false, 'create_edit': false}"/>
+                        <field name="routing_line_id" options="{'create': false, 'create_edit': false}" domain="[('routing_id','=',routing_id)]"/>
+                        <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}"
+                                domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                        <field name="prod_lot_id" on_change="restrict_change(theoretical_qty)" domain="[('product_id', '=', product_id)]" context="{'default_product_id': product_id}"  groups="stock.group_production_lot"/>
+                        <field name="package_id" on_change="restrict_change(theoretical_qty)" groups="stock.group_tracking_lot"/>
+                        <field name="partner_id" on_change="restrict_change(theoretical_qty)" groups="stock.group_tracking_owner"/>
+                        <field name="theoretical_qty" readonly="1"/>
+                        <field name="product_qty" string="Real Quantity"/>
+                        <field name="state" invisible="True"/>
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- add task codes to Purchase Receipts -->
+    <record id="view_purchase_receipt_form" model="ir.ui.view">
+        <field name="name">account.voucher.purchase.form</field>
+        <field name="model">account.voucher</field>
+        <field name="inherit_id" ref="account_voucher.view_purchase_receipt_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_dr_ids']" position='replace'>
+                <field name="line_dr_ids" on_change="onchange_price(line_dr_ids, tax_id, partner_id)" context="{'journal_id':journal_id,'partner_id':partner_id}">
+                    <tree string="Expense Lines" editable="bottom">
+                        <field name="name"/>
+                        <field name="amount"/>
+                        <field name="routing_id" options="{'create': false, 'create_edit': false}"
+                                domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                        <field name="routing_line_id" options="{'create': false, 'create_edit': false}"
+                                domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                        <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}"
+                                domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                        <field name="account_id" domain="[('user_type.report_type','=','expense'), ('type','!=','view')]" invisible="1"/>
+                        <field name="account_analytic_id" groups="analytic.group_analytic_accounting" invisible="1"/>
+                    </tree>
+                </field>
+            </xpath>
+        </field>
+    </record>
 
 </data>
 </openerp>

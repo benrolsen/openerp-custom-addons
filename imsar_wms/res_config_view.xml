@@ -13,19 +13,23 @@
                         <div>
                             <div>
                                 <label for="material_account_type_ids"/>
-                                <field name="material_account_type_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                                <field name="material_account_type_ids" class="oe_inline" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
                             <div>
                                 <label for="interim_receiving"/>
-                                <field name="interim_receiving" options="{'create': false, 'create_edit': false}"/>
+                                <field name="interim_receiving" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
                                 <label for="interim_shipping"/>
-                                <field name="interim_shipping" options="{'create': false, 'create_edit': false}"/>
+                                <field name="interim_shipping" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="attrition"/>
+                                <field name="attrition" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                             <div>
                                 <label for="stock_journal"/>
-                                <field name="stock_journal" options="{'create': false, 'create_edit': false}"/>
+                                <field name="stock_journal" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
                         </div>
                     </group>

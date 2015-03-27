@@ -16,6 +16,7 @@ class stock_move(models.Model):
     target_routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Target Identifier', required=True, copy=True)
     source_task_name = fields.Char('Source Task', compute='_compute_names')
     target_task_name = fields.Char('Target Task', compute='_compute_names')
+    picking_is_incoming_type = fields.Boolean(related='picking_id.is_incoming_type')
 
     @api.one
     def _compute_names(self):
@@ -98,10 +99,6 @@ class stock_quant(models.Model):
     mfg_order_id = fields.Many2one('mrp.production', 'Manufacturing Order', copy=True, readonly=True)
 
     @api.v7
-    def quants_reserve(self, cr, uid, quants, move, link=False, context=None):
-        quants = quant_obj.quants_get_prefered_domain(cr, uid, ops.location_id, move.product_id, qty, domain=domain, prefered_domain_list=[], restrict_lot_id=move.restrict_lot_id.id, restrict_partner_id=move.restrict_partner_id.id, context=context)
-
-    @api.v7
     def _get_inventory_value(self, cr, uid, quant, context=None):
         # labor costs are applied per quant, not per unit
         return ((quant.material_cost + quant.overhead_cost) * quant.qty) + quant.labor_cost
@@ -164,11 +161,21 @@ class stock_picking(models.Model):
     _description = "Picking List"
     _order = "priority desc, date desc, id desc"
 
+    is_incoming_type = fields.Boolean('Is Internal', compute='_check_type')
+    do_recalc_lot_cost = fields.Boolean('Need to recompute lot base cost')
+
+    @api.one
+    @api.depends('picking_type_id')
+    def _check_type(self):
+        if self.picking_type_id == self.env.ref('stock.picking_type_in'):
+            self.is_incoming_type = True
+        else:
+            self.is_incoming_type = False
+
     @api.multi
     def action_invoice_create(self, journal_id=False, group=False, type='out_invoice'):
         # overrides same method from account_anglo_saxon/stock.py
-        # Note that this function side-steps tax fiscal position, at least until we find
-        # a need for it.
+        # Note that this function side-steps tax fiscal position, at least until we find a need for it.
         res = super(stock_picking, self).action_invoice_create(journal_id, group, type)
         if type in ('in_invoice', 'in_refund'):
             for invoice in self.env['account.invoice'].browse(res):
@@ -186,30 +193,271 @@ class stock_picking(models.Model):
         return res
 
     @api.v7
+    def _create_extra_moves(self, cr, uid, picking, context=None):
+        moves = super(stock_picking, self)._create_extra_moves(cr, uid, picking, context)
+        # if we got more than expected on receiving, we need to adjust the unit price based on PO line
+        if picking.is_incoming_type:
+            for move in self.pool.get('stock.move').browse(cr, uid, moves):
+                if move.move_orig_ids:
+                    orig_move = self.pool.get('stock.move').browse(cr, uid, move.move_orig_ids.ids[0])
+                    total_qty = orig_move.product_qty + move.product_qty
+                    orig_subtotal = orig_move.product_qty * orig_move.price_unit
+                    new_price_unit = orig_subtotal / total_qty
+                    move.write({'price_unit': new_price_unit})
+                    orig_move.write({'price_unit': new_price_unit})
+                    # We can't get to the op and lot at this point, so set a flag to correct it later down the line
+                    picking.write({'do_recalc_lot_cost': True})
+                else:
+                    # no source move means no PO line info, so value is 0
+                    move.write({'price_unit': 0.0})
+        return moves
+
+    @api.v7
     def _prepare_values_extra_move(self, cr, uid, op, product, remaining_qty, context=None):
         res = super(stock_picking, self)._prepare_values_extra_move(cr, uid, op, product, remaining_qty, context)
+        res['move_orig_ids'] = [(6,0, [op.linked_move_operation_ids.move_id.id])]
         res['source_routing_id'] = op.linked_move_operation_ids.move_id.source_routing_id.id
         res['source_routing_line_id'] = op.linked_move_operation_ids.move_id.source_routing_line_id.id
         res['source_routing_subrouting_id'] = op.linked_move_operation_ids.move_id.source_routing_subrouting_id.id
         res['target_routing_id'] = op.linked_move_operation_ids.move_id.target_routing_id.id
         res['target_routing_line_id'] = op.linked_move_operation_ids.move_id.target_routing_line_id.id
         res['target_routing_subrouting_id'] = op.linked_move_operation_ids.move_id.target_routing_subrouting_id.id
+        res['purchase_line_id'] = op.linked_move_operation_ids.move_id.purchase_line_id.id
+        res['origin'] = op.linked_move_operation_ids.move_id.origin
         return res
 
+    @api.cr_uid_ids_context
+    def do_enter_transfer_details(self, cr, uid, picking_id, context=None):
+        picking = self.pool.get('stock.picking').browse(cr, uid, picking_id)
+        # this button should recompute packages every time
+        picking.do_prepare_partial()
+        if picking.is_incoming_type:
+            # automatically create lot/serials to receive into
+            for line in picking.pack_operation_ids:
+                vals = {
+                    'name': "{}-{}".format(picking.origin,line.linked_move_operation_ids.move_id.id),
+                    'product_id': line.product_id.id,
+                    'base_cost': line.linked_move_operation_ids.move_id.price_unit,
+                }
+                lot_id = self.pool.get('stock.production.lot').search(cr, uid, [('name','=',vals['name'])])
+                if not lot_id:
+                    lot_id = self.pool.get('stock.production.lot').create(cr, uid, vals)
+                else:
+                    lot_id = lot_id[0]
+                line.write({'lot_id': lot_id})
+        return super(stock_picking, self).do_enter_transfer_details(cr, uid, picking_id)
 
-class stock_move_operation_link(models.Model):
-    _inherit = "stock.move.operation.link"
+    @api.cr_uid_ids_context
+    def do_transfer(self, cr, uid, picking_ids, context=None):
+        res = super(stock_picking, self).do_transfer(cr, uid, picking_ids, context)
+        for picking in self.browse(cr, uid, picking_ids, context=context):
+            if picking.do_recalc_lot_cost:
+                for move in picking.move_lines:
+                    for op in move.linked_move_operation_ids.operation_id:
+                        lot = op.lot_id
+                        lot.write({'base_cost': move.price_unit})
+        return res
+
+    @api.multi
+    def action_confirm(self):
+        # copied from and overwrites function from stock/stock.py
+        if self.picking_type_id == self.env.ref('stock.picking_type_in'):
+            self.force_assign()
+        elif self.picking_type_id == self.env.ref('stock.picking_type_internal'):
+            # internal
+            pass
+        elif self.picking_type_id == self.env.ref('stock.picking_type_out'):
+            # shipping/outgoing
+            pass
+        for line in self.move_lines:
+            if line.state == 'draft':
+                line.action_confirm()
+        return True
+
+
+class stock_production_lot(models.Model):
+    _inherit = 'stock.production.lot'
+
+    base_cost = fields.Float('Base unit cost', default=0.0, digits=(1,4), required=True)
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'For IMSAR internal tracking, every serial/lot number must be unique!'),
+    ]
+
+
+class stock_inventory(models.Model):
+    _inherit = "stock.inventory"
 
     @api.v7
-    def get_specific_domain(self, cr, uid, record, context=None):
-        # only called for linked moves
-        domain = super(stock_move_operation_link, self).get_specific_domain(cr, uid, record, context)
-        move = record.move_id
-        domain.append(('routing_id', '=', move.source_routing_id.id))
-        domain.append(('routing_line_id', '=', move.source_routing_line_id.id))
-        domain.append(('routing_subrouting_id', '=', move.routing_subrouting_id.id))
-        print(domain)
-        return domain
+    def _get_inventory_lines(self, cr, uid, inventory, context=None):
+        # replaces the same function from stock/stock.py, does not call super()
+        location_obj = self.pool.get('stock.location')
+        product_obj = self.pool.get('product.product')
+        location_ids = location_obj.search(cr, uid, [('id', 'child_of', [inventory.location_id.id])], context=context)
+        domain = ' location_id in %s'
+        args = (tuple(location_ids),)
+        if inventory.partner_id:
+            domain += ' and owner_id = %s'
+            args += (inventory.partner_id.id,)
+        if inventory.lot_id:
+            domain += ' and lot_id = %s'
+            args += (inventory.lot_id.id,)
+        if inventory.product_id:
+            domain += ' and product_id = %s'
+            args += (inventory.product_id.id,)
+        if inventory.package_id:
+            domain += ' and package_id = %s'
+            args += (inventory.package_id.id,)
+
+        cr.execute('''
+           SELECT product_id, sum(qty) as product_qty, location_id, routing_id, routing_line_id, routing_subrouting_id, lot_id as prod_lot_id, package_id, owner_id as partner_id
+           FROM stock_quant WHERE''' + domain + '''
+           GROUP BY product_id, location_id, routing_id, routing_line_id, routing_subrouting_id, lot_id, package_id, partner_id
+        ''', args)
+        vals = []
+        for product_line in cr.dictfetchall():
+            #replace the None the dictionary by False, because falsy values are tested later on
+            for key, value in product_line.items():
+                if not value:
+                    product_line[key] = False
+            product_line['inventory_id'] = inventory.id
+            product_line['theoretical_qty'] = product_line['product_qty']
+            if product_line['product_id']:
+                product = product_obj.browse(cr, uid, product_line['product_id'], context=context)
+                product_line['product_uom_id'] = product.uom_id.id
+            vals.append(product_line)
+        return vals
+
+
+class stock_inventory_line(models.Model):
+    _inherit = "stock.inventory.line"
+
+    routing_id = fields.Many2one('account.routing', 'Category', required=True)
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True)
+
+    @api.v7
+    def _resolve_inventory_line(self, cr, uid, inventory_line, context=None):
+        # copied from and replaces function from stock/stock.py
+        stock_move_obj = self.pool.get('stock.move')
+        diff = inventory_line.theoretical_qty - inventory_line.product_qty
+        if not diff:
+            return
+        #each theorical_lines where difference between theoretical and checked quantities is not 0 is a line for which we need to create a stock move
+        vals = {
+            'name': _('INV:') + (inventory_line.inventory_id.name or ''),
+            'product_id': inventory_line.product_id.id,
+            'product_uom': inventory_line.product_uom_id.id,
+            'date': inventory_line.inventory_id.date,
+            'company_id': inventory_line.inventory_id.company_id.id,
+            'inventory_id': inventory_line.inventory_id.id,
+            'state': 'confirmed',
+            'restrict_lot_id': inventory_line.prod_lot_id.id,
+            'restrict_partner_id': inventory_line.partner_id.id,
+         }
+        inventory_location_id = inventory_line.product_id.property_stock_inventory.id
+        if diff < 0:
+            #found more than expected
+            vals['source_routing_id'] = inventory_line.inventory_id.company_id.attrition.routing_id.id
+            vals['source_routing_line_id'] = inventory_line.inventory_id.company_id.attrition.routing_line_id.id
+            vals['source_routing_subrouting_id'] = inventory_line.inventory_id.company_id.attrition.id
+            vals['location_id'] = inventory_line.inventory_id.company_id.attrition.location_id.id
+            vals['target_routing_id'] = inventory_line.routing_id.id
+            vals['target_routing_line_id'] = inventory_line.routing_line_id.id
+            vals['target_routing_subrouting_id'] = inventory_line.routing_subrouting_id.id
+            vals['location_dest_id'] = inventory_line.routing_subrouting_id.location_id.id
+            vals['product_uom_qty'] = -diff
+        else:
+            #found fewer than expected
+            vals['source_routing_id'] = inventory_line.routing_id.id
+            vals['source_routing_line_id'] = inventory_line.routing_line_id.id
+            vals['source_routing_subrouting_id'] = inventory_line.routing_subrouting_id.id
+            vals['location_id'] = inventory_line.routing_subrouting_id.location_id.id
+            vals['target_routing_id'] = inventory_line.inventory_id.company_id.attrition.routing_id.id
+            vals['target_routing_line_id'] = inventory_line.inventory_id.company_id.attrition.routing_line_id.id
+            vals['target_routing_subrouting_id'] = inventory_line.inventory_id.company_id.attrition.id
+            vals['location_dest_id'] = inventory_line.inventory_id.company_id.attrition.location_id.id
+            vals['product_uom_qty'] = diff
+        return stock_move_obj.create(cr, uid, vals, context=context)
+
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        self.routing_line_id = ''
+        mat_types = self.env.user.company_id.material_account_type_ids
+        for routing_line in self.routing_id.routing_lines:
+            if routing_line.account_type_id.id in mat_types.ids:
+                self.routing_line_id = routing_line.id
+                return
+
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
+        self.routing_subrouting_id = ''
+
+    @api.onchange('routing_subrouting_id')
+    def onchange_routing_subrouting_id(self):
+        pass
+
+
+class stock_change_product_qty(models.TransientModel):
+    _inherit = "stock.change.product.qty"
+
+    routing_id = fields.Many2one('account.routing', 'Category', required=True)
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True)
+
+    @api.v7
+    def change_product_qty(self, cr, uid, ids, context=None):
+        # copied from and replaces function from stock/stock_change_product_qty.py
+        if context is None:
+            context = {}
+
+        inventory_obj = self.pool.get('stock.inventory')
+        inventory_line_obj = self.pool.get('stock.inventory.line')
+
+        for data in self.browse(cr, uid, ids, context=context):
+            if data.new_quantity < 0:
+                raise Warning(_('Warning!'), _('Quantity cannot be negative.'))
+            ctx = context.copy()
+            ctx['location'] = data.location_id.id
+            ctx['lot_id'] = data.lot_id.id
+            inventory_id = inventory_obj.create(cr, uid, {
+                'name': _('INV: %s') % (data.product_id.name),
+                'product_id': data.product_id.id,
+                'location_id': data.location_id.id,
+                'lot_id': data.lot_id.id}, context=context)
+            product = data.product_id.with_context(location=data.location_id.id, lot_id= data.lot_id.id)
+            th_qty = product.qty_available
+            line_data = {
+                'inventory_id': inventory_id,
+                'product_qty': data.new_quantity,
+                'location_id': data.location_id.id,
+                'product_id': data.product_id.id,
+                'product_uom_id': data.product_id.uom_id.id,
+                'theoretical_qty': th_qty,
+                'prod_lot_id': data.lot_id.id,
+                'routing_id': data.routing_id.id,
+                'routing_line_id': data.routing_line_id.id,
+                'routing_subrouting_id': data.routing_subrouting_id.id,
+            }
+            inventory_line_obj.create(cr , uid, line_data, context=context)
+            inventory_obj.action_done(cr, uid, [inventory_id], context=context)
+        return {}
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        self.routing_line_id = ''
+        mat_types = self.env.user.company_id.material_account_type_ids
+        for routing_line in self.routing_id.routing_lines:
+            if routing_line.account_type_id.id in mat_types.ids:
+                self.routing_line_id = routing_line.id
+                return
+
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
+        self.routing_subrouting_id = ''
+
+    @api.onchange('routing_subrouting_id')
+    def onchange_routing_subrouting_id(self):
+        self.location_id = self.routing_subrouting_id.location_id.id
 
 
 class purchase_order(models.Model):
@@ -372,6 +620,14 @@ class purchase_request_line(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     approved_by = fields.Many2one('res.users', string='Approved by')
 
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        self.routing_line_id = ''
+
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
+        self.routing_subrouting_id = ''
+
 
 class account_invoice_line(models.Model):
     _inherit = "account.invoice.line"
@@ -403,30 +659,45 @@ class account_invoice_line(models.Model):
 
     @api.v7
     def _anglo_saxon_sale_move_lines(self, cr, uid, i_line, res, context=None):
-        # print('_anglo_saxon_sale_move_lines')
         return []
 
     @api.v7
     def _anglo_saxon_purchase_move_lines(self, cr, uid, i_line, res, context=None):
-        # print('_anglo_saxon_purchase_move_lines')
         return []
 
 
-class account_invoice(models.Model):
-    _inherit = "account.invoice"
+class account_voucher(models.Model):
+    _inherit = "account.voucher"
 
-    # @api.v7
-    # def _prepare_refund(self, cr, uid, invoice, date=None, period_id=None, description=None, journal_id=None, context=None):
-    #     # account_anglo_saxon does something for refunds here, may want to revisit this
-    #     pass
+    @api.multi
+    def write(self, vals):
+        res = super(account_voucher, self).write(vals)
+        # make it auto-compute the total without falling into an infinite loop from compute_tax()
+        keys = vals.keys()
+        if not (len(keys) == 2 and 'amount' in keys and 'tax_amount' in keys):
+            self.compute_tax()
+        return res
 
-    # @api.multi
-    # def finalize_invoice_move_lines(self, move_lines):
-    #     # print(move_lines)
-    #     for temp_line in move_lines:
-    #         line = temp_line[2]
-    #         print("DR {}, CR {}, GA {}, AA {}".format(line['debit'],line['credit'],line['account_id'],line['analytic_account_id']))
-    #     return move_lines
+
+class account_voucher_line(models.Model):
+    _inherit = "account.voucher.line"
+
+    routing_id = fields.Many2one('account.routing', 'Category', required=True)
+    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True)
+    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True)
+
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        self.routing_line_id = ''
+
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
+        self.routing_subrouting_id = ''
+
+    @api.onchange('routing_subrouting_id')
+    def onchange_subrouting_id(self):
+        self.account_id = self.routing_subrouting_id.account_id
+        self.account_analytic_id = self.routing_subrouting_id.account_analytic_id
 
 
 class stock_warehouse_orderpoint(models.Model):
@@ -435,6 +706,14 @@ class stock_warehouse_orderpoint(models.Model):
     routing_id = fields.Many2one('account.routing', 'Category', required=True,)
     routing_line_id = fields.Many2one('account.routing.line', 'Billing Type', required=True,)
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Task Code', required=True,)
+
+    @api.onchange('routing_id')
+    def onchange_routing_id(self):
+        self.routing_line_id = ''
+
+    @api.onchange('routing_line_id')
+    def onchange_routing_line_id(self):
+        self.routing_subrouting_id = ''
 
 
 class procurement_order(models.Model):

@@ -27,6 +27,7 @@ class wms_settings(models.TransientModel):
     material_account_type_ids = fields.Many2many('account.account.type', 'config_global_material_type_rel', 'config_id', 'account_type_id', string="Material Account Types")
     interim_receiving = fields.Many2one('account.routing.subrouting', string="Interim Receiving Task Code", required=True)
     interim_shipping = fields.Many2one('account.routing.subrouting', string="Interim Shipping Task Code", required=True)
+    attrition = fields.Many2one('account.routing.subrouting', string="Attrition Task Code", required=True)
     stock_journal = fields.Many2one('account.journal', string='Stock Journal', required=True)
 
     @api.model
@@ -36,6 +37,7 @@ class wms_settings(models.TransientModel):
         res['material_account_type_ids'] = user.company_id.material_account_type_ids.ids
         res['interim_receiving'] = user.company_id.interim_receiving.id
         res['interim_shipping'] = user.company_id.interim_shipping.id
+        res['attrition'] = user.company_id.attrition.id
         res['stock_journal'] = user.company_id.stock_journal.id
         return res
 
@@ -45,6 +47,7 @@ class wms_settings(models.TransientModel):
             'material_account_type_ids': [(6,0, self.material_account_type_ids.ids)],
             'interim_receiving': self.interim_receiving.id,
             'interim_shipping': self.interim_shipping.id,
+            'attrition': self.attrition.id,
             'stock_journal': self.stock_journal.id,
         })
 
@@ -54,6 +57,7 @@ class res_company(models.Model):
     material_account_type_ids = fields.Many2many('account.account.type', 'company_global_material_type_rel', 'config_id', 'account_type_id', string="Material Account Types")
     interim_receiving = fields.Many2one('account.routing.subrouting', string="Interim Receiving Task Code")
     interim_shipping = fields.Many2one('account.routing.subrouting', string="Interim Shipping Task Code")
+    attrition = fields.Many2one('account.routing.subrouting', string="Attrition Task Code", required=True)
     stock_journal = fields.Many2one('account.journal', string='Stock Journal')
 
 
