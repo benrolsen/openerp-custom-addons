@@ -595,10 +595,10 @@ class hr_timekeeping_sheet(models.Model):
             for sheet in self.search([('name','=',row['name']),('employee_id','=',row['employee_id'])]):
                 if len(sheet.line_ids) == 0:
                     sheet.unlink()
-        # if it's open, empty, and 5 weeks old, just void it out
+        # if it's open, empty, and 5 weeks old, just delete it
         old_date = datetime.today() - timedelta(weeks=5)
         for sheet in self.search([('state','=','draft'),('date_to','<',old_date),('line_ids','=',None)]):
-            sheet.button_void()
+            sheet.unlink()
 
 
 class hr_timekeeping_line(models.Model):
