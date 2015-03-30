@@ -2,18 +2,15 @@ from datetime import datetime, date, timedelta
 from dateutil.relativedelta import *
 import dateutil.parser
 from collections import defaultdict
-from copy import copy
 import pytz
 import json
 import base64
-import time
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
 from openerp.addons.base.ir.ir_mail_server import MailDeliveryException
 import openerp.addons.decimal_precision as dp
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
-from openerp import netsvc
 from openerp.report import render_report
 
 import logging
@@ -587,6 +584,21 @@ class hr_timekeeping_sheet(models.Model):
             elif approval_line.type == 'SeniorManagement' and not contains_unallowable_task:
                 approval_line.sudo().unlink()
         return res
+
+    @api.model
+    def sheet_cleanup(self):
+        # despite my best efforts, dupes are still getting created occasionally
+        # this will look for duplicate regular timesheets and remove any with no line entries
+        cr = self._cr
+        cr.execute("""select tk.name, tk.employee_id, count(tk.id) as num from hr_timekeeping_sheet tk where type='regular' group by tk.name,employee_id having count(tk.id) > 1;""")
+        for row in cr.dictfetchall():
+            for sheet in self.search([('name','=',row['name']),('employee_id','=',row['employee_id'])]):
+                if len(sheet.line_ids) == 0:
+                    sheet.unlink()
+        # if it's open, empty, and 5 weeks old, just void it out
+        old_date = datetime.today() - timedelta(weeks=5)
+        for sheet in self.search([('state','=','draft'),('date_to','<',old_date),('line_ids','=',None)]):
+            sheet.button_void()
 
 
 class hr_timekeeping_line(models.Model):
