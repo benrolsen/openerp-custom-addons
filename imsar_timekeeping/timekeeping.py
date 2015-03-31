@@ -651,6 +651,7 @@ class hr_timekeeping_line(models.Model):
     # these fields should be removed when we stop using Quickbooks
     inventory_recorded = fields.Boolean('Inv Value Recorded', default=False)
     employee_number = fields.Integer('Employee Number', related="sheet_id.employee_id.employee_number")
+    adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
 
     @api.one
     @api.depends('date')
@@ -749,6 +750,22 @@ class hr_timekeeping_line(models.Model):
         # Guess again! Related field to computed field loses the self._uid of the function call
         self.uid_is_user_id = (self.user_id.id == self._uid)
         self.full_amount = self.amount + self.premium_amount
+        self.adv_search = ''
+
+    def _adv_search(self, operator, value):
+        today = date.today()
+        sunday = today - timedelta(days=today.weekday() + 1)
+        saturday = today - timedelta(days=today.weekday() - 5)
+        last_sunday = sunday - timedelta(days=7)
+        last_saturday = saturday - timedelta(days=7)
+
+        if value == 'this_week':
+            lines = self.search([('date','>=',sunday), ('date','<=',saturday)]).ids
+        elif value == 'last_week':
+            lines = self.search([('date','>=',last_sunday), ('date','<=',last_saturday)]).ids
+        else:
+            lines = self.env['hr.timekeeping.line'].search([]).ids
+        return [('id','in',lines)]
 
     @api.model
     def _safety_checks(self, sheet):

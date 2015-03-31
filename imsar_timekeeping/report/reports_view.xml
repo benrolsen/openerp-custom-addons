@@ -114,6 +114,8 @@
                     <field name="serial_reference"/>
                     <filter name="not_recorded" string="Not Recorded" domain="[('inventory_recorded','=',False)]"/>
                     <filter name="recorded" string="Recorded" domain="[('inventory_recorded','=',True)]"/>
+                    <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
+                    <filter name="last_week" string="Last Week" domain="[('adv_search','=','last_week')]"/>
                     <group expand="0" string="Group By">
                         <filter name="group_by_user" string="User" context="{'group_by':'user_id'}"/>
                         <filter name="group_by_serial" string="Serial" context="{'group_by':'serial_reference'}"/>
@@ -152,6 +154,19 @@
         <act_window id="timekeeping_inventory_report_mark_recorded" name="Mark as Recorded"
             res_model="hr.timekeeping.line.inventory.confirm" src_model="hr.timekeeping.line" multi="True" key2="client_action_multi"
             view_mode="form" target="new" view_type="form" groups="account.group_account_user" />
+
+        <!-- Full timekeeping line report -->
+        <record id="action_timekeeping_lines_full_report" model="ir.actions.act_window">
+            <field name="name">Timekeeping Lines Report</field>
+            <field name="res_model">hr.timekeeping.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="timesheet_inventory_report_tree"/>
+            <!--<field name="context">{'search_default_not_recorded':1}</field>-->
+            <!--<field name="domain">[('serial_reference','!=',''),('sheet_state','=','done')]</field>-->
+        </record>
+        <menuitem id="menu_timekeeping_lines_full_report" action="action_timekeeping_lines_full_report" parent="menu_hr_timekeeping_reports"
+                  groups="account.group_account_user" sequence="11"/>
 
         <!-- Sheets by week/task report -->
         <record id="view_timekeeping_by_task_wizard" model="ir.ui.view">
