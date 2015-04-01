@@ -1,3 +1,4 @@
+from datetime import date
 from openerp import models, fields, api, _
 import openerp.addons.decimal_precision as dp
 from openerp.exceptions import Warning
@@ -154,6 +155,33 @@ class stock_quant(models.Model):
         vals.update({'routing_line_id': move.target_routing_line_id.id})
         vals.update({'routing_subrouting_id': move.target_routing_subrouting_id.id})
         quant.sudo().write(vals)
+
+    @api.multi
+    def button_move_mat_cost(self):
+        vals = {
+            'quant_id': self.id,
+            'cost_type': 'material',
+        }
+        move_cost = self.env['stock.quant.move_cost'].create(vals)
+        view = {
+            'name': _('Move Cost'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'stock.quant.move_cost',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_id': move_cost.id,
+        }
+        return view
+
+    @api.multi
+    def button_move_labor_cost(self):
+        print('nothing')
+
+    @api.multi
+    def button_move_oh_cost(self):
+        print('nothing')
 
 
 class stock_picking(models.Model):
@@ -354,6 +382,7 @@ class stock_inventory_line(models.Model):
             'state': 'confirmed',
             'restrict_lot_id': inventory_line.prod_lot_id.id,
             'restrict_partner_id': inventory_line.partner_id.id,
+            'price_unit': inventory_line.prod_lot_id.base_cost,
          }
         inventory_location_id = inventory_line.product_id.property_stock_inventory.id
         if diff < 0:
@@ -742,3 +771,49 @@ class account_routing_purchase_preferences(models.TransientModel):
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier',)
 
 
+class quant_move_cost(models.TransientModel):
+    _name = "stock.quant.move_cost"
+    _description = "Wizard to move cost from quant"
+
+    quant_id = fields.Many2one('stock.quant')
+    cost_type = fields.Selection([('material','Material'),('labor','Labor'),('overhead','Overhead'),], "Cost Type")
+    amount = fields.Float('Amount', default=0.0)
+    account_id = fields.Many2one('account.account', 'Real Account')
+    account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account')
+
+    @api.multi
+    def confirm(self):
+        if self.cost_type == 'material':
+            self.quant_id.material_cost -= self.amount
+        if self.cost_type == 'labor':
+            self.quant_id.labor_cost -= self.amount
+        if self.cost_type == 'overhead':
+            self.quant_id.material_cost -= self.amount
+        move_lines = list()
+        # for positive amount, debit the target account, credit the inventory account
+        debit_line = {
+            'name': 'Quant cost adjustment',
+            'debit': self.amount if self.amount >= 0.0 else 0.0,
+            'credit': -self.amount if self.amount < 0.0 else 0.0,
+            'account_id': self.account_id.id,
+            'analytic_account_id': self.account_analytic_id.id,
+        }
+        credit_line = {
+            'name': 'Quant cost adjustment',
+            'debit': -self.amount if self.amount < 0.0 else 0.0,
+            'credit': self.amount if self.amount >= 0.0 else 0.0,
+            'account_id': self.quant_id.routing_subrouting_id.account_id.id,
+            'analytic_account_id': self.quant_id.routing_subrouting_id.account_analytic_id.id,
+        }
+        move_lines.append((0, 0, debit_line))
+        move_lines.append((0, 0, credit_line))
+        move_vals = {
+            'ref': 'Quant Move Cost',
+            'line_id': move_lines,
+            'journal_id': self.env.user.company_id.stock_journal.id,
+            'date': date.today(),
+            'narration': '',
+            'company_id': self.env.user.company_id.id,
+        }
+        move = self.env['account.move'].with_context(self._context).create(move_vals)
+        move.post()
