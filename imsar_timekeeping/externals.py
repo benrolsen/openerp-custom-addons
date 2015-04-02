@@ -76,7 +76,7 @@ class account_analytic_account(models.Model):
         # field and search just for one line, and auth_users always applies in this case
         auth_ids = self.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
         intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
-        return [('id','in', list(intersection))]
+        return [('id','in', list(reviewed_ids.ids))]
 
     def _search_hidden_ids(self, operator, value):
         if value == False:
@@ -367,6 +367,7 @@ class res_users(models.Model):
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
     pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
     hide_analytics = fields.Many2many('account.analytic.account', 'analytic_user_hide_rel', 'user_id', 'analytic_id', string='Tasks hidden from timesheets')
+    auth_routings = fields.Many2many('account.routing', 'account_routing_user_auth_rel', 'user_id', 'account_routing_id', string='Allowed Task Categories')
     timesheet_prefs = fields.One2many('hr.timekeeping.preferences', 'user_id', string='Preferences')
 
     @api.multi
@@ -384,6 +385,12 @@ class account_move_line(models.Model):
     _inherit = "account.move.line"
 
     timekeeping_line_ids = fields.Many2many('hr.timekeeping.line', 'timekeeping_line_move_line_rel', 'move_line_id', 'timekeeping_line_id', string='Related timekeeping lines')
+
+
+class account_routing(models.Model):
+    _inherit = "account.routing"
+
+    auth_users = fields.Many2many('res.users', 'account_routing_user_auth_rel', 'account_routing_id', 'user_id', string='Category Allowed Users')
 
 
 class account_routing_subrouting(models.Model):
@@ -421,7 +428,11 @@ class account_routing_subrouting(models.Model):
         reviewed_ids = aa_model.search([('type','!=','view'),('user_review_ids','in',sheet_id.user_id.id)])
         auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
         shown_ids = aa_model.search([('hide_from_users','not in',sheet_id.user_id.id)])
-        intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids), set(shown_ids.ids))
+        auth_categories = self.env['account.routing'].search([('auth_users','in',sheet_id.user_id.id)]).ids
+        category_auth_subroutes = self.env['account.routing.subrouting'].search([('routing_id','in',auth_categories)]).ids
+        category_auth_analytics = aa_model.search([('account_routing_subrouting_ids','in',category_auth_subroutes)])
+        final_auth = set.union(set(auth_ids.ids), set(category_auth_analytics.ids))
+        intersection = set.intersection(set(reviewed_ids.ids), set(shown_ids.ids), final_auth)
         subrouting_ids = self.env['account.routing.subrouting'].search([('account_analytic_id','in',list(intersection))]).ids
         # proxy timesheets have a set of always allowed tasks
         if sheet_id.type == 'proxy' and self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids:

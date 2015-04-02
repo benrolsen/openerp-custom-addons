@@ -226,6 +226,20 @@
             </field>
         </record>
 
+        <!-- Account routing additions -->
+        <record id="account_routing_form" model="ir.ui.view">
+            <field name="name">account.routing.form</field>
+            <field name="model">account.routing</field>
+            <field name="inherit_id" ref="account_routing.account_routing_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//group' position='after'>
+                    <group>
+                        <field name="auth_users" widget="many2many_tags"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
         <!-- Account routing subrouting, add old task code stuff -->
         <record id="account_routing_subrouting_tree" model="ir.ui.view">
             <field name="name">account.routing.subrouting.tree</field>
