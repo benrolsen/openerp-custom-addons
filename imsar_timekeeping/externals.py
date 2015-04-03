@@ -76,7 +76,13 @@ class account_analytic_account(models.Model):
         # field and search just for one line, and auth_users always applies in this case
         auth_ids = self.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
         intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
-        return [('id','in', list(reviewed_ids.ids))]
+        # but then we added another way people can be authorized, by task category (account_routing),
+        # so we have to include those
+        auth_categories = self.env['account.routing'].search([('auth_users','in',self._uid)]).ids
+        category_auth_subroutes = self.env['account.routing.subrouting'].search([('routing_id','in',auth_categories)]).ids
+        category_auth_analytics = self.search([('account_routing_subrouting_ids','in',category_auth_subroutes)])
+        final = set.union(intersection, set(category_auth_analytics.ids))
+        return [('id','in', list(final))]
 
     def _search_hidden_ids(self, operator, value):
         if value == False:
