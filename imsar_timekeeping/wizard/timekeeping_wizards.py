@@ -234,7 +234,10 @@ class hr_timekeeping_sheet_payroll_confirm(models.TransientModel):
         # just using a pseudo-workflow for payroll_state
         for sheet in sheets:
             if sheet.state == 'done' and sheet.payroll_state == 'draft':
-                sheet.payroll_state = 'pending'
+                if len(sheet.line_ids) > 0:
+                    sheet.payroll_state = 'pending'
+                else:
+                    sheet.payroll_state = 'submitted'
         return {'type': 'ir.actions.act_window_close'}
 
 
