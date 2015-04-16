@@ -303,3 +303,26 @@ class timekeeping_search_sheets_by_task(models.TransientModel):
             'domain': [('id','in',list(ids))],
         }
 
+    @api.multi
+    def paid_report(self):
+        pp_year, pp_num, week_ab = self.week.split('-')
+        payperiod = self.env['hr.timekeeping.payperiod'].search([('year','=',pp_year),('period_num','=',pp_num)])[0]
+        if week_ab.upper() == 'A':
+            start_date = datetime.strptime(payperiod.start_date, DATE_FORMAT)
+            end_date = datetime.strptime(payperiod.start_date, DATE_FORMAT) + timedelta(days=6, hours=23, minutes=59)
+        elif week_ab.upper() == 'B':
+            start_date = datetime.strptime(payperiod.start_date, DATE_FORMAT) + timedelta(days=7)
+            end_date = datetime.strptime(payperiod.start_date, DATE_FORMAT) + timedelta(days=13, hours=23, minutes=59)
+        else:
+            raise Warning('Week name did not include -A or -B')
+        timesheets = self.env['hr.timekeeping.sheet'].search([('payroll_state','=','paid'),('payment_date','>=',start_date),('payment_date','<=',end_date)])
+        return {
+            'name': _('Timesheets by Task'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.timekeeping.sheet',
+            'view_id': False,
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': [('id','in',timesheets.ids)],
+        }
+
