@@ -423,7 +423,7 @@
                     <field name="name" />
                     <field name="date_from" />
                     <field name="date_to" />
-                    <field name="total_time" widget="float_time" />
+                    <field name="total_time" sum="Hours"/>
                     <field name="type" />
                     <field name="state" />
                     <field name="payroll_state" groups="base.group_hr_user"/>
