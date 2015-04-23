@@ -47,7 +47,7 @@ class timekeeping_lines_report(models.Model):
             prev_week_date = today - timedelta(days=7)
             prev_week_pp = self.env['hr.timekeeping.payperiod'].get_payperiod(prev_week_date)
             prev_week_ab = prev_week_pp.get_week_ab(prev_week_date)
-            prev_week = prev_payperiod.name + '-' + prev_week_ab
+            prev_week = prev_week_pp.name + '-' + prev_week_ab
             ids = self.search([('week_name','=',prev_week)]).ids
         elif value == 'this_payperiod':
             ids = self.search([('payperiod_id','=',this_payperiod.id)]).ids
