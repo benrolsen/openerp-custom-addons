@@ -121,20 +121,6 @@ class hr_timekeeping_sheet(models.Model):
             if total > 24.0:
                 raise Warning(_("You have more than 24 hours entered for {}, please fix before saving.".format(day)))
 
-        subtotals = json.loads(self.subtotal_json)
-        regular_worktype_id = str(self.user_id.company_id.regular_worktype_id.id)
-        overtime_worktype_id = str(self.user_id.company_id.overtime_worktype_id.id)
-        regular = subtotals.get(regular_worktype_id, 0.0)
-        overtime = subtotals.get(overtime_worktype_id, 0.0)
-        if self.employee_flsa_status != 'exempt':
-            if regular > 40.0 and self.type == 'regular':
-                raise Warning(_("You cannot log more than 40 hours of regular time."))
-            if overtime > 0.0 and regular < 40.0 and self.type == 'regular':
-                raise Warning(_("You cannot log overtime without having 40 hours of regular time first."))
-        else:
-            if overtime > 0.0:
-                raise Warning(_("Exempt employees are not eligible for overtime."))
-
     @api.one
     @api.depends('payperiod_id', 'user_id', 'type', 'state')
     def _computed_fields(self):
@@ -227,6 +213,21 @@ class hr_timekeeping_sheet(models.Model):
     def button_confirm(self):
         # recalc computed fields
         self._compute_subtotals()
+        # make sure non-exempt employees obey overtime rules
+        subtotals = json.loads(self.subtotal_json)
+        regular_worktype_id = str(self.user_id.company_id.regular_worktype_id.id)
+        overtime_worktype_id = str(self.user_id.company_id.overtime_worktype_id.id)
+        regular = subtotals.get(regular_worktype_id, 0.0)
+        overtime = subtotals.get(overtime_worktype_id, 0.0)
+        if self.employee_flsa_status != 'exempt':
+            if regular > 40.0 and self.type == 'regular':
+                raise Warning(_("You cannot log more than 40 hours of regular time."))
+            if overtime > 0.0 and regular < 40.0 and self.type == 'regular':
+                raise Warning(_("You cannot log overtime without having 40 hours of regular time first."))
+        else:
+            if overtime > 0.0:
+                raise Warning(_("Exempt employees are not eligible for overtime."))
+
         # log submission for approval
         now = get_now_tz(self.env.user, self.env['ir.config_parameter'])
         subject = "Submitted for approval"
