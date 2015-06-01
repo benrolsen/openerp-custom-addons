@@ -189,7 +189,7 @@ class employee(models.Model):
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', default='exempt', required=True)
     full_time = fields.Boolean('Full Time', default=True)
     full_time_hours = fields.Integer('Full Time Hours (pay period)', default=80)
-    wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0)
+    wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0, groups="base.group_hr_user,account.group_account_user")
     pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)',compute='_computed_pto_rate', default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
@@ -245,7 +245,6 @@ class employee(models.Model):
                 self.pto_accrual_rate = 0
         else:
             self.pto_accrual_rate = 0
-
 
     @api.one
     @api.depends('user_id')
@@ -410,7 +409,7 @@ class account_routing_subrouting(models.Model):
     oneclick_filter = fields.Boolean(store=False, compute='_dummy', search='_filter_oneclick')
     oneclick_prefs = fields.Many2many('hr.timekeeping.preferences', 'user_pref_subroute_rel', 'subrouting_id', 'user_pref', string='One Click Prefs')
     view_on_timesheet = fields.Boolean(store=False, compute='_dummy', search='_viewable_search')
-    require_serial = fields.Boolean('Require Serial/Repair #', default=False)
+    require_serial = fields.Boolean('Direct MFG Code', default=False)
 
     @api.one
     def _dummy(self):

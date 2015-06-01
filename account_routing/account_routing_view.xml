@@ -46,7 +46,7 @@
             <field name="act_window_id" ref="account_routing_view_form"/>
         </record>
         <!-- The form on task identifier makes this unnecessary -->
-        <!--<menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />-->
+        <menuitem id="menu_account_routing_view" action="account_routing_view_form" parent="account.account_account_menu" sequence="20" />
 
         <!-- Account routing lines -->
         <record id="account_routing_line_filter" model="ir.ui.view">
@@ -102,7 +102,7 @@
             <field name="context">{'search_default_group_by_category':1}</field>
         </record>
         <!-- The form on task identifier makes this unnecessary -->
-        <!--<menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21"/>-->
+        <menuitem id="menu_account_routing_line_view" action="account_routing_line_view" parent="account.account_account_menu" sequence="21"/>
 
         <!-- Account routing subrouting -->
         <record id="account_routing_subrouting_filter" model="ir.ui.view">

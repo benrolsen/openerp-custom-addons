@@ -35,7 +35,7 @@ class hr_timekeeping_sheet(models.Model):
     _name = 'hr.timekeeping.sheet'
     _inherit = ['mail.thread']
     _description = 'Timekeeping Sheet'
-    _order = 'name desc'
+    _order = 'date_from desc'
 
     # model columns
     name = fields.Char('Week Number', compute='_computed_fields', readonly=True, store=True)
