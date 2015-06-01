@@ -189,8 +189,7 @@ class employee(models.Model):
     flsa_status = fields.Selection([('exempt','Exempt'),('non-exempt','Non-exempt')], string='FLSA Status', default='exempt', required=True)
     full_time = fields.Boolean('Full Time', default=True)
     full_time_hours = fields.Integer('Full Time Hours (pay period)', default=80)
-    # wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0, groups="base.group_hr_user,account.group_account_user")
-    wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0)
+    wage_rate = fields.Float('Hourly Wage Rate', required=True, default=0.0, groups="base.group_hr_user,account.group_account_user")
     pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)',compute='_computed_pto_rate', default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
@@ -210,6 +209,11 @@ class employee(models.Model):
     address_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Working Address')
     address_home_id = fields.Many2one('res.partner', related='resource_id.user_id.partner_id', string='Home Address')
     pm_analytics = fields.Many2many('account.analytic.account', related='resource_id.user_id.pm_analytics', string='Projects Managed')
+
+    @api.multi
+    def get_wage_rate(self):
+        # this exists *only* so that it can be called with sudo() to get around access permission on wage_rate
+        return self.wage_rate
 
     @api.one
     @api.depends('first_name','middle_name','last_name')

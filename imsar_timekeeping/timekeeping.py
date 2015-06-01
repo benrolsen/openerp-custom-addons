@@ -787,7 +787,8 @@ class hr_timekeeping_line(models.Model):
         unit_amount = vals.get('unit_amount') or self.unit_amount
         worktype_id = vals.get('worktype') or self.worktype.id
         worktype = self.env['hr.timekeeping.worktype'].browse(worktype_id)
-        vals['amount'] = self.sheet_id.employee_id.wage_rate * unit_amount
+        wage_rate = self.sheet_id.employee_id.sudo().get_wage_rate()
+        vals['amount'] = wage_rate * unit_amount
         vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         # if this is a correction, make reverse correcting entry and save this as normal
         line_type = vals.get('type') or self.type
@@ -830,7 +831,8 @@ class hr_timekeeping_line(models.Model):
         if not override:
             self._safety_checks(sheet)
         vals['user_id'] = sheet.user_id.id
-        vals['amount'] = sheet.employee_id.wage_rate * unit_amount
+        wage_rate = sheet.employee_id.sudo().get_wage_rate()
+        vals['amount'] = wage_rate * unit_amount
         vals['premium_amount'] = vals['amount'] * worktype.premium_rate
         vals['id'] = super(hr_timekeeping_line, self).create(vals)
         if vals['id'].logging_required:
