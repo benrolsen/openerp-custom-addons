@@ -611,6 +611,7 @@ class hr_timekeeping_line(models.Model):
     # model columns
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='restrict', copy=True)
     user_id = fields.Many2one('res.users', string='User', readonly=True, default=lambda self: self.env.user, copy=False)
+    employee_id = fields.Many2one('hr.employee', related='sheet_id.employee_id')
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     type = fields.Selection([('Regular','Regular'),('Correction','Correction'),], 'Line Entry Type', default="Regular", required=True)
@@ -625,6 +626,7 @@ class hr_timekeeping_line(models.Model):
     routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_user_default_route(), copy=True)
     routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True, copy=True)
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_user_default_subroute(), copy=True)
+    task_shortname = fields.Char("Task", compute="_computed_fields")
     account_analytic_id = fields.Many2one('account.analytic.account', related='routing_subrouting_id.account_analytic_id', readonly=True)
     aa_dcaa_allowable = fields.Boolean(related='routing_subrouting_id.account_analytic_id.dcaa_allowable', readonly=True)
     location = fields.Selection([('office','Office'),('home','Home')], string='Work Location', required=True, default='office', help="Location the hours were worked",)
@@ -657,7 +659,7 @@ class hr_timekeeping_line(models.Model):
     @api.one
     @api.depends('date')
     def _day_name(self):
-        self.day_name = fields.Date.from_string(self.date).strftime('%A')
+        self.day_name = fields.Date.from_string(self.date).strftime('%A')[:3]
 
     @api.one
     @api.depends('date', 'previous_date')
@@ -752,6 +754,7 @@ class hr_timekeeping_line(models.Model):
         self.uid_is_user_id = (self.user_id.id == self._uid)
         self.full_amount = self.amount + self.premium_amount
         self.adv_search = ''
+        self.task_shortname = "{}/{}".format(self.routing_id.name, self.routing_subrouting_id.name)
 
     def _adv_search(self, operator, value):
         today = date.today()
