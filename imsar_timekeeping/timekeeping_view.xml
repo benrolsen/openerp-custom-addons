@@ -95,7 +95,8 @@
                         <field name="sow_examples" readonly="1"/>
                     </group>
                     <footer attrs="{'invisible':[('sheet_state','!=','draft')]}">
-                        <button name="write" type="object" string="Save" class="oe_highlight"/> or <button name="cancel" string="Cancel" special="cancel" class="oe_link"/>
+                        <button name="write" type="object" string="Save" class="oe_highlight"/> or
+                        <button name="cancel" string="Cancel" special="cancel" class="oe_link" attrs="{'invisible':[('type','=','Correction')]}"/>
                         <button name="unlink" string="Delete this entry" type="object" class="oe_right" confirm="Are you sure you want to delete this entry?"
                                 attrs="{'invisible':[('id','=',False)]}"/>
                     </footer>
