@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="shipping_method_prepay" model="purchase.shipping.method">
+            <field name="name">Prepay and add</field>
+        </record>
+
+    </data>
+</openerp>

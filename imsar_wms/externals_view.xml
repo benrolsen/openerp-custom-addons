@@ -1,135 +1,291 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
+<data>
 
-        <!-- purchase order -->
-        <record id="category_purchase_order_form" model="ir.ui.view">
-            <field name="name">category_purchase.order.form</field>
-            <field name="model">purchase.order</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form"/>
-            <field name="arch" type="xml">
+    <!-- purchase order -->
+    <record id="category_purchase_order_form" model="ir.ui.view">
+        <field name="name">category_purchase.order.form</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
 
-                <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
-                    <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
-                </xpath>
-                <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='attributes'>
-                    <attribute name="invisible">1</attribute>
-                </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="name"]' position='after'>
+                <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                        domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+            </xpath>
+            <xpath expr='//field[@name="order_line"]/tree//field[@name="account_analytic_id"]' position='attributes'>
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr='//field[@name="location_id"]' position='after'>
+                <field name="fob"/>
+                <field name="shipping_method"/>
+            </xpath>
 
-            </field>
-        </record>
+        </field>
+    </record>
 
-        <!-- Purcahse order line -->
-        <record id="purchase_order_line_form" model="ir.ui.view">
-            <field name="name">purchase.order.line.form</field>
-            <field name="model">purchase.order.line</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form"/>
-            <field name="arch" type="xml">
-                <xpath expr='/form/sheet' position='replace'>
-                    <sheet>
+    <!-- Purchase order line -->
+    <record id="purchase_order_line_form" model="ir.ui.view">
+        <field name="name">purchase.order.line.form</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='/form/sheet' position='replace'>
+                <sheet>
+                    <group>
                         <group>
-                            <group>
-                                <field name="product_id" on_change="onchange_product_id(parent.pricelist_id,product_id,0,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)"/>
-                                <field name="name"/>
-                                <label for="product_qty"/>
-                                <div>
-                                    <field name="product_qty" on_change="onchange_product_id(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
-                                    <field name="product_uom" groups="product.group_uom" on_change="onchange_product_uom(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
-                                </div>
-                                <field name="price_unit"/>
-                                <field name="taxes_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>
-                            </group>
-                            <group>
-                                <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                        domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                                <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                        domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                                <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                                        domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
-                                <field name="date_planned" widget="date"/>
-                                <field name="account_analytic_id" colspan="2" groups="purchase.group_analytic_accounting" invisible="1"/>
-                                <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
-                            </group>
+                            <field name="product_id" on_change="onchange_product_id(parent.pricelist_id,product_id,0,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)"/>
+                            <field name="name"/>
+                            <label for="product_qty"/>
+                            <div>
+                                <field name="product_qty" on_change="onchange_product_id(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
+                                <field name="product_uom" groups="product.group_uom" on_change="onchange_product_uom(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,'draft',context)" class="oe_inline"/>
+                            </div>
+                            <field name="price_unit"/>
+                            <field name="taxes_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>
                         </group>
-                        <notebook>
-                        <page string="Invoices and Incoming Shipments">
-                            <field name="invoice_lines"/>
-                            <field name="move_ids"/>
-                        </page>
-                        </notebook>
-                    </sheet>
-                </xpath>
-
-                <xpath expr="//field[@name='date_planned']" position='after'>
-                    <field name="shipping_method"/>
-                    <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
-                </xpath>
-            </field>
-        </record>
-
-        <!-- Add location to material subrouting -->
-        <record id="account_routing_subrouting_form" model="ir.ui.view">
-            <field name="name">account.routing.subrouting.form</field>
-            <field name="model">account.routing.subrouting</field>
-            <field name="inherit_id" ref="account_routing.account_routing_subrouting_form"/>
-            <field name="arch" type="xml">
-                <xpath expr='//group[@name="ars_view"]' position='after'>
-                    <group attrs="{'invisible':[('material_type','=',False)]}">
-                        <field name="material_type" invisible="1"/>
-                        <field name="location_id" attrs="{'required':[('material_type','=',True)]}"
-                                options="{'create': false, 'create_edit': false}" />
+                        <group>
+                            <field name="routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                            <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('routing_id','=',routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
+                            <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                    domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+                            <field name="date_planned" widget="date"/>
+                            <field name="account_analytic_id" colspan="2" groups="purchase.group_analytic_accounting" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+                        </group>
                     </group>
-                </xpath>
-            </field>
-        </record>
+                    <notebook>
+                    <page string="Invoices and Incoming Shipments">
+                        <field name="invoice_lines"/>
+                        <field name="move_ids"/>
+                    </page>
+                    </notebook>
+                </sheet>
+            </xpath>
 
-        <!-- Product Category -->
-        <record id="view_category_property_form" model="ir.ui.view">
-            <field name="name">product.category.stock.property.form.inherit</field>
-            <field name="model">product.category</field>
-            <field name="inherit_id" ref="stock_account.view_category_property_form"/>
-            <field name="arch" type="xml">
-                <data>
-                    <group name="account_stock_property" position="attributes">
-                        <attribute name="invisible">1</attribute>
+            <xpath expr="//field[@name='date_planned']" position='after'>
+                <field name="dest_employee" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add location to material subrouting -->
+    <record id="account_routing_subrouting_form" model="ir.ui.view">
+        <field name="name">account.routing.subrouting.form</field>
+        <field name="model">account.routing.subrouting</field>
+        <field name="inherit_id" ref="account_routing.account_routing_subrouting_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//group[@name="ars_view"]' position='after'>
+                <group attrs="{'invisible':[('material_type','=',False)]}">
+                    <field name="material_type" invisible="1"/>
+                    <field name="location_id" attrs="{'required':[('material_type','=',True)]}"
+                            options="{'create': false, 'create_edit': false}" />
+                </group>
+                <group>
+                    <field name="labor_oh_rate"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+    <record id="account_analytic_account_subroute_form" model="ir.ui.view">
+        <field name="name">account.analytic.account.subroute.form</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="account_routing.account_analytic_account_subroute_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//field[@name="account_routing_subrouting_ids"]/form/group' position='inside'>
+                <group attrs="{'invisible':[('material_type','=',False)]}">
+                    <field name="material_type" invisible="1"/>
+                    <field name="location_id" attrs="{'required':[('material_type','=',True)]}"
+                            options="{'create': false, 'create_edit': false}" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Category -->
+    <record id="view_category_property_form" model="ir.ui.view">
+        <field name="name">product.category.stock.property.form.inherit</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="stock_account.view_category_property_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <group name="account_stock_property" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </group>
+            </data>
+        </field>
+    </record>
+
+    <!-- Product Template -->
+    <record id="view_template_form" model="ir.ui.view">
+        <field name="name">product.template.form.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.view_template_property_form"/>
+        <field name="arch" type="xml">
+
+            <field name="route_ids" position="after">
+                <field name="can_buy" invisible="True"/>
+            </field>
+            <field name="active" position="after">
+                <field name="serial_prefix"/>
+            </field>
+            <group name="procurement" position="inside">
+                <group string="Manufacturer Info" attrs="{'invisible': [('can_buy', '!=', True )] }">
+                    <field name="mfr1_name"/>
+                    <field name="mfr1_partnum"/>
+                    <field name="mfr2_name"/>
+                    <field name="mfr2_partnum"/>
+                    <field name="mfr3_name"/>
+                    <field name="mfr3_partnum"/>
+                </group>
+            </group>
+            <group name="lot" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </group>
+
+            <button name="%(stock.action_view_change_product_quantity)d" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </button>
+        </field>
+    </record>
+
+    <!-- The time entry detail form, readonly -->
+    <record id="hr_timekeeping_line_form" model="ir.ui.view">
+        <field name="name">hr.timekeeping.line.form</field>
+        <field name="model">hr.timekeeping.line</field>
+        <field name="inherit_id" ref="imsar_timekeeping.hr_timekeeping_line_form"/>
+        <field name="arch" type="xml">
+            <field name="serial_reference" position="replace">
+                <field name="mfg_order_id" readonly="1"/>
+                <field name="serial_ids" widget="many2many_tags" readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- The time entry detail form, editable -->
+    <record id="hr_timekeeping_line_form_editable" model="ir.ui.view">
+        <field name="name">hr.timekeeping.line.form</field>
+        <field name="model">hr.timekeeping.line</field>
+        <field name="inherit_id" ref="imsar_timekeeping.hr_timekeeping_line_form_editable"/>
+        <field name="arch" type="xml">
+            <field name="serial_reference" position="replace">
+                <field name="mfg_order_id" attrs="{'readonly':[('sheet_state','!=','draft')]}"
+                        domain="[('active_on_date','=',date)]" options="{'create': false, 'create_edit': false}"/>
+                <field name="serial_ids" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('require_serial','=',True)]}"
+                        widget="many2many_tags" domain="[('active_on_date','=',date)]" options="{'create': false, 'create_edit': false}"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Manually review timesheet lines with mfg serials -->
+    <record id="view_tkline_review_form" model="ir.ui.view">
+        <field name="name">hr.timekeeping.line.review.form</field>
+        <field name="model">hr.timekeeping.line.review</field>
+        <field name="arch" type="xml">
+            <form string="Timesheet Line Review">
+                <group>
+                    <group>
+                        <field name="employee_id" readonly="1"/>
+                        <field name="sheet_id" readonly="1"/>
+                        <field name="date" readonly="1"/>
+                        <field name="description" readonly="1"/>
+                        <field name="tkline_task" readonly="1"/>
                     </group>
-                </data>
-            </field>
-        </record>
-
-        <!-- Product Template -->
-        <record id="view_template_form" model="ir.ui.view">
-            <field name="name">product.template.form.inherit</field>
-            <field name="model">product.template</field>
-            <field name="inherit_id" ref="stock.view_template_property_form"/>
-            <field name="arch" type="xml">
-
-                <field name="route_ids" position="after">
-                    <field name="can_buy" invisible="True"/>
-                </field>
-
-                <group name="procurement" position="inside">
-                    <group string="Manufacturer Info" attrs="{'invisible': [('can_buy', '!=', True )] }">
-                        <field name="mfr1_name"/>
-                        <field name="mfr1_partnum"/>
-                        <field name="mfr2_name"/>
-                        <field name="mfr2_partnum"/>
-                        <field name="mfr3_name"/>
-                        <field name="mfr3_partnum"/>
+                    <group>
+                        <field name="unit_amount" readonly="1"/>
+                        <field name="full_amount" readonly="1"/>
+                        <field name="oh_amount" readonly="1"/>
+                        <field name="total_amount" readonly="1"/>
+                        <field name="serial_ids" readonly="1" widget="many2many_tags"/>
                     </group>
                 </group>
+                <group>
+                    <field name="quant_ids" readonly="1">
+                        <tree>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <field name="qty" string="Qty"/>
+                            <field name="task_name"/>
+                            <field name="location_id" invisible="1"/>
+                            <field name="inventory_value"/>
+                        </tree>
+                    </field>
+                </group>
+                <group>
+                    <field name="account_move_lines" readonly="1">
+                        <tree>
+                            <field name="account_id"/>
+                            <field name="analytic_account_id"/>
+                            <field name="debit"/>
+                            <field name="credit"/>
+                        </tree>
+                    </field>
+                </group>
+                <group>
+                    <field name="ref"/>
+                    <field name="line_ids">
+                        <tree editable="bottom" colors="blue:line_type=='Debit';green:line_type=='Credit';">
+                            <field name="name"/>
+                            <field name="line_type"/>
+                            <field name="amount"/>
+                            <field name="account_id"/>
+                            <field name="analytic_id"/>
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+                    <button string="Submit" name="submit" type="object" class="oe_highlight"/>
+                    or
+                    <button string="Cancel" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="view_tkline_review_tree" model="ir.ui.view">
+        <field name="name">hr.timekeeping.line.tree</field>
+        <field name="model">hr.timekeeping.line</field>
+        <field eval="8" name="priority"/>
+        <field name="arch" type="xml">
+            <tree string="Timesheet Lines">
+                <field name="employee_id"/>
+                <field name="name"/>
+                <field name="task_shortname"/>
+                <field name="mfg_order_id"/>
+                <field name="serial_ids"/>
+                <field name="sheet_id"/>
+                <button name="button_manual_accounting" string="Review" type="object" groups="account.group_account_user"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_tkline_review" model="ir.actions.act_window">
+        <field name="name">Timesheet Line Review</field>
+        <field name="res_model">hr.timekeeping.line</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_tkline_review_tree"/>
+        <field name="domain">[('accounting_review_flag','=',True)]</field>
+    </record>
+    <menuitem id="menu_action_tkline_review" action="action_tkline_review" parent="stock.menu_stock_warehouse_mgmt" groups="account.group_account_user" sequence="21"/>
 
-                <button name="%(stock.action_view_change_product_quantity)d" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </button>
+    <!-- product category -->
+    <record id="product_category_form_view_inherit" model="ir.ui.view">
+        <field name="name">product.category.form</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="stock.product_category_form_view_inherit"/>
+        <field name="arch" type="xml">
+            <field name="removal_strategy_id" position="after">
+                <field name="default_location" />
             </field>
-        </record>
+        </field>
+    </record>
 
 
-    </data>
+</data>
 </openerp>

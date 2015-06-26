@@ -615,7 +615,7 @@ class hr_timekeeping_line(models.Model):
     uid_is_user_id = fields.Boolean(compute='_computed_fields', readonly=True)
     name = fields.Char('Description')
     type = fields.Selection([('Regular','Regular'),('Correction','Correction'),], 'Line Entry Type', default="Regular", required=True)
-    unit_amount = fields.Float('Quantity', help='Specifies the amount of quantity to count.')
+    unit_amount = fields.Float('Time')
     amount = fields.Float('Amount', required=True, default=0.0, digits=dp.get_precision('Account'))
     premium_amount = fields.Float(string='Premium Amount', required=True, default=0.0, help='The additional amount based on work type, like overtime', digits=dp.get_precision('Account'))
     full_amount = fields.Float(string='Final Amount', digits=dp.get_precision('Account'), compute='_computed_fields', readonly=True, store=True)

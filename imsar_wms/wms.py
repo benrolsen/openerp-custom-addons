@@ -1,14 +1,14 @@
-from datetime import date
+from datetime import date, datetime
 from openerp import models, fields, api, _
 import openerp.addons.decimal_precision as dp
 from openerp.exceptions import Warning
+from openerp import SUPERUSER_ID
 
 
 class stock_move(models.Model):
     _inherit = 'stock.move'
 
     dest_employee = fields.Many2one('hr.employee', 'Deliver to', copy=True)
-    # source is empty when creating a stock move from a PO
     source_routing_id = fields.Many2one('account.routing', 'Source Category', required=True, copy=True)
     source_routing_line_id = fields.Many2one('account.routing.line', 'Source Type', required=True, copy=True)
     source_routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Source Identifier', required=True, copy=True)
@@ -18,6 +18,9 @@ class stock_move(models.Model):
     source_task_name = fields.Char('Source Task', compute='_compute_names')
     target_task_name = fields.Char('Target Task', compute='_compute_names')
     picking_is_incoming_type = fields.Boolean(related='picking_id.is_incoming_type')
+    accounting_review_flag = fields.Boolean('Needs manual accounting review', default=False)
+    mfg_order_id = fields.Many2one('mrp.production', 'Created by MFG Order', select=True, copy=False)
+    kitting_production_id = fields.Many2one('mrp.production', 'Kitted to Production Order', select=True)
 
     @api.one
     def _compute_names(self):
@@ -50,6 +53,20 @@ class stock_move(models.Model):
             'move_id': move.id,
         }
 
+    @api.onchange('raw_material_production_id')
+    def onchange_raw_material(self):
+        if self.raw_material_production_id:
+            if self.raw_material_production_id.routing_subrouting_id.location_id.usage == 'internal':
+                # direct manufacturing
+                self.target_routing_id = self.env.user.company_id.mfg_task_code.routing_id.id
+                self.target_routing_subrouting_id = self.env.user.company_id.mfg_task_code.id
+            else:
+                # direct expenses like Contracts
+                self.target_routing_id = self.raw_material_production_id.mat_routing_id.id
+                self.target_routing_subrouting_id = self.raw_material_production_id.routing_subrouting_id.id
+        else:
+            self.target_routing_id = None
+
     @api.onchange('source_routing_id')
     def onchange_source_route(self):
         self.source_routing_line_id = ''
@@ -78,11 +95,43 @@ class stock_move(models.Model):
 
     @api.onchange('target_routing_line_id')
     def onchange_target_routing_line(self):
-        self.target_routing_subrouting_id = ''
+        if self.target_routing_subrouting_id and self.target_routing_subrouting_id.routing_line_id != self.target_routing_line_id:
+            self.target_routing_subrouting_id = ''
 
     @api.onchange('target_routing_subrouting_id')
     def onchange_target_subroute(self):
         self.location_dest_id = self.target_routing_subrouting_id.location_id.id
+
+    @api.multi
+    def button_manual_accounting(self):
+        stock_review = self.env['stock.move.review'].create({
+            'move_id': self.id,
+        })
+        view = {
+            'name': _('Stock Move Review'),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'stock.move.review',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'res_id': stock_review.id,
+        }
+        return view
+
+    @api.multi
+    def write(self, vals):
+        super(stock_move, self).write(vals)
+        for move in self:
+            if move.raw_material_production_id and move.location_dest_id.usage not in ['customer','production']:
+                raise Warning("All MFG stock movements must be to external locations, such as production or customer.")
+
+    @api.v7
+    def check_tracking(self, cr, uid, move, lot_id, context=None):
+        # if we already have enough quants assigned, no need to check lot restriction
+        assigned_qty = sum([quant.qty for quant in move.reserved_quant_ids])
+        if assigned_qty < move.product_uom_qty:
+            self.check_tracking_product(cr, uid, move.product_id, lot_id, move.location_id, move.location_dest_id, context=context)
 
 
 class stock_quant(models.Model):
@@ -92,21 +141,39 @@ class stock_quant(models.Model):
     routing_id = fields.Many2one('account.routing', 'Category', )
     routing_line_id = fields.Many2one('account.routing.line', 'Type', )
     routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', )
-    cost = fields.Float('Unit Cost', related='material_cost', store=True)
+    task_name = fields.Char('Task', compute='_computed_fields')
     material_cost = fields.Float('Material Unit Cost')
-    labor_cost = fields.Float('Labor Cost')
-    overhead_cost = fields.Float('Overhead Cost')
-    purchase_order_id = fields.Many2one('purchase.order', 'Purchase Order', copy=True, readonly=True)
-    mfg_order_id = fields.Many2one('mrp.production', 'Manufacturing Order', copy=True, readonly=True)
+    labor_cost = fields.Float('Labor Unit Cost')
+    overhead_cost = fields.Float('Overhead Unit Cost')
+    cost = fields.Float('Full Unit Cost', compute='_compute_costs', inverse='_set_cost', store=True)
+    total_material_cost = fields.Float('Total Material Cost', compute='_compute_costs')
+    total_labor_cost = fields.Float('Total Labor Cost', compute='_compute_costs')
+    total_overhead_cost = fields.Float('Total OH Cost', compute='_compute_costs')
+    inventory_value = fields.Float('Inventory Value', compute='_compute_costs', store=True)
+    purchase_order_id = fields.Many2one('purchase.order', 'From Purchase Order', copy=True, readonly=True)
+    mfg_order_id = fields.Many2one('mrp.production', 'From Manufacturing Order', copy=True, readonly=True)
+
+    @api.one
+    @api.depends('material_cost', 'labor_cost', 'overhead_cost', 'qty')
+    def _compute_costs(self):
+        self.cost = self.material_cost + self.overhead_cost + self.labor_cost
+        self.inventory_value = self.cost * self.qty
+        self.total_material_cost = self.material_cost * self.qty
+        self.total_labor_cost = self.labor_cost * self.qty
+        self.total_overhead_cost = self.overhead_cost * self.qty
+
+    @api.one
+    @api.depends('routing_id', 'routing_line_id', 'routing_subrouting_id')
+    def _computed_fields(self):
+        self.task_name = "{}/{}/{}".format(self.routing_id.name, self.routing_line_id.name, self.routing_subrouting_id.name)
+
+    @api.one
+    def _set_cost(self):
+        self.material_cost = self.cost
 
     @api.v7
     def _get_inventory_value(self, cr, uid, quant, context=None):
-        # labor costs are applied per quant, not per unit
-        return ((quant.material_cost + quant.overhead_cost) * quant.qty) + quant.labor_cost
-
-    @api.cr_uid_ids_context
-    def _price_update(self, cr, uid, quant_ids, newprice, context=None):
-        pass
+        return (quant.material_cost * quant.qty) + (quant.overhead_cost * quant.qty) + (quant.labor_cost * quant.qty)
 
     @api.model
     def _account_entry_move(self, quants, move):
@@ -114,30 +181,98 @@ class stock_quant(models.Model):
         # Note: this does not call super
         if move.product_id.valuation != 'real_time':
             return False
-        for q in quants:
-            if q.owner_id:
-                return False
-            if q.qty <= 0:
-                return False
 
+        source_loc_usage = move.location_id.usage
+        dest_loc_usage = move.location_dest_id.usage
+        if source_loc_usage != 'internal' and dest_loc_usage != 'internal':
+            # if source and destination both aren't internal, don't make accounting entries
+            return False
         # TODO address the refund case like the original function
-        source_account = move.source_routing_subrouting_id.account_id.id
-        target_account = move.target_routing_subrouting_id.account_id.id
+        debit_account = move.target_routing_subrouting_id.account_id.id
+        debit_analytic = move.target_routing_subrouting_id.account_analytic_id.id
+        credit_account = move.source_routing_subrouting_id.account_id.id
+        credit_analytic = move.source_routing_subrouting_id.account_analytic_id.id
+        if debit_account == credit_account:
+            # don't make entries if the debit and credit account are the same (some processes do this out of necessity)
+            return False
         journal_id = self.env.user.company_id.stock_journal.id
-        self._create_account_move_line(quants, move, source_account, target_account, journal_id)
+        picking_mat_debit = self.env.user.company_id.pnl_mat_debit.id or None
+        picking_mat_credit = self.env.user.company_id.pnl_mat_credit.id or None
+        picking_labor_debit = self.env.user.company_id.pnl_labor_debit.id or None
+        picking_labor_credit = self.env.user.company_id.pnl_labor_credit.id or None
+        move_lines = []
+        for quant in quants:
+            period = self.env['account.period'].find(move.date)[0]
+            full_cost = (quant.material_cost * quant.qty) + (quant.labor_cost * quant.qty) + (quant.overhead_cost * quant.qty)
+            mat_cost = quant.material_cost * quant.qty
+            labor_cost = quant.labor_cost * quant.qty
+            # items can't have negative value, right?
+            if full_cost <= 0:
+                continue
+            move_lines.append(self._make_debit_move_line(move, full_cost, debit_account, debit_analytic, quantity=quant.qty))
+            move_lines.append(self._make_credit_move_line(move, full_cost, credit_account, credit_analytic, quantity=quant.qty))
+            if source_loc_usage == 'internal' and dest_loc_usage != 'internal':
+                # items leaving the company
+                if move.product_id.categ_id.id in self.env.user.company_id.rm_product_categories.ids:
+                    # we can automate accounting for raw materials leaving the company
+                    if mat_cost > 0:
+                        move_lines.append(self._make_debit_move_line(move, mat_cost, picking_mat_credit, quantity=quant.qty))
+                        move_lines.append(self._make_credit_move_line(move, mat_cost, picking_mat_debit, quantity=quant.qty))
+                    entry = self.env['account.move'].create({'journal_id': journal_id, 'line_id': move_lines, 'period_id': period.id, 'date': move.date, 'ref': move.picking_id.name},)
+                    entry.post()
+                else:
+                    # anything other than raw materials will need someone to look at it
+                    move.write({'accounting_review_flag': True})
+            elif source_loc_usage != 'internal' and dest_loc_usage == 'internal':
+                # Make receiving entries
+                if mat_cost > 0:
+                    move_lines.append(self._make_debit_move_line(move, mat_cost, picking_mat_debit, quantity=quant.qty))
+                    move_lines.append(self._make_credit_move_line(move, mat_cost, picking_mat_credit, quantity=quant.qty))
+                if labor_cost > 0:
+                    move_lines.append(self._make_debit_move_line(move, labor_cost, picking_labor_debit, quantity=quant.qty))
+                    move_lines.append(self._make_credit_move_line(move, labor_cost, picking_labor_credit, quantity=quant.qty))
+                entry = self.env['account.move'].create({'journal_id': journal_id, 'line_id': move_lines, 'period_id': period.id, 'date': move.date, 'ref': move.picking_id.name},)
+                entry.post()
+            elif source_loc_usage == 'internal' and dest_loc_usage == 'internal':
+                # internal moves only require the regular debit/credit
+                entry = self.env['account.move'].create({'journal_id': journal_id, 'line_id': move_lines, 'period_id': period.id, 'date': move.date, 'ref': 'MFG: ' + move.product_id.name},)
+                entry.post()
 
-    @api.v7
-    def _prepare_account_move_line(self, cr, uid, move, qty, cost, credit_account_id, debit_account_id, context=None):
-        # TODO address the refund case like the original function
-        source_analytic = move.source_routing_subrouting_id.account_analytic_id.id
-        target_analytic = move.target_routing_subrouting_id.account_analytic_id.id
-        lines = super(stock_quant, self)._prepare_account_move_line(cr, uid, move, qty, cost, credit_account_id, debit_account_id, context)
-        debit_tuple, credit_tuple = lines
-        debit_line_vals = debit_tuple[2]
-        credit_line_vals = credit_tuple[2]
-        credit_line_vals['analytic_account_id'] = source_analytic
-        debit_line_vals['analytic_account_id'] = target_analytic
-        return [(0, 0, debit_line_vals), (0, 0, credit_line_vals)]
+    @api.model
+    def _make_debit_move_line(self, move, amount, debit_account, debit_analytic=None, quantity=None):
+        partner_id = move.picking_id.partner_id.commercial_partner_id.id or False
+        debit_line_vals = {
+                    'name': move.name,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_id.uom_id.id,
+                    'date': move.date,
+                    'partner_id': partner_id,
+                    'debit': amount > 0 and amount or 0,
+                    'credit': amount < 0 and -amount or 0,
+                    'account_id': debit_account,
+                    'analytic_account_id': debit_analytic,
+        }
+        if quantity:
+            debit_line_vals.update({'quantity': quantity,})
+        return (0, 0, debit_line_vals)
+
+    @api.model
+    def _make_credit_move_line(self, move, amount, credit_account, credit_analytic=None, quantity=None):
+        partner_id = move.picking_id.partner_id.commercial_partner_id.id or False
+        credit_line_vals = {
+                    'name': move.name,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_id.uom_id.id,
+                    'date': move.date,
+                    'partner_id': partner_id,
+                    'debit': amount < 0 and -amount or 0,
+                    'credit': amount > 0 and amount or 0,
+                    'account_id': credit_account,
+                    'analytic_account_id': credit_analytic,
+        }
+        if quantity:
+            credit_line_vals.update({'quantity': quantity,})
+        return (0, 0, credit_line_vals)
 
     @api.v7
     def _quant_create(self, cr, uid, qty, move, lot_id=False, owner_id=False, src_package_id=False, dest_package_id=False,
@@ -148,40 +283,46 @@ class stock_quant(models.Model):
         vals = dict()
         if move.purchase_line_id:
             vals.update({'purchase_order_id': move.purchase_line_id.order_id.id})
-        if move.production_id:
-            vals.update({'mfg_order_id': move.production_id.id})
+        if move.mfg_order_id:
+            vals.update({'mfg_order_id': move.mfg_order_id.id})
         vals.update({'material_cost': move.price_unit})
         vals.update({'routing_id': move.target_routing_id.id})
         vals.update({'routing_line_id': move.target_routing_line_id.id})
         vals.update({'routing_subrouting_id': move.target_routing_subrouting_id.id})
         quant.sudo().write(vals)
+        return quant
+
+    @api.v7
+    def move_quants_write(self, cr, uid, quants, move, location_dest_id, dest_package_id, context=None):
+        super(stock_quant, self).move_quants_write(cr, uid, quants, move, location_dest_id, dest_package_id, context)
+        vals = {'routing_id': move.target_routing_id.id,
+                'routing_line_id': move.target_routing_line_id.id,
+                'routing_subrouting_id': move.target_routing_subrouting_id.id}
+        self.write(cr, SUPERUSER_ID, [q.id for q in quants], vals, context=context)
 
     @api.multi
-    def button_move_mat_cost(self):
-        vals = {
-            'quant_id': self.id,
-            'cost_type': 'material',
-        }
-        move_cost = self.env['stock.quant.move_cost'].create(vals)
-        view = {
-            'name': _('Move Cost'),
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'stock.quant.move_cost',
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-            'res_id': move_cost.id,
-        }
-        return view
+    def add_material_cost(self, amount):
+        if not amount:
+            return None
+        unit_cost = amount / self.qty
+        self.write({'material_cost': self.material_cost + unit_cost})
+        self.lot_id.write({'base_cost': self.lot_id.base_cost + unit_cost})
 
     @api.multi
-    def button_move_labor_cost(self):
-        print('nothing')
+    def add_labor_cost(self, amount):
+        if not amount:
+            return None
+        unit_cost = amount / self.qty
+        self.write({'labor_cost': self.labor_cost + unit_cost})
+        self.lot_id.write({'base_cost': self.lot_id.base_cost + unit_cost})
 
     @api.multi
-    def button_move_oh_cost(self):
-        print('nothing')
+    def add_labor_oh_cost(self, amount):
+        if not amount:
+            return None
+        unit_cost = amount / self.qty
+        self.write({'overhead_cost': self.overhead_cost + unit_cost})
+        self.lot_id.write({'base_cost': self.lot_id.base_cost + unit_cost})
 
 
 class stock_picking(models.Model):
@@ -189,7 +330,7 @@ class stock_picking(models.Model):
     _description = "Picking List"
     _order = "priority desc, date desc, id desc"
 
-    is_incoming_type = fields.Boolean('Is Internal', compute='_check_type')
+    is_incoming_type = fields.Boolean('Is Incoming', compute='_check_type')
     do_recalc_lot_cost = fields.Boolean('Need to recompute lot base cost')
 
     @api.one
@@ -208,7 +349,8 @@ class stock_picking(models.Model):
         if type in ('in_invoice', 'in_refund'):
             for invoice in self.env['account.invoice'].browse(res):
                 for line in invoice.invoice_line:
-                    if line.product_id and not line.product_id.type == 'service':
+                    if line.product_id and not line.product_id.type == 'service' and \
+                            line.routing_subrouting_id.location_id.usage == 'internal':
                         # use warehouse settings for interim receiving of physical products
                         account_id = self.env.user.company_id.interim_receiving.account_id.id
                         analytic_id = self.env.user.company_id.interim_receiving.account_analytic_id.id
@@ -262,16 +404,12 @@ class stock_picking(models.Model):
         if picking.is_incoming_type:
             # automatically create lot/serials to receive into
             for line in picking.pack_operation_ids:
+                move_id = line.linked_move_operation_ids[0].move_id
                 vals = {
-                    'name': "{}-{}".format(picking.origin,line.linked_move_operation_ids.move_id.id),
                     'product_id': line.product_id.id,
-                    'base_cost': line.linked_move_operation_ids.move_id.price_unit,
+                    'base_cost': move_id.price_unit,
                 }
-                lot_id = self.pool.get('stock.production.lot').search(cr, uid, [('name','=',vals['name'])])
-                if not lot_id:
-                    lot_id = self.pool.get('stock.production.lot').create(cr, uid, vals)
-                else:
-                    lot_id = lot_id[0]
+                lot_id = self.pool.get('stock.production.lot').create(cr, uid, vals)
                 line.write({'lot_id': lot_id})
         return super(stock_picking, self).do_enter_transfer_details(cr, uid, picking_id)
 
@@ -306,11 +444,45 @@ class stock_picking(models.Model):
 class stock_production_lot(models.Model):
     _inherit = 'stock.production.lot'
 
+    serial_seq = fields.Char('Serial Sequence', default=lambda self: self._serial_seq(), required=True)
+    name = fields.Char('Serial', compute='_computed_fields', store=True, index=True)
     base_cost = fields.Float('Base unit cost', default=0.0, digits=(1,4), required=True)
+    production_id = fields.Many2one('mrp.production', "MFG Order")
+    active_on_date = fields.Boolean('Active On Date', compute='_computed_fields', search='_search_active_date')
+
+    @api.depends('serial_seq','product_id')
+    def _computed_fields(self):
+        self.active_on_date = True
+        self.name = "{}{}".format(self.product_id.product_tmpl_id.serial_prefix, self.serial_seq)
+
+    def _search_active_date(self, operator, value):
+        try:
+            # the strptime just validates the date in the try/catch
+            ts_date = datetime.strptime(value, '%Y-%m-%d')
+            cr = self._cr
+            cr.execute("""select id from mrp_production where tsrange(date_start::date, date_finished::date, '[]') @> '{}'::timestamp
+                            and not state = ANY(array['draft','confirmed','ready','in_production','cancel']);""".format(value))
+            lines = [row[0] for row in cr.fetchall()]
+            cr.execute("""select id from mrp_production where date_start::date <= '{}'::timestamp
+                            and state = ANY(array['confirmed','ready','in_production']) ;""".format(value))
+            lines += [row[0] for row in cr.fetchall()]
+            mfg_orders = self.env['mrp.production'].browse(lines)
+            res = []
+            for mfg_order in mfg_orders:
+                res += mfg_order.production_serials.ids
+            return [('id','in',res)]
+        except TypeError:
+            return [('id','in',[])]
+
+    def _serial_seq(self):
+        return self.env['ir.sequence'].next_by_code('stock.lot.serial')
 
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'For IMSAR internal tracking, every serial/lot number must be unique!'),
     ]
+    _defaults = {
+        'name': '',
+    }
 
 
 class stock_inventory(models.Model):
@@ -471,6 +643,7 @@ class stock_change_product_qty(models.TransientModel):
             inventory_line_obj.create(cr , uid, line_data, context=context)
             inventory_obj.action_done(cr, uid, [inventory_id], context=context)
         return {}
+
     @api.onchange('routing_id')
     def onchange_routing_id(self):
         self.routing_line_id = ''
@@ -487,129 +660,6 @@ class stock_change_product_qty(models.TransientModel):
     @api.onchange('routing_subrouting_id')
     def onchange_routing_subrouting_id(self):
         self.location_id = self.routing_subrouting_id.location_id.id
-
-
-class purchase_order(models.Model):
-    _inherit = 'purchase.order'
-
-    @api.model
-    def view_init(self, fields_list):
-        # this makes sure that the current user has an account.routing.purchase.preferences line
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if not pref:
-            pref = self.env['account.routing.purchase.preferences'].create({'user_id':self._uid})
-
-    @api.model
-    def _prepare_inv_line(self, account_id, order_line):
-        """
-        This function does not call super and invalidates the work done by _choose_account_from_po_line
-        from purchase/purchase.py and account_anglo_saxon/purchase.py, in order to choose the
-        correct account and analytic.
-        If there's a non-service product, put the debit (expense) into
-        the interim receiving account/analytic, and let the stock.move make a balancing credit in both and
-        put the debit in the actual asset/expense account according to task code.
-        If there's no product, or it's a service product, there will be no stock.move, so the invoice
-        should pick the asset/expense account/analytic directly.
-        Also note that this function side-steps tax fiscal position, at least until we find
-        a need for it.
-        """
-        if order_line.product_id and not order_line.product_id.type == 'service':
-            # use warehouse settings for interim receiving of physical products
-            account_id = self.env.user.company_id.interim_receiving.account_id.id
-            analytic_id = self.env.user.company_id.interim_receiving.account_analytic_id.id
-            if not account_id or not analytic_id:
-                raise Warning(_('Error!'), _('You must define an interim receiving task code in the Warehouse settings.'))
-        else:
-            account_id = order_line.routing_subrouting_id.account_id.id
-            analytic_id = order_line.routing_subrouting_id.account_analytic_id.id
-        return {
-            'name': order_line.name,
-            'account_id': account_id,
-            'account_analytic_id': analytic_id,
-            'price_unit': order_line.price_unit or 0.0,
-            'quantity': order_line.product_qty,
-            'product_id': order_line.product_id.id or False,
-            'uos_id': order_line.product_uom.id or False,
-            'invoice_line_tax_id': [(6, 0, [x.id for x in order_line.taxes_id])],
-            'purchase_line_id': order_line.id,
-            'routing_id': order_line.routing_id.id,
-            'routing_line_id': order_line.routing_subrouting_id.id,
-            'routing_subrouting_id': order_line.routing_subrouting_id.id,
-        }
-
-    @api.model
-    def _prepare_order_line_move(self, order, order_line, picking_id, group_id):
-    # def _prepare_order_line_move(self, cr, uid, order, order_line, picking_id, group_id, context=None):
-        res = super(purchase_order,self)._prepare_order_line_move(order, order_line, picking_id, group_id)
-        for vals in res:
-            vals['dest_employee'] = order_line.dest_employee.id
-            vals['source_routing_id'] = self.env.user.company_id.interim_receiving.routing_id.id
-            vals['source_routing_line_id'] = self.env.user.company_id.interim_receiving.routing_line_id.id
-            vals['source_routing_subrouting_id'] = self.env.user.company_id.interim_receiving.id
-            vals['target_routing_id'] = order_line.routing_id.id
-            vals['target_routing_line_id'] = order_line.routing_line_id.id
-            vals['target_routing_subrouting_id'] = order_line.routing_subrouting_id.id
-        return res
-
-
-class purchase_order_line(models.Model):
-    _inherit = 'purchase.order.line'
-
-    routing_id = fields.Many2one('account.routing', 'Category', required=True, default=lambda self: self._get_routing_id())
-    routing_line_id = fields.Many2one('account.routing.line', 'Type', required=True, default=lambda self: self._get_routing_line_id())
-    routing_subrouting_id = fields.Many2one('account.routing.subrouting', 'Identifier', required=True, default=lambda self: self._get_routing_subrouting_id())
-    shipping_method = fields.Char('Shipping Method')
-    dest_employee = fields.Many2one('hr.employee', 'Deliver to')
-
-    @api.onchange('routing_id')
-    def onchange_routing_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_id:
-            pref.write({'routing_id': self.routing_id.id})
-        if self.routing_line_id not in self.routing_id.routing_lines:
-            self.routing_line_id = ''
-
-    @api.onchange('routing_line_id')
-    def onchange_routing_line_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_line_id:
-            pref.write({'routing_line_id': self.routing_line_id.id})
-        if self.routing_subrouting_id not in self.routing_line_id.subrouting_ids:
-            self.routing_subrouting_id = ''
-
-    @api.onchange('routing_subrouting_id')
-    def onchange_routing_subrouting_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        if self.routing_subrouting_id:
-            pref.write({'routing_subrouting_id': self.routing_subrouting_id.id})
-
-    @api.model
-    def _get_routing_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_id.id
-
-    @api.model
-    def _get_routing_line_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_line_id.id
-
-    @api.model
-    def _get_routing_subrouting_id(self):
-        pref = self.env['account.routing.purchase.preferences'].search([('user_id','=',self._uid)])
-        return pref.routing_subrouting_id.id
-
-    @api.v7
-    def onchange_product_id(self, cr, uid, ids, pricelist_id, product_id, qty, uom_id,
-            partner_id, date_order=False, fiscal_position_id=False, date_planned=False,
-            name=False, price_unit=False, state='draft', context=None):
-        res = super(purchase_order_line, self).onchange_product_id(cr, uid, ids, pricelist_id, product_id, qty, uom_id,
-            partner_id, date_order, fiscal_position_id, date_planned, name, price_unit, state, context)
-        product = self.pool.get('product.product').browse(cr, uid, product_id)
-        price = price_unit
-        if not price_unit:
-            price = product.standard_price
-        res['value'].update({'price_unit': price,})
-        return res
 
 
 class purchase_request(models.Model):
@@ -788,7 +838,7 @@ class quant_move_cost(models.TransientModel):
         if self.cost_type == 'labor':
             self.quant_id.labor_cost -= self.amount
         if self.cost_type == 'overhead':
-            self.quant_id.material_cost -= self.amount
+            self.quant_id.overhead_cost -= self.amount
         move_lines = list()
         # for positive amount, debit the target account, credit the inventory account
         debit_line = {
@@ -817,3 +867,210 @@ class quant_move_cost(models.TransientModel):
         }
         move = self.env['account.move'].with_context(self._context).create(move_vals)
         move.post()
+
+
+class stock_move_review(models.TransientModel):
+    _name = "stock.move.review"
+    _description = "Wizard to manually create accounting entries for stock moves"
+
+    move_id = fields.Many2one('stock.move', 'Stock move to review')
+    name = fields.Char('Description', related='move_id.name')
+    source_task_name = fields.Char('Source Task', related='move_id.source_task_name')
+    target_task_name = fields.Char('Target Task', related='move_id.target_task_name')
+    quant_ids = fields.Many2many('stock.quant', 'stock_quant_move_rel', 'move_id', 'quant_id', 'Moved Quants', related='move_id.quant_ids')
+    total_material_costs = fields.Float('Total Material Costs', compute='_quant_costs')
+    total_labor_costs = fields.Float('Total Labor Costs', compute='_quant_costs')
+    total_oh_costs = fields.Float('Total Overhead Costs', compute='_quant_costs')
+    total_costs = fields.Float('Total Costs', compute='_quant_costs')
+    preconf_type = fields.Selection([('Overhead','Overhead'), ('Contract','Contract'), ('Sales','Sales'), ('Manufacturing','Direct Manufacturing')])
+    line_ids = fields.One2many('stock.move.review.line', 'review_id', "Accounting Lines")
+    total_credits = fields.Float('Total Credits', compute='_line_stats', digits=(2,2))
+    total_debits = fields.Float('Total Debits', compute='_line_stats', digits=(2,2))
+    production_id = fields.Many2one('mrp.production', compute='_consumed_for_production_id')
+    add_production_material_cost = fields.Float('Add to material costs of MFG Order produced products')
+    add_production_labor_cost = fields.Float('Add to labor costs of MFG Order produced products')
+    add_production_oh_cost = fields.Float('Add to overhead costs of MFG Order produced products')
+
+    @api.one
+    def _quant_costs(self):
+        mat_costs = 0.0
+        labor_costs = 0.0
+        oh_costs = 0.0
+        for q in self.quant_ids:
+            mat_costs += (q.material_cost * q.qty)
+            labor_costs += (q.labor_cost * q.qty)
+            oh_costs += (q.overhead_cost * q.qty)
+        self.total_material_costs = mat_costs
+        self.total_labor_costs = labor_costs
+        self.total_oh_costs = oh_costs
+        self.total_costs = mat_costs + labor_costs + oh_costs
+
+    @api.one
+    def _consumed_for_production_id(self):
+        if self.move_id.raw_material_production_id:
+            self.production_id = self.move_id.raw_material_production_id.id
+        elif self.move_id.kitting_production_id:
+            self.production_id = self.move_id.kitting_production_id.id
+        else:
+            self.production_id = None
+
+    @api.one
+    @api.depends('line_ids')
+    def _line_stats(self):
+        total_credits = 0.0
+        total_debits = 0.0
+        for line in self.line_ids:
+            if line.line_type == 'Credit':
+                total_credits += line.amount
+            if line.line_type == 'Debit':
+                total_debits += line.amount
+        self.total_credits = total_credits
+        self.total_debits = total_debits
+
+    @api.onchange('preconf_type')
+    def onchange_preconf_type(self):
+        lines = []
+        # the primary credit line is always the same
+        credit = {
+            'line_type': 'Credit',
+            'amount': self.total_costs,
+            'account_id': self.move_id.source_routing_subrouting_id.account_id.id,
+            'analytic_id': self.move_id.source_routing_subrouting_id.account_analytic_id.id,
+        }
+        lines.append((0,0,credit))
+        if self.preconf_type in ('Overhead', 'Contract'):
+            # remove the overhead from "overhead ending inventory"
+            oh_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_oh_costs,
+                'account_id': self.env.user.company_id.pnl_mfg_oh.id,
+            }
+            lines.append((0,0,oh_debit))
+            # expensed items get removed from P&L accounts
+            pnl_mat_credit = {
+                'line_type': 'Credit',
+                'amount': self.total_material_costs,
+                'account_id': self.env.user.company_id.pnl_mat_debit.id,
+            }
+            lines.append((0,0,pnl_mat_credit))
+            pnl_mat_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_material_costs,
+                'account_id': self.env.user.company_id.pnl_mat_credit.id,
+            }
+            lines.append((0,0,pnl_mat_debit))
+            pnl_labor_credit = {
+                'line_type': 'Credit',
+                'amount': self.total_labor_costs,
+                'account_id': self.env.user.company_id.pnl_labor_debit.id,
+            }
+            lines.append((0,0,pnl_labor_credit))
+            pnl_labor_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_labor_costs,
+                'account_id': self.env.user.company_id.pnl_labor_credit.id,
+            }
+            lines.append((0,0,pnl_labor_debit))
+            if self.preconf_type == 'Overhead':
+                # overheads can combine materials and labor
+                expense_debit = {
+                    'line_type': 'Debit',
+                    'amount': self.total_material_costs + self.total_labor_costs,
+                    'account_id': self.move_id.target_routing_subrouting_id.account_id.id,
+                    'analytic_id': self.move_id.target_routing_subrouting_id.account_analytic_id.id,
+                }
+                lines.append((0,0,expense_debit))
+            if self.preconf_type == 'Contract':
+                # contracts have to strip off labor
+                mat_debit = {
+                    'line_type': 'Debit',
+                    'amount': self.total_material_costs,
+                    'account_id': self.move_id.target_routing_subrouting_id.account_id.id,
+                    'analytic_id': self.move_id.target_routing_subrouting_id.account_analytic_id.id,
+                }
+                lines.append((0,0,mat_debit))
+                labor_debit = {
+                    'line_type': 'Debit',
+                    'amount': self.total_labor_costs,
+                    'account_id': self.env.user.company_id.mfg_oh_labor_writeoff.id,
+                }
+                lines.append((0,0,labor_debit))
+        elif self.preconf_type == 'Sales':
+            # remove the overhead from "overhead ending inventory"
+            oh_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_oh_costs,
+                'account_id': self.env.user.company_id.pnl_mfg_oh.id,
+            }
+            lines.append((0,0,oh_debit))
+            # sales are the standard case
+            pnl_mat_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_material_costs,
+                'account_id': self.env.user.company_id.pnl_mat_credit.id,
+            }
+            lines.append((0,0,pnl_mat_debit))
+            pnl_labor_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_labor_costs,
+                'account_id': self.env.user.company_id.pnl_labor_credit.id,
+            }
+            lines.append((0,0,pnl_labor_debit))
+        elif self.preconf_type == 'Manufacturing':
+            # just move the entire cost to manufacturing task code
+            expense_debit = {
+                'line_type': 'Debit',
+                'amount': self.total_costs,
+                'account_id': self.move_id.raw_material_production_id.mat_routing_subrouting_id.account_id.id,
+                'analytic_id': self.move_id.raw_material_production_id.mat_routing_subrouting_id.account_analytic_id.id,
+            }
+            lines.append((0,0,expense_debit))
+        # and then set the lines accordingly
+        self.line_ids = lines
+        self.add_production_material_cost = self.total_material_costs
+        self.add_production_labor_cost = self.total_labor_costs
+        self.add_production_oh_cost = self.total_oh_costs
+
+    @api.multi
+    def submit(self):
+        if self.total_credits != self.total_debits:
+            raise Warning("Credits and Debits are not balanced!")
+        # if move was part of kitting or raw materials for MFG, show option to add cost to produced goods
+        if self.production_id:
+            material_unit_cost = self.add_production_material_cost / len(self.production_id.production_quants)
+            labor_unit_cost = self.add_production_labor_cost / len(self.production_id.production_quants)
+            oh_unit_cost = self.add_production_oh_cost / len(self.production_id.production_quants)
+            for quant in self.production_id.production_quants:
+                quant.add_material_cost(material_unit_cost)
+                quant.add_labor_cost(labor_unit_cost)
+                quant.add_labor_oh_cost(oh_unit_cost)
+        # write journal entries
+        journal_id = self.env.user.company_id.stock_journal.id
+        period = self.env['account.period'].find(self.move_id.date)[0]
+        move_lines = []
+        for line in self.line_ids:
+            if line.line_type == 'Debit' and line.amount > 0.0:
+                move_lines.append(self.env['stock.quant']._make_debit_move_line(self.move_id, line.amount, line.account_id.id, line.analytic_id.id))
+            if line.line_type == 'Credit' and line.amount > 0.0:
+                move_lines.append(self.env['stock.quant']._make_credit_move_line(self.move_id, line.amount, line.account_id.id, line.analytic_id.id))
+        if move_lines:
+            entry = self.env['account.move'].create({'journal_id': journal_id, 'line_id': move_lines, 'period_id': period.id, 'date': self.move_id.date, 'ref': self.move_id.picking_id.name},)
+            entry.post()
+        # mark move as reviewed
+        self.move_id.write({'accounting_review_flag': False})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
+
+
+class stock_move_review_line(models.TransientModel):
+    _name = "stock.move.review.line"
+    _description = "Manual accounting lines for stock move reviews"
+
+    review_id = fields.Many2one('stock.move.review', 'Stock Move Review')
+    line_type = fields.Selection([('Debit','Debit'), ('Credit','Credit')], required=True)
+    amount = fields.Float('Amount', required=True)
+    account_id = fields.Many2one('account.account', 'Account', required=True, domain="[('type','not in',['view','closed'])]")
+    analytic_id = fields.Many2one('account.analytic.account', 'Analytic', domain="[('state','not in',['template','close','cancelled']),('type','not in',['template'])]")
+

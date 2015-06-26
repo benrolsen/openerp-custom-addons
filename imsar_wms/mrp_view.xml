@@ -7,15 +7,34 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
         <field name="arch" type="xml">
+            <!-- Buttons -->
+            <xpath expr="//button[@name='%(mrp.act_mrp_product_produce)d']" position="replace">
+                <button name="action_produce" states="ready,in_production" string="Produce" type="object" class="oe_highlight"/>
+            </xpath>
+            <xpath expr="//button[@name='force_production']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='button_produce']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <!-- MO overview -->
-            <xpath expr="//sheet/group" position="inside">
-                <group>
-                    <field name="account_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('section_ids','in',[%(imsar_mrp.ar_section_mrp)d])]"/>
-                    <field name="routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_id','=',account_routing_id),('section_ids','in',[%(imsar_mrp.ar_section_mrp)d])]"/>
-                    <field name="routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_line_id','=',routing_line_id),('type','!=','view')]" />
+            <xpath expr="//sheet/group/group[2]" position="after">
+                <group string="Material Task Code">
+                    <field name="mat_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(ar_section_mrp)d])]"/>
+                    <field name="mat_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',mat_routing_id),('section_ids','in',[%(ar_section_mrp)d])]"/>
+                    <field name="mat_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',mat_routing_line_id),('type','!=','view')]" />
+                    <field name="production_serials" widget="many2many_tags" invisible="1"/>
+                </group>
+                <group string="Labor Task Code">
+                    <field name="labor_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
+                    <field name="labor_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_id','=',labor_routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
+                    <field name="labor_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                            domain="[('routing_line_id','=',labor_routing_line_id),('type','!=','view')]" />
                 </group>
             </xpath>
             <!-- Products Consumed -->
@@ -23,21 +42,25 @@
                 <page string="Consumed Products">
                     <group col="3">
                         <group string="Products to Consume">
-                            <field name="move_lines" nolabel="1" options="{'reload_on_button': true}">
+                            <field name="to_consume_lines" nolabel="1" options="{'reload_on_button': true}" readonly="0">
                                 <tree colors="blue:state == 'draft';black:state in ('ready','assigned','in_production');gray:state in ('cancel','done');red:state in ('confirmed','waiting')" string="Products to Consume">
                                     <field name="product_id"/>
                                     <field name="product_uom_qty"  string="Quantity"/>
-                                    <field name="restrict_lot_id" context="{'product_id': product_id}" groups="stock.group_production_lot"/>
+                                    <field name="lot_ids" readonly="1"/>
                                     <field name="product_uom" string="Unit of Measure" groups="product.group_uom" invisible="1"/>
                                     <field name="state" invisible="1"/>
+                                    <button name="%(stock.move_scrap)d"
+                                        string="Scrap Products" type="action"
+                                        icon="terp-gtk-jump-to-ltr" context="{'scrap': True}"
+                                        states="draft,waiting,confirmed,assigned"/>
                                 </tree>
                             </field>
                         </group>
                         <group string="Consumed Products">
-                            <field name="move_lines2" nolabel="1" options="{'reload_on_button': true}">
-                                <tree colors="red:scrapped==True;blue:state == 'draft';black:state in ('confirmed','ready','in_production');gray:state == 'cancel' " string="Consumed Products" editable="bottom">
+                            <field name="consumed_lines" nolabel="1" options="{'reload_on_button': true}">
+                                <tree colors="red:scrapped==True;blue:state == 'draft';black:state in ('confirmed','ready','in_production');gray:state == 'cancel'" string="Consumed Products">
                                     <field name="product_id" readonly="1"/>
-                                    <field name="restrict_lot_id" context="{'product_id': product_id}" groups="stock.group_production_lot"/>
+                                    <field name="lot_ids" readonly="1"/>
                                     <field name="product_uom_qty" readonly="1"/>
                                     <field name="product_uom" readonly="1" string="Unit of Measure" groups="product.group_uom" invisible="1"/>
                                     <field name="state" invisible="1"/>
@@ -49,30 +72,36 @@
                 </page>
             </xpath>
             <!-- Finished Products -->
-            <xpath expr="//sheet/notebook//field[@name='move_created_ids']//field[@name='product_uom_qty']" position="after">
-                <field name="restrict_lot_id" groups="stock.group_production_lot"/>
-            </xpath>
-            <xpath expr="//sheet/notebook//field[@name='move_created_ids']//field[@name='product_uom']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//sheet/notebook//field[@name='move_created_ids2']//field[@name='product_uom']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-        </field>
-    </record>
-
-
-    <record id="view_mrp_product_produce_wizard" model="ir.ui.view">
-        <field name="name">mrp.product.produce.form</field>
-        <field name="model">mrp.product.produce</field>
-        <field name="inherit_id" ref="mrp.view_mrp_product_produce_wizard"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='lot_id']" position="replace">
-                <field name="lot_ids" widget="many2many_tags" domain="[('product_id', '=', product_id)]"/>
-            </xpath>
-            <xpath expr="//field[@name='product_qty']" position="attributes">
-                <attribute name="readonly">1</attribute>
-                <attribute name="string">"Quantity"</attribute>
+            <xpath expr="//sheet/notebook//page[@string='Finished Products']" position="replace">
+                <page string="Finished Products">
+                    <group>
+                        <group string="Products to Produce">
+                            <field name="to_produce_lines" nolabel="1" options="{'reload_on_button': true}">
+                                <tree string="Products to Finish">
+                                    <field name="product_id"/>
+                                    <field name="product_uom_qty"/>
+                                    <field name="restrict_lot_id" groups="stock.group_production_lot"/>
+                                    <field name="product_uom"  string="Unit of Measure" invisible="1"/>
+                                    <field name="state" invisible="1"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Produced Products">
+                            <field name="produced_lines" nolabel="1" options="{'reload_on_button': true}">
+                                <tree colors="red:scrapped==True;blue:state == 'draft';black:state in('confirmed','ready','in_production');gray:state in('cancel','done') " string="Finished Products">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom_qty" readonly="1"/>
+                                    <field name="restrict_lot_id" groups="stock.group_production_lot"/>
+                                    <field name="product_uom" readonly="1" string="Unit of Measure" invisible="1"/>
+                                    <field name="location_dest_id"  readonly="1" string="Destination Loc." widget="selection" groups="stock.group_locations"/>
+                                    <field name="scrapped" invisible="1"/>
+                                    <field name="state" invisible="1"/>
+                                    <button name="%(stock.move_scrap)d" string="Scrap Products" type="action" icon="terp-gtk-jump-to-ltr" states="done,cancel"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>

@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//separator[@string='Accounting']" position="after">
                     <group name="imsar_wms">
-                        <label for="id" string="Task Codes"/>
+                        <label for="id" string="Accounting Defaults"/>
                         <div>
                             <div>
                                 <label for="material_account_type_ids"/>
@@ -30,6 +30,70 @@
                             <div>
                                 <label for="stock_journal"/>
                                 <field name="stock_journal" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pnl_mat_debit"/>
+                                <field name="pnl_mat_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pnl_mat_credit"/>
+                                <field name="pnl_mat_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pnl_labor_debit"/>
+                                <field name="pnl_labor_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pnl_labor_credit"/>
+                                <field name="pnl_labor_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="pnl_mfg_oh"/>
+                                <field name="pnl_mfg_oh" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="mfg_oh_mat_writeoff"/>
+                                <field name="mfg_oh_mat_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="mfg_oh_labor_writeoff"/>
+                                <field name="mfg_oh_labor_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                        </div>
+                    </group>
+
+                </xpath>
+            </field>
+        </record>
+
+        <record id="imsar_mrp_config_settings" model="ir.ui.view">
+            <field name="name">mrp settings for imsar</field>
+            <field name="model">mrp.config.settings</field>
+            <field name="inherit_id" ref="mrp.view_mrp_config"/>
+            <field name="arch" type="xml">
+                <xpath expr="//separator[@string='Master Data']" position="after">
+                    <group name="imsar_wms">
+                        <label for="id" string="Task Codes"/>
+                        <div>
+                            <div>
+                                <label for="mfg_task_code"/>
+                                <field name="mfg_task_code" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="wip_task_code"/>
+                                <field name="wip_task_code" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
+                            </div>
+                            <div>
+                                <label for="kitting_mat_locations"/>
+                                <field name="kitting_mat_locations" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
+                            <div>
+                                <label for="prod_ready_locations"/>
+                                <field name="prod_ready_locations" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
+                            <div>
+                                <label for="rm_product_categories"/>
+                                <field name="rm_product_categories" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
                         </div>
                     </group>

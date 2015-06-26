@@ -5,7 +5,7 @@
         <record id="stock_account.default_cost_method" forcecreate="True" model="ir.property">
             <field name="name">Cost Method Property</field>
             <field name="fields_id" search="[('model', '=', 'product.template'), ('name', '=', 'cost_method')]"/>
-            <field name="value">real</field>
+            <field name="value">average</field>
             <field name="type">selection</field>
         </record>
         <record id="stock_account.default_valuation" forcecreate="True" model="ir.property">
@@ -19,7 +19,7 @@
             <field name="name">Default Cost Method</field>
             <field name="company_id" eval="ref('base.main_company')"/>
             <field name="fields_id" eval="ref('stock_account.field_product_template_cost_method')"/>
-            <field name="value">real</field>
+            <field name="value">average</field>
             <field name="type">selection</field>
         </record>
         <record id="default_valuation" forcecreate="True" model="ir.property">

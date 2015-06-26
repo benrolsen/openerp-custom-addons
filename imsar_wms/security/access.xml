@@ -10,5 +10,40 @@
             <field name="perm_read">1</field>
         </record>
 
+        <!-- Allow everyone to see mfg orders -->
+        <record id="access_production_user" model="ir.model.access">
+            <field name="name">mrp.production.user</field>
+            <field name="model_id" ref="mrp.model_mrp_production"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <!-- Allow everyone to see stock moves -->
+        <record id="access_stock_move_user" model="ir.model.access">
+            <field name="name">stock.move.user</field>
+            <field name="model_id" ref="stock.model_stock_move"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <!-- Allow everyone to see shipping methods -->
+        <record id="access_shipping_method_user" model="ir.model.access">
+            <field name="name">purchase.shipping.method.user</field>
+            <field name="model_id" ref="imsar_wms.model_purchase_shipping_method"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
+        <!-- Allow purchasing/warehouse full access to shipping methods -->
+        <record id="access_shipping_method_manager" model="ir.model.access">
+            <field name="name">purchase.shipping.method.manager</field>
+            <field name="model_id" ref="imsar_wms.model_purchase_shipping_method"/>
+            <field name="group_id" ref="purchase.group_purchase_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
     </data>
 </openerp>
