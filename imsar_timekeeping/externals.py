@@ -193,7 +193,7 @@ class employee(models.Model):
     pto_accrual_rate = fields.Float('PTO Accrual Rate (per hour)',compute='_computed_pto_rate', default=0.0, digits=(1,4))
     accrued_pto = fields.Float('Accrued PTO', default=0.0, digits=(10,4), readonly=True)
     accrued_pto_personal = fields.Float('Accrued PTO', related="accrued_pto")
-    max_pto = fields.Float('Maximum PTO', default=0.0, digits=(10,4))
+    max_pto = fields.Float('Maximum PTO', default=160.0, digits=(10,4))
     is_owner = fields.Boolean('Company Owner', default=False)
     owner_wage_account_id = fields.Many2one('account.account', 'Owner Wage Liability Account')
     employee_number = fields.Integer('Employee Number', default=0)
