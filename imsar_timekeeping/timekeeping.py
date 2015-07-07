@@ -994,6 +994,7 @@ class hr_timekeeping_approval(models.Model):
     _order = 'sheet_id desc, create_date desc'
 
     employee_id = fields.Many2one('hr.employee', related='sheet_id.employee_id', store=True)
+    employee_manager = fields.Many2one('hr.employee', related='sheet_id.employee_id.parent_id')
     type = fields.Selection([('Admin','Admin'),('Manager','Manager'),('Project','Project'),('SeniorManagement', 'Senior Management'),('HR','HR')], string="Approval Type", required=True, readonly=True)
     sheet_id = fields.Many2one('hr.timekeeping.sheet', string='Timekeeping Sheet', required=True, ondelete='cascade')
     sheet_type = fields.Selection([('regular','Regular'),('addendum','Addendum'),('proxy','Proxy'),], related='sheet_id.type', string='Type', default='regular', required=True, readonly=True,)

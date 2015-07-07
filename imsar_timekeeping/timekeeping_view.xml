@@ -532,6 +532,7 @@
                     <field name="relevant_time" widget="float_time"/>
                     <field name="overtime" widget="float_time"/>
                     <field name="account_analytic_id"/>
+                    <field name="employee_manager"/>
                     <field name="uid_can_approve" invisible="True"/>
                     <button name="button_approve" string="Approve" class="oe_highlight" type="object"
                             attrs="{'invisible':['|',('state','!=','confirm'),('uid_can_approve','!=',True)]}"/>
