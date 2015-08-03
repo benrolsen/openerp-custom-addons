@@ -17,57 +17,35 @@
         <field name="help">This analysis gives you a fast overview on the current stock level of your products and their today's inventory value.</field>
     </record>
 
-    <!-- Manually review outgoing stock moves -->
-    <record id="view_move_review_form" model="ir.ui.view">
-        <field name="name">stock.move.review.form</field>
-        <field name="model">stock.move.review</field>
+    <!-- Quant move records -->
+    <record id="view_quant_move_record_tree" model="ir.ui.view">
+        <field name="name">stock.quant.move.record.tree</field>
+        <field name="model">stock.quant.move.record</field>
         <field name="arch" type="xml">
-            <form string="Stock Move Review">
+            <tree>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="date"/>
+                <field name="picking_type_id"/>
+                <field name="source_task_name"/>
+                <field name="target_task_name"/>
+                <field name="origin"/>
+                <field name="qty"/>
+                <field name="total_material_cost"/>
+                <field name="total_labor_cost"/>
+                <field name="total_overhead_cost"/>
+                <field name="inventory_value"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_quant_move_record_search" model="ir.ui.view">
+        <field name="name">stock.quant.move.record.search.view</field>
+        <field name="model">stock.quant.move.record.search</field>
+        <field name="arch" type="xml">
+            <form>
                 <group>
-                    <field name="move_id" invisible="1"/>
-                    <field name="name" readonly="1"/>
-                    <field name="source_task_name" readonly="1"/>
-                    <field name="target_task_name" readonly="1"/>
-                </group>
-                <group>
-                    <field name="quant_ids" readonly="1">
-                        <tree>
-                            <field name="product_id"/>
-                            <field name="qty" string="Qty"/>
-                            <field name="lot_id"/>
-                            <field name="total_material_cost" sum="Material" string="Mat"/>
-                            <field name="total_labor_cost" sum="Labor" string="Labor"/>
-                            <field name="total_overhead_cost" sum="Overhead" string="OH"/>
-                            <field name="inventory_value" sum="Cost"/>
-                        </tree>
-                    </field>
-                </group>
-                <group string="Accounting">
-                    <group colspan="2">
-                        <field name="preconf_type"/>
-                        <field name="line_ids">
-                            <tree editable="bottom" colors="blue:line_type=='Debit';green:line_type=='Credit';">
-                                <field name="line_type"/>
-                                <field name="amount"/>
-                                <field name="account_id"/>
-                                <field name="analytic_id"/>
-                            </tree>
-                        </field>
-                    </group>
-                    <group>
-                        <field name="total_credits"/>
-                    </group>
-                    <group>
-                        <field name="total_debits"/>
-                    </group>
-                </group>
-                <group string="Manufacturing" attrs="{'invisible': [('production_id', '=', False)]}">
-                    <group>
-                        <field name="production_id" readonly="1"/>
-                        <field name="add_production_material_cost"/>
-                        <field name="add_production_labor_cost"/>
-                        <field name="add_production_oh_cost"/>
-                    </group>
+                    <field name="start_date" required="1"/>
+                    <field name="end_date" required="1"/>
                 </group>
                 <footer>
                     <button string="Submit" name="submit" type="object" class="oe_highlight"/>
@@ -77,34 +55,15 @@
             </form>
         </field>
     </record>
-    <record id="view_move_review_tree" model="ir.ui.view">
-        <field name="name">stock.move.tree</field>
-        <field name="model">stock.move</field>
-        <field eval="8" name="priority"/>
-        <field name="arch" type="xml">
-            <tree colors="grey:state == 'cancel';red:(state not in ('cancel','done')) and date > current_date" string="Moves">
-                <field name="name"/>
-                <field name="picking_id" string="Reference"/>
-                <field name="create_date" invisible="1" groups="base.group_no_one"/>
-                <field name="product_id"/>
-                <field name="product_uom_qty"/>
-                <field name="source_task_name"/>
-                <field name="target_task_name"/>
-                <field name="state" invisible="1"/>
-                <button name="button_manual_accounting" string="Review" type="object" groups="account.group_account_user"/>
-            </tree>
-        </field>
-    </record>
-    <record id="action_move_review" model="ir.actions.act_window">
-        <field name="name">Stock Moves Review</field>
-        <field name="res_model">stock.move</field>
+    <record id="action_quant_move_record_search" model="ir.actions.act_window">
+        <field name="name">Quant Move Records</field>
+        <field name="res_model">stock.quant.move.record.search</field>
         <field name="type">ir.actions.act_window</field>
         <field name="view_type">form</field>
-        <field name="view_mode">tree</field>
-        <field name="view_id" ref="view_move_review_tree"/>
-        <field name="domain">[('accounting_review_flag','=',True)]</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
-    <menuitem id="menu_action_move_review" action="action_move_review" parent="stock.menu_stock_warehouse_mgmt" groups="account.group_account_user" sequence="20"/>
+    <menuitem id="menu_action_quant_move_record" action="action_quant_move_record_search" parent="stock.menu_stock_warehouse_mgmt" groups="account.group_account_user" sequence="25"/>
 
     <!-- Stock picking form -->
     <record id="view_picking_form" model="ir.ui.view">
@@ -113,6 +72,9 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <xpath expr="//button[@string='Reverse Transfer']" position='attributes'>
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='force_assign']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//field[@name='partner_id']" position='attributes'>
@@ -170,7 +132,7 @@
                 <field name="product_uos" groups="product.group_uos" invisible="1"/>
                 <field name="location_id" groups="stock.group_locations" invisible="1"/>
                 <field name="location_dest_id" groups="stock.group_locations" invisible="1"/>
-                <field name="source_task_name"/>
+                <!--<field name="source_task_name"/>-->
                 <field name="target_task_name"/>
                 <field name="date" groups="base.group_no_one"/>
                 <field name="date_expected" invisible="1"/>
@@ -211,14 +173,14 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//group[@name='origin_grp']" position='before'>
-                <group name="Source Task Code" string="Source Task Code">
-                    <field name="source_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="source_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_id','=',source_routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="source_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_line_id','=',source_routing_line_id),('type','!=','view')]" />
-                </group>
+                <!--<group name="Source Task Code" string="Source Task Code">-->
+                    <!--<field name="source_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>-->
+                    <!--<field name="source_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('routing_id','=',source_routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>-->
+                    <!--<field name="source_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('routing_line_id','=',source_routing_line_id),('type','!=','view')]" />-->
+                <!--</group>-->
                 <group name="Destination Task Code" string="Destination Task Code">
                     <field name="target_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
                             domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
@@ -228,8 +190,12 @@
                             domain="[('routing_line_id','=',target_routing_line_id),('type','!=','view')]" />
                 </group>
             </xpath>
-            <xpath expr="//group[@name='quants_grp']" position='inside'>
-                <field name="quant_ids"/>
+            <xpath expr="//group[@name='quants_grp']" position='replace'>
+                <group name="quants_grp" string="Reserved Quants" colspan="4">
+                    <field name="reserved_quant_ids" widget="many2many" domain="[('product_id','=',product_id),('available','=',True)]"
+                        context="{'search_default_locationgroup':1}"/>
+                    <field name="quant_ids"/>
+                </group>
             </xpath>
         </field>
     </record>
@@ -260,6 +226,9 @@
         <field name="model">stock.move</field>
         <field name="inherit_id" ref="stock.view_move_picking_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='force_assign']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//field[@name='name']" position='before'>
                 <field name="picking_is_incoming_type" invisible="1"/>
                 <field name="price_unit" attrs="{'required':True, 'invisible':[('picking_is_incoming_type','=',False)]}"/>
@@ -276,14 +245,14 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//group[@string='Locations']" position='before'>
-                <group name="Source Task Code" string="Source Task Code">
-                    <field name="source_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="source_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_id','=',source_routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
-                    <field name="source_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
-                            domain="[('routing_line_id','=',source_routing_line_id),('type','!=','view')]" />
-                </group>
+                <!--<group name="Source Task Code" string="Source Task Code">-->
+                    <!--<field name="source_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>-->
+                    <!--<field name="source_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('routing_id','=',source_routing_id),('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>-->
+                    <!--<field name="source_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"-->
+                            <!--domain="[('routing_line_id','=',source_routing_line_id),('type','!=','view')]" />-->
+                <!--</group>-->
                 <group name="Destination Task Code" string="Destination Task Code">
                     <field name="target_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
                             domain="[('section_ids','in',[%(account_routing.ar_section_purchase)d])]"/>
@@ -295,6 +264,13 @@
             </xpath>
             <xpath expr="//group[@string='Locations']" position='attributes'>
                 <attribute name="invisible">0</attribute>
+            </xpath>
+            <xpath expr="//group[@name='quants_grp']" position='replace'>
+                <group name="quants_grp" string="Reserved Quants" colspan="4">
+                    <field name="reserved_quant_ids" widget="many2many" domain="[('product_id','=',product_id),('available','=',True)]"
+                        context="{'search_default_locationgroup':1}"/>
+                    <field name="quant_ids" attrs="{'readonly':[('state','=','draft')]}"/>
+                </group>
             </xpath>
         </field>
     </record>
@@ -340,14 +316,15 @@
         </field>
     </record>
 
-    <record id="invoice_supplier_form" model="ir.ui.view">
-        <field name="name">account.invoice.supplier.form</field>
-        <field name="model">account.invoice</field>
-        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+    <!--  Quant tree view -->
+    <record id="view_stock_quant_tree" model="ir.ui.view">
+        <field name="name">stock.quant.tree</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='product_id']" position='replace'>
-                <field name="product_id" options="{'create': false, 'create_edit': false}"/>
-            </xpath>
+            <field name="company_id" position="replace">
+                <button name="button_split_wizard" string="Split" type="object"/>
+            </field>
         </field>
     </record>
 
@@ -370,7 +347,9 @@
                         <field name="mfg_order_id"/>
                         <field name="in_date"/>
                         <field name="reservation_id"/>
+                        <field name="reserved_mfg_order_id"/>
                         <field name="propagated_from_id"/>
+                        <field name="available"/>
                         <field name="owner_id" groups="stock.group_tracking_owner"/>
                     </group>
                     <group string="Quant Cost" groups="account.group_account_user">
@@ -379,6 +358,9 @@
                         <field name="labor_cost"/>
                         <field name="overhead_cost"/>
                         <field name="inventory_value"/>
+                        <field name="repair_material_cost" />
+                        <field name="repair_labor_cost"/>
+                        <field name="repair_overhead_cost"/>
                     </group>
                     <group string="Location">
                         <field name="routing_id" readonly="1"/>
@@ -387,6 +369,24 @@
                         <field name="location_id" readonly="1"/>
                     </group>
                 </group>
+            </form>
+        </field>
+    </record>
+
+    <!-- Quant split wizard -->
+    <record id="view_stock_split_wizard" model="ir.ui.view">
+        <field name="name">stock.split.view</field>
+        <field name="model">stock.quant.split</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="qty" required="1"/>
+                </group>
+                <footer>
+                    <button string="Submit" name="submit" type="object" class="oe_highlight"/>
+                    or
+                    <button string="Cancel" class="oe_link" special="cancel"/>
+                </footer>
             </form>
         </field>
     </record>

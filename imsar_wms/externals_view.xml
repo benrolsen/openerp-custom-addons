@@ -217,28 +217,6 @@
                         </tree>
                     </field>
                 </group>
-                <group>
-                    <field name="account_move_lines" readonly="1">
-                        <tree>
-                            <field name="account_id"/>
-                            <field name="analytic_account_id"/>
-                            <field name="debit"/>
-                            <field name="credit"/>
-                        </tree>
-                    </field>
-                </group>
-                <group>
-                    <field name="ref"/>
-                    <field name="line_ids">
-                        <tree editable="bottom" colors="blue:line_type=='Debit';green:line_type=='Credit';">
-                            <field name="name"/>
-                            <field name="line_type"/>
-                            <field name="amount"/>
-                            <field name="account_id"/>
-                            <field name="analytic_id"/>
-                        </tree>
-                    </field>
-                </group>
                 <footer>
                     <button string="Submit" name="submit" type="object" class="oe_highlight"/>
                     or
@@ -256,7 +234,7 @@
                 <field name="employee_id"/>
                 <field name="name"/>
                 <field name="task_shortname"/>
-                <field name="mfg_order_id"/>
+                <field name="full_amount" string="Labor Amount"/>
                 <field name="serial_ids"/>
                 <field name="sheet_id"/>
                 <button name="button_manual_accounting" string="Review" type="object" groups="account.group_account_user"/>
@@ -283,6 +261,18 @@
             <field name="removal_strategy_id" position="after">
                 <field name="default_location" />
             </field>
+        </field>
+    </record>
+
+    <!-- account invoices -->
+    <record id="invoice_supplier_form" model="ir.ui.view">
+        <field name="name">account.invoice.supplier.form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_supplier_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position='replace'>
+                <field name="product_id" options="{'create': false, 'create_edit': false}"/>
+            </xpath>
         </field>
     </record>
 

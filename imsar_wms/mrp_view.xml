@@ -2,6 +2,7 @@
 <openerp>
 <data>
 
+    <!-- Manufacturing Order -->
     <record id="mrp_production_form_view" model="ir.ui.view">
         <field name="name">mrp.production.form</field>
         <field name="model">mrp.production</field>
@@ -9,12 +10,26 @@
         <field name="arch" type="xml">
             <!-- Buttons -->
             <xpath expr="//button[@name='%(mrp.act_mrp_product_produce)d']" position="replace">
-                <button name="action_produce" states="ready,in_production" string="Produce" type="object" class="oe_highlight"/>
+                <button name="action_quant_return" states="ready,in_production" string="Produce" type="object" class="oe_highlight"/>
             </xpath>
             <xpath expr="//button[@name='force_production']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//button[@name='button_produce']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <!-- Unused/changed fields -->
+            <field name="routing_id" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="origin" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
+            <field name="product_qty" position="replace">
+                <field name="product_qty" class="oe_inline"/>
+            </field>
+            <!-- locations -->
+            <xpath expr="//sheet/group/group[3]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
             <!-- MO overview -->
@@ -26,7 +41,6 @@
                             domain="[('routing_id','=',mat_routing_id),('section_ids','in',[%(ar_section_mrp)d])]"/>
                     <field name="mat_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
                             domain="[('routing_line_id','=',mat_routing_line_id),('type','!=','view')]" />
-                    <field name="production_serials" widget="many2many_tags" invisible="1"/>
                 </group>
                 <group string="Labor Task Code">
                     <field name="labor_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
@@ -39,32 +53,44 @@
             </xpath>
             <!-- Products Consumed -->
             <xpath expr="//sheet/notebook//page[@string='Consumed Products']" position="replace">
-                <page string="Consumed Products">
-                    <group col="3">
-                        <group string="Products to Consume">
-                            <field name="to_consume_lines" nolabel="1" options="{'reload_on_button': true}" readonly="0">
-                                <tree colors="blue:state == 'draft';black:state in ('ready','assigned','in_production');gray:state in ('cancel','done');red:state in ('confirmed','waiting')" string="Products to Consume">
+                <page string="Components">
+                    <group col="4">
+                        <group string="Assigned" attrs="{'invisible': [('state', 'in', ['cancel','done'])]}">
+                            <field name="component_quants" widget="many2many" nolabel="1"
+                                domain="[('location_id.usage','not in', ['production','inventory']),('available','=',True)]"
+                                context="{'search_default_productgroup':1, 'search_default_internal_loc':1}">
+                                <tree>
                                     <field name="product_id"/>
-                                    <field name="product_uom_qty"  string="Quantity"/>
-                                    <field name="lot_ids" readonly="1"/>
-                                    <field name="product_uom" string="Unit of Measure" groups="product.group_uom" invisible="1"/>
-                                    <field name="state" invisible="1"/>
-                                    <button name="%(stock.move_scrap)d"
-                                        string="Scrap Products" type="action"
-                                        icon="terp-gtk-jump-to-ltr" context="{'scrap': True}"
-                                        states="draft,waiting,confirmed,assigned"/>
+                                    <field name="qty"/>
+                                    <field name="lot_id"/>
+                                    <field name="inventory_value" string="Value"/>
                                 </tree>
                             </field>
                         </group>
-                        <group string="Consumed Products">
-                            <field name="consumed_lines" nolabel="1" options="{'reload_on_button': true}">
-                                <tree colors="red:scrapped==True;blue:state == 'draft';black:state in ('confirmed','ready','in_production');gray:state == 'cancel'" string="Consumed Products">
-                                    <field name="product_id" readonly="1"/>
-                                    <field name="lot_ids" readonly="1"/>
-                                    <field name="product_uom_qty" readonly="1"/>
-                                    <field name="product_uom" readonly="1" string="Unit of Measure" groups="product.group_uom" invisible="1"/>
-                                    <field name="state" invisible="1"/>
-                                    <field name="scrapped" invisible="1"/>
+                        <group string="BoM">
+                            <field name="component_bom" readonly="1" nolabel="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="product_qty"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Needed" attrs="{'invisible': [('state', 'in', ['cancel','done'])]}">
+                            <field name="missing_lines" invisible="1" nolabel="1"/>
+                            <field name="missing_lines_display" readonly="1" nolabel="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="product_qty"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Used" attrs="{'invisible': [('state', 'not in', ['cancel','done'])]}">
+                            <field name="component_quants_used" widget="many2many" nolabel="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="qty"/>
+                                    <field name="lot_id"/>
+                                    <field name="inventory_value" string="Value"/>
                                 </tree>
                             </field>
                         </group>
@@ -76,33 +102,238 @@
                 <page string="Finished Products">
                     <group>
                         <group string="Products to Produce">
-                            <field name="to_produce_lines" nolabel="1" options="{'reload_on_button': true}">
-                                <tree string="Products to Finish">
+                            <field name="production_quants" nolabel="1" options="{'reload_on_button': true}">
+                                <tree string="Products to Produce">
                                     <field name="product_id"/>
-                                    <field name="product_uom_qty"/>
-                                    <field name="restrict_lot_id" groups="stock.group_production_lot"/>
-                                    <field name="product_uom"  string="Unit of Measure" invisible="1"/>
-                                    <field name="state" invisible="1"/>
+                                    <field name="qty"/>
+                                    <field name="lot_id"/>
                                 </tree>
                             </field>
                         </group>
                         <group string="Produced Products">
-                            <field name="produced_lines" nolabel="1" options="{'reload_on_button': true}">
-                                <tree colors="red:scrapped==True;blue:state == 'draft';black:state in('confirmed','ready','in_production');gray:state in('cancel','done') " string="Finished Products">
+                            <field name="produced_quants" nolabel="1" options="{'reload_on_button': true}">
+                                <tree string="Produced Products">
                                     <field name="product_id" readonly="1"/>
-                                    <field name="product_uom_qty" readonly="1"/>
-                                    <field name="restrict_lot_id" groups="stock.group_production_lot"/>
-                                    <field name="product_uom" readonly="1" string="Unit of Measure" invisible="1"/>
-                                    <field name="location_dest_id"  readonly="1" string="Destination Loc." widget="selection" groups="stock.group_locations"/>
-                                    <field name="scrapped" invisible="1"/>
-                                    <field name="state" invisible="1"/>
-                                    <button name="%(stock.move_scrap)d" string="Scrap Products" type="action" icon="terp-gtk-jump-to-ltr" states="done,cancel"/>
+                                    <field name="qty" readonly="1"/>
+                                    <field name="lot_id" readonly="1"/>
                                 </tree>
                             </field>
                         </group>
                     </group>
                 </page>
             </xpath>
+            <!-- Hide other pages -->
+            <xpath expr="//sheet/notebook//page[@string='Work Orders']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//page[@string='Scheduled Products']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet/notebook//page[@string='Extra Information']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Quant return wizard -->
+    <record id="view_quant_return_wizard" model="ir.ui.view">
+        <field name="name">mrp.production.quant.return.view</field>
+        <field name="model">mrp.production.quant.return</field>
+        <field name="arch" type="xml">
+            <form>
+                <group string="Returned Quantities">
+                    <field name="lines" nolabel="1">
+                        <tree editable="top" create="false">
+                            <field name="product_id" readonly="1"/>
+                            <field name="lot_id" required="1"/>
+                            <field name="product_qty" required="1"/>
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+                    <button string="Submit" name="submit" type="object" class="oe_highlight"/>
+                    or
+                    <button string="Cancel" class="oe_link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Manufacturing Modification Order -->
+    <record id="mrp_production_mod_form_filter" model="ir.ui.view">
+        <field name="name">mrp.production.mod.filter</field>
+        <field name="model">mrp.production.mod</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="production_serials"/>
+            </search>
+        </field>
+    </record>
+    <record id="mrp_production_mod_form_tree" model="ir.ui.view">
+        <field name="name">mrp.production.mod.tree</field>
+        <field name="model">mrp.production.mod</field>
+        <field name="arch" type="xml">
+            <tree colors="blue:state == 'draft';gray:state in ('cancel','done');">
+                <field name="name"/>
+                <field name="order_type"/>
+                <field name="state"/>
+                <field name="date_start"/>
+                <field name="date_finished"/>
+                <field name="mat_task_shortname"/>
+                <field name="labor_task_shortname" invisible="1"/>
+                <field name="production_serials"/>
+            </tree>
+        </field>
+    </record>
+    <record id="mrp_production_mod_form_view" model="ir.ui.view">
+        <field name="name">mrp.production.mod.form</field>
+        <field name="model">mrp.production.mod</field>
+        <field name="arch" type="xml">
+            <form string="Modification Orders">
+            <header>
+                <button name="button_confirm" type="object" states="draft" string="Confirm Production" class="oe_highlight"/>
+                <button name="action_quant_return" type="object" states="ready,in_production" string="Produce" class="oe_highlight"/>
+                <button name="action_assign" type="object" states="confirmed,picking_except" string="Check Availability" class="oe_highlight"/>
+                <button name="button_cancel" type="object" states="draft,confirmed,ready,in_production" string="Cancel Production"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,ready,in_production,done" statusbar_colors='{"confirmed":"blue"}'/>
+            </header>
+            <sheet>
+                <div class="oe_title">
+                    <h1>Modification Order <field name="name" class="oe_inline"/></h1>
+                </div>
+                <group>
+                    <group><field name="order_type"/></group>
+                    <group><field name="date_planned"/></group>
+                </group>
+                <group>
+                    <group string="Material Task Code">
+                        <field name="mat_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('section_ids','in',[%(ar_section_mrp)d])]"/>
+                        <field name="mat_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('routing_id','=',mat_routing_id),('section_ids','in',[%(ar_section_mrp)d])]"/>
+                        <field name="mat_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('routing_line_id','=',mat_routing_line_id),('type','!=','view')]" />
+                    </group>
+                    <group string="Labor Task Code">
+                        <field name="labor_routing_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
+                        <field name="labor_routing_line_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('routing_id','=',labor_routing_id),('section_ids','in',[%(imsar_timekeeping.ar_section_timekeeping)d])]"/>
+                        <field name="labor_routing_subrouting_id" options="{'create': false, 'create_edit': false}" widget="selection"
+                                domain="[('routing_line_id','=',labor_routing_line_id),('type','!=','view')]" />
+                    </group>
+                </group>
+                <group col="3">
+                    <group string="Source Items">
+                        <field name="source_quants" widget="many2many" nolabel="1"
+                            domain="[('location_id.usage','not in', ['production','inventory']),('available','=',True)]"
+                            context="{'search_default_productgroup':1, 'search_default_internal_loc':1}">
+                            <tree>
+                                <field name="product_id"/>
+                                <field name="qty"/>
+                                <field name="lot_id"/>
+                                <field name="inventory_value" string="Value"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group string="Mod Components" attrs="{'invisible': [('state', 'in', ['cancel','done'])]}">
+                        <field name="component_quants" widget="many2many" nolabel="1"
+                            domain="[('location_id.usage','not in', ['production','inventory']),('available','=',True)]"
+                            context="{'search_default_productgroup':1, 'search_default_internal_loc':1}">
+                            <tree>
+                                <field name="product_id"/>
+                                <field name="qty"/>
+                                <field name="lot_id"/>
+                                <field name="inventory_value" string="Value"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group string="Used" attrs="{'invisible': [('state', 'not in', ['cancel','done'])]}">
+                        <field name="component_quants_used" widget="many2many" nolabel="1">
+                            <tree>
+                                <field name="product_id"/>
+                                <field name="qty"/>
+                                <field name="lot_id"/>
+                                <field name="inventory_value" string="Value"/>
+                            </tree>
+                        </field>
+                    </group>
+                </group>
+                <group col="3">
+                    <group string="Upgrade Into" attrs="{'invisible': ['|',('order_type', '!=', 'Upgrade'),('state','!=','draft')]}">
+                        <field name="result_products" nolabel="1">
+                            <tree editable="top" create="false">
+                                <field name="product_id" required="1"/>
+                                <field name="source_quant" invisible="1"/>
+                                <field name="lot_id" readonly="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group string="Products to Produce" attrs="{'invisible': [('state','=','draft')]}">
+                        <field name="production_quants" nolabel="1" options="{'reload_on_button': true}"
+                                attrs="{'readonly': [('order_type', '=', 'Repair')]}">
+                            <tree string="Products to Produce">
+                                <field name="product_id"/>
+                                <field name="qty"/>
+                                <field name="lot_id"/>
+                                <field name="propagated_from_id" invisible="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group string="Produced Products" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <field name="produced_quants" nolabel="1" options="{'reload_on_button': true}">
+                            <tree string="Produced Products">
+                                <field name="product_id" readonly="1"/>
+                                <field name="qty" readonly="1"/>
+                                <field name="lot_id" readonly="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                </group>
+            </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_mrp_production_mod_form" model="ir.actions.act_window">
+        <field name="name">Modification Orders</field>
+        <field name="res_model">mrp.production.mod</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_mrp_production_mod_form" action="action_mrp_production_mod_form" parent="mrp.menu_mrp_manufacturing" sequence="2"/>
+
+    <!-- Mod Order line item -->
+    <record id="mrp_production_mod_line_form_view" model="ir.ui.view">
+        <field name="name">mrp.production.mod.line.form</field>
+        <field name="model">mrp.production.mod.line</field>
+        <field name="arch" type="xml">
+            <form string="Modification Line">
+                <group>
+                    <group>
+                        <field name="product_id" required="1" context="{'group_by' : 'categ_id'}" options="{'create': false, 'create_edit': false}" />
+                    </group>
+                    <group>
+                        <field name="lot_id" required="1" options="{'create': false, 'create_edit': false}" />
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <!-- Bill of Materials -->
+    <record id="mrp_bom_form_view" model="ir.ui.view">
+        <field name="name">mrp.bom.form</field>
+        <field name="model">mrp.bom</field>
+        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+        <field name="arch" type="xml">
+            <field name="name" position="replace">
+                <field name="name" required="1"/>
+            </field>
+            <field name="code" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </field>
         </field>
     </record>
 

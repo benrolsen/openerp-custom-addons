@@ -18,6 +18,14 @@
             <field name="perm_read">1</field>
         </record>
 
+        <!-- Allow everyone to see mfg mod orders -->
+        <record id="access_production_mod_user" model="ir.model.access">
+            <field name="name">mrp.production.mod.user</field>
+            <field name="model_id" ref="imsar_wms.model_mrp_production_mod"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
         <!-- Allow everyone to see stock moves -->
         <record id="access_stock_move_user" model="ir.model.access">
             <field name="name">stock.move.user</field>
@@ -39,6 +47,28 @@
             <field name="name">purchase.shipping.method.manager</field>
             <field name="model_id" ref="imsar_wms.model_purchase_shipping_method"/>
             <field name="group_id" ref="purchase.group_purchase_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+        <!-- Allow purchasing/warehouse full access to mfg mod orders -->
+        <record id="access_production_mod_manager" model="ir.model.access">
+            <field name="name">mrp.production.mod.manager</field>
+            <field name="model_id" ref="imsar_wms.model_mrp_production_mod"/>
+            <field name="group_id" ref="purchase.group_purchase_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+        </record>
+
+        <!-- Allow mrp users full access to mfg mod orders -->
+        <record id="access_production_mod_mrp" model="ir.model.access">
+            <field name="name">mrp.production.mod.manager</field>
+            <field name="model_id" ref="imsar_wms.model_mrp_production_mod"/>
+            <field name="group_id" ref="mrp.group_mrp_user"/>
             <field name="perm_read">1</field>
             <field name="perm_write">1</field>
             <field name="perm_create">1</field>
