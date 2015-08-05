@@ -31,34 +31,34 @@
                                 <label for="stock_journal"/>
                                 <field name="stock_journal" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
                             </div>
-                            <div>
-                                <label for="pnl_mat_debit"/>
-                                <field name="pnl_mat_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="pnl_mat_credit"/>
-                                <field name="pnl_mat_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="pnl_labor_debit"/>
-                                <field name="pnl_labor_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="pnl_labor_credit"/>
-                                <field name="pnl_labor_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="pnl_mfg_oh"/>
-                                <field name="pnl_mfg_oh" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="mfg_oh_mat_writeoff"/>
-                                <field name="mfg_oh_mat_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
-                            <div>
-                                <label for="mfg_oh_labor_writeoff"/>
-                                <field name="mfg_oh_labor_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>
-                            </div>
+                            <!--<div>-->
+                                <!--<label for="pnl_mat_debit"/>-->
+                                <!--<field name="pnl_mat_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="pnl_mat_credit"/>-->
+                                <!--<field name="pnl_mat_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="pnl_labor_debit"/>-->
+                                <!--<field name="pnl_labor_debit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="pnl_labor_credit"/>-->
+                                <!--<field name="pnl_labor_credit" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="pnl_mfg_oh"/>-->
+                                <!--<field name="pnl_mfg_oh" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="mfg_oh_mat_writeoff"/>-->
+                                <!--<field name="mfg_oh_mat_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
+                            <!--<div>-->
+                                <!--<label for="mfg_oh_labor_writeoff"/>-->
+                                <!--<field name="mfg_oh_labor_writeoff" class="oe_inline" options="{'create': false, 'create_edit': false}"/>-->
+                            <!--</div>-->
                         </div>
                     </group>
 
@@ -91,10 +91,10 @@
                                 <label for="prod_ready_locations"/>
                                 <field name="prod_ready_locations" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
-                            <div>
-                                <label for="rm_product_categories"/>
-                                <field name="rm_product_categories" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
-                            </div>
+                            <!--<div>-->
+                                <!--<label for="rm_product_categories"/>-->
+                                <!--<field name="rm_product_categories" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>-->
+                            <!--</div>-->
                         </div>
                     </group>
 

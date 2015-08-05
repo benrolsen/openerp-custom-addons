@@ -88,6 +88,9 @@
                 <field name="picking_type_code" invisible="1"/>
                 <field name="is_incoming_type" invisible="1"/>
             </xpath>
+            <xpath expr="//button[@name='do_partial_open_barcode']" position='attributes'>
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//page[@string='Additional Info']" position='replace'>
                 <page string="Additional Info">
                     <group string="Other Information">

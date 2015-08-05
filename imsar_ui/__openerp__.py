@@ -33,12 +33,11 @@
                  'imsar_default_install', 'imsar_accounting', 'imsar_sale', 'account_budget',
                  "purchase", "sale",
                  'product', 'account', 'stock',
-                 'mrp', 'mrp_operations',
+                 'mrp',
     ],
     'data': [
         'product_view.xml',
         'invoice_view.xml',
-        'mrp_view.xml',
         'partner_view.xml',
         'account_view.xml',
         'purchase_view.xml',

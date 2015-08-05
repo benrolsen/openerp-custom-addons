@@ -572,7 +572,7 @@ class mrp_production_mod(models.Model):
     @api.multi
     def button_cancel(self):
         if self.order_type == 'Upgrade':
-            self.env['stock.quant'].send_to_scrap(self.production_quants.ids)
+            self.env['stock.quant'].send_to_scrap(self.production_quants.ids, origin=self.name)
         self.write({'component_quants': [(5,None)], 'source_quants': [(5,None)], 'state': 'cancel'})
         return True
 

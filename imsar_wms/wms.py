@@ -244,7 +244,7 @@ class stock_quant(models.Model):
         self.write(cr, SUPERUSER_ID, [q.id for q in quants], vals, context=context)
 
     @api.model
-    def send_to_scrap(self, quant_ids):
+    def send_to_scrap(self, quant_ids, origin=None):
         taskcode = self.env.user.company_id.attrition
         picking_type_id = self.env.ref('stock.picking_type_out').id
         move_lines = []
@@ -266,6 +266,8 @@ class stock_quant(models.Model):
                 'location_dest_id': taskcode.location_id.id,
                 'reserved_quant_ids': [(6,0,quant.ids)],
             }
+            if origin:
+                vals['origin'] = origin
             move_lines.append((0,0,vals))
         if not move_lines:
             return True
@@ -395,19 +397,16 @@ class stock_picking(models.Model):
                     move.write({'price_unit': 0.0})
         return moves
 
-    # @api.v7
-    # def _prepare_values_extra_move(self, cr, uid, op, product, remaining_qty, context=None):
-    #     res = super(stock_picking, self)._prepare_values_extra_move(cr, uid, op, product, remaining_qty, context)
-    #     res['move_orig_ids'] = [(6,0, [op.linked_move_operation_ids.move_id.id])]
-    #     res['source_routing_id'] = op.linked_move_operation_ids.move_id.source_routing_id.id
-    #     res['source_routing_line_id'] = op.linked_move_operation_ids.move_id.source_routing_line_id.id
-    #     res['source_routing_subrouting_id'] = op.linked_move_operation_ids.move_id.source_routing_subrouting_id.id
-    #     res['target_routing_id'] = op.linked_move_operation_ids.move_id.target_routing_id.id
-    #     res['target_routing_line_id'] = op.linked_move_operation_ids.move_id.target_routing_line_id.id
-    #     res['target_routing_subrouting_id'] = op.linked_move_operation_ids.move_id.target_routing_subrouting_id.id
-    #     res['purchase_line_id'] = op.linked_move_operation_ids.move_id.purchase_line_id.id
-    #     res['origin'] = op.linked_move_operation_ids.move_id.origin
-    #     return res
+    @api.v7
+    def _prepare_values_extra_move(self, cr, uid, op, product, remaining_qty, context=None):
+        res = super(stock_picking, self)._prepare_values_extra_move(cr, uid, op, product, remaining_qty, context)
+        res['move_orig_ids'] = [(6,0, [op.linked_move_operation_ids.move_id.id])]
+        res['target_routing_id'] = op.linked_move_operation_ids.move_id.target_routing_id.id
+        res['target_routing_line_id'] = op.linked_move_operation_ids.move_id.target_routing_line_id.id
+        res['target_routing_subrouting_id'] = op.linked_move_operation_ids.move_id.target_routing_subrouting_id.id
+        res['purchase_line_id'] = op.linked_move_operation_ids.move_id.purchase_line_id.id
+        res['origin'] = op.linked_move_operation_ids.move_id.origin
+        return res
 
     @api.cr_uid_ids_context
     def do_enter_transfer_details(self, cr, uid, picking_id, context=None):

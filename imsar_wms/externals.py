@@ -307,16 +307,6 @@ class timekeeping_line_move_review(models.TransientModel):
     total_amount = fields.Float("Total", compute='_computed_fields')
     serial_ids = fields.Many2many('stock.production.lot', related='timekeeping_line_id.serial_ids')
     quant_ids = fields.One2many('stock.quant', string="Quants", compute="_related_quants")
-    # mfg_order_id = fields.Many2one('mrp.production', 'MFG Order', related='timekeeping_line_id.mfg_order_id')
-    # mfg_product_id = fields.Many2one('product.product', related='timekeeping_line_id.mfg_order_id.product_id')
-    # mfg_serial_ids = fields.One2many('stock.production.lot', related='timekeeping_line_id.mfg_order_id.production_serials')
-    # mat_task_shortname = fields.Char("MFG Material Task", related='timekeeping_line_id.mfg_order_id.mat_task_shortname')
-    # labor_task_shortname = fields.Char("MFG Labor Task", related='timekeeping_line_id.mfg_order_id.labor_task_shortname')
-    # ref = fields.Char("Description", required=True)
-    # account_move_lines = fields.Many2many('account.move.line', string="Posted GL Lines", related='timekeeping_line_id.move_line_ids')
-    # line_ids = fields.One2many('hr.timekeeping.line.review.line', 'review_id', "Correcting GL Lines")
-    # total_credits = fields.Float('Total Credits', compute='_line_stats', digits=(2,2))
-    # total_debits = fields.Float('Total Debits', compute='_line_stats', digits=(2,2))
 
     @api.one
     def _computed_fields(self):
