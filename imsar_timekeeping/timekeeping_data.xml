@@ -102,6 +102,30 @@ Please follow up on management and PM approvals for this timesheet.
             <field name="args" eval="'()'"/>
         </record>
 
+        <!-- Email template near PTO max -->
+        <record id="near_max_pto_email" model="email.template">
+            <field name="name">Near Maximum PTO</field>
+            <field name="model_id" ref="model_hr_employee"/>
+            <field name="email_from">${(object.user_id.company_id.email or 'no-reply@imsar.com')|safe}</field>
+            <field name="email_to">${object.user_id.email|safe}</field>
+            <field name="subject">Near Maximum PTO</field>
+            <field name="body_html"><![CDATA[You are nearing your maximum PTO. You have accrued ${object.accrued_pto} PTO hours and have a maximum of ${object.max_pto} hours.
+You may want to consider using PTO so that you don't lose it!]]></field>
+        </record>
+
+        <record id="ir_cron_check_max_pto" forcecreate="True" model="ir.cron">
+            <field name="name">Check Employee PTO Limit</field>
+            <field name="active">True</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model" eval="'hr.employee'"/>
+            <field name="function" eval="'check_max_pto'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
     </data>
 </openerp>
 

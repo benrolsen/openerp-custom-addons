@@ -350,6 +350,18 @@ class employee(models.Model):
         }
         return view
 
+    @api.model
+    def check_max_pto(self):
+        for employee in self.search([('id','!=',1)]):
+            # email employee if they're within 10 hours of max PTO
+            if employee.max_pto > 0 and employee.accrued_pto + 10 >= employee.max_pto:
+                template = self.env.ref('imsar_timekeeping.near_max_pto_email')
+                try:
+                    self.pool.get('email.template').send_mail(self._cr, self._uid, template.id, employee.id, force_send=True, raise_exception=True)
+                except MailDeliveryException:
+                    pass
+
+
 
 class employee_self_edit(models.TransientModel):
     _name = "hr.employee.self.edit"

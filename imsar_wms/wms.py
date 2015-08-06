@@ -570,6 +570,7 @@ class stock_inventory_line(models.Model):
 
     @api.v7
     def _resolve_inventory_line(self, cr, uid, inventory_line, context=None):
+        #TODO investigate this
         raise Warning("FIX ME")
         # copied from and replaces function from stock/stock.py
         stock_move_obj = self.pool.get('stock.move')
@@ -592,9 +593,9 @@ class stock_inventory_line(models.Model):
         inventory_location_id = inventory_line.product_id.property_stock_inventory.id
         if diff < 0:
             #found more than expected
-            vals['source_routing_id'] = inventory_line.inventory_id.company_id.attrition.routing_id.id
-            vals['source_routing_line_id'] = inventory_line.inventory_id.company_id.attrition.routing_line_id.id
-            vals['source_routing_subrouting_id'] = inventory_line.inventory_id.company_id.attrition.id
+            # vals['source_routing_id'] = inventory_line.inventory_id.company_id.attrition.routing_id.id
+            # vals['source_routing_line_id'] = inventory_line.inventory_id.company_id.attrition.routing_line_id.id
+            # vals['source_routing_subrouting_id'] = inventory_line.inventory_id.company_id.attrition.id
             vals['location_id'] = inventory_line.inventory_id.company_id.attrition.location_id.id
             vals['target_routing_id'] = inventory_line.routing_id.id
             vals['target_routing_line_id'] = inventory_line.routing_line_id.id
@@ -603,9 +604,9 @@ class stock_inventory_line(models.Model):
             vals['product_uom_qty'] = -diff
         else:
             #found fewer than expected
-            vals['source_routing_id'] = inventory_line.routing_id.id
-            vals['source_routing_line_id'] = inventory_line.routing_line_id.id
-            vals['source_routing_subrouting_id'] = inventory_line.routing_subrouting_id.id
+            # vals['source_routing_id'] = inventory_line.routing_id.id
+            # vals['source_routing_line_id'] = inventory_line.routing_line_id.id
+            # vals['source_routing_subrouting_id'] = inventory_line.routing_subrouting_id.id
             vals['location_id'] = inventory_line.routing_subrouting_id.location_id.id
             vals['target_routing_id'] = inventory_line.inventory_id.company_id.attrition.routing_id.id
             vals['target_routing_line_id'] = inventory_line.inventory_id.company_id.attrition.routing_line_id.id
