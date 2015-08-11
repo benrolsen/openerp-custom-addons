@@ -125,6 +125,7 @@
                         <!--<field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" groups="account.group_account_manager"/>-->
                         <field name="limit_to_auth"/>
                         <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                        <field name="auth_departments" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
                     </group>
                 </form>
             </field>

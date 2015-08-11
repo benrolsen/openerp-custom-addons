@@ -29,7 +29,7 @@
             <field name="target">new</field>
         </record>
 
-        <!-- search filters -->
+        <!-- Employee search filters -->
         <record id="view_employee_filter" model="ir.ui.view">
             <field name="name">Employees</field>
             <field name="model">hr.employee</field>
@@ -211,6 +211,7 @@
                             <field name="pm_ids" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
                             <field name="limit_to_auth"/>
                             <field name="auth_users" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
+                            <field name="auth_departments" widget="many2many_tags" options="{'create': false, 'create_edit': false}" />
                         </group>
                     </group>
                 </xpath>
@@ -223,20 +224,6 @@
 
                 <xpath expr='//notebook/page/separator[@name="description"]' position='replace'/>
                 <xpath expr='//notebook/page/field[@name="description"]' position='replace'/>
-            </field>
-        </record>
-
-        <!-- Account routing additions -->
-        <record id="account_routing_form" model="ir.ui.view">
-            <field name="name">account.routing.form</field>
-            <field name="model">account.routing</field>
-            <field name="inherit_id" ref="account_routing.account_routing_form"/>
-            <field name="arch" type="xml">
-                <xpath expr='//group' position='after'>
-                    <group>
-                        <field name="auth_users" widget="many2many_tags"/>
-                    </group>
-                </xpath>
             </field>
         </record>
 

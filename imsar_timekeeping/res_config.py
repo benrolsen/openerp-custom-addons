@@ -37,6 +37,7 @@ class timekeeping_settings(models.TransientModel):
     pto_accrual_rate_under_5 = fields.Float('PTO Accrual Rate (per hour): under 5 years', required=True, default=0.0, digits=(1,4))
     pto_accrual_rate_5_to_15 = fields.Float('PTO Accrual Rate (per hour): 5 to 15 years', required=True, default=0.0, digits=(1,4))
     pto_accrual_rate_over_15 = fields.Float('PTO Accrual Rate (per hour): over 15 years', required=True, default=0.0, digits=(1,4))
+    default_auth_departments = fields.Many2many('hr.department', 'config_dept_rel', 'config_id', 'dept_id', string="Default HR Departments with project/contract authorization")
 
     @api.model
     def get_default_timekeeping(self, fields):
@@ -55,6 +56,7 @@ class timekeeping_settings(models.TransientModel):
         res['pto_accrual_rate_under_5'] = user.company_id.pto_accrual_rate_under_5
         res['pto_accrual_rate_5_to_15'] = user.company_id.pto_accrual_rate_5_to_15
         res['pto_accrual_rate_over_15'] = user.company_id.pto_accrual_rate_over_15
+        res['default_auth_departments'] = user.company_id.default_auth_departments.ids
         return res
 
     @api.one
@@ -73,6 +75,7 @@ class timekeeping_settings(models.TransientModel):
             'pto_accrual_rate_under_5': self.pto_accrual_rate_under_5,
             'pto_accrual_rate_5_to_15': self.pto_accrual_rate_5_to_15,
             'pto_accrual_rate_over_15': self.pto_accrual_rate_over_15,
+            'default_auth_departments': [(6,0, self.default_auth_departments.ids)],
         })
 
 class res_company(models.Model):
@@ -91,5 +94,6 @@ class res_company(models.Model):
     pto_accrual_rate_under_5 = fields.Float('PTO Accrual Rate (per hour): under 5 years', required=True, default=0.0, digits=(1,4))
     pto_accrual_rate_5_to_15 = fields.Float('PTO Accrual Rate (per hour): 5 to 15 years', required=True, default=0.0, digits=(1,4))
     pto_accrual_rate_over_15 = fields.Float('PTO Accrual Rate (per hour): over 15 years', required=True, default=0.0, digits=(1,4))
+    default_auth_departments = fields.Many2many('hr.department', 'company_dept_rel', 'company_id', 'dept_id', string="Default HR Departments with project/contract authorization")
 
 

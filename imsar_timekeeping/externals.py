@@ -23,6 +23,7 @@ class account_analytic_account(models.Model):
     dcaa_allowable = fields.Boolean(string="FAR Allowable?", default=True)
     limit_to_auth = fields.Boolean(string="Limit Allowed Users?", default=False,)
     auth_users = fields.Many2many('res.users', 'analytic_user_auth_rel', 'analytic_id', 'user_id', string='Allowed Users')
+    auth_departments = fields.Many2many('hr.department', 'analytic_dept_auth_rel', 'analytic_id', 'dept_id', string='Allowed Departments', default=lambda self: self._default_depts())
     hide_from_users = fields.Many2many('res.users', 'analytic_user_hide_rel', 'analytic_id', 'user_id', string='Hide from Users')
     hide_from_uid = fields.Boolean(compute='_computed_fields', search='_search_hidden_ids', string="Hide from my timesheet", readonly=True, store=False)
     linked_worktype = fields.Many2one('hr.timekeeping.worktype', string="Limit to worktype", domain="[('limited_use','=',True)]")
@@ -66,6 +67,7 @@ class account_analytic_account(models.Model):
             self.user_has_reviewed = False
 
     def _search_user_has_reviewed(self, operator, value):
+        employee = self.env['hr.employee'].search([('user_id','=',self._uid)])
         if value == False:
             reviewed_ids = self.search([('user_review_ids','not in',self._uid)])
         elif value == True:
@@ -74,14 +76,8 @@ class account_analytic_account(models.Model):
             reviewed_ids = self.search([])
         # this next filter actually depends on auth users, not reviewed users, but I didn't want to make yet another
         # field and search just for one line, and auth_users always applies in this case
-        auth_ids = self.search(['|',('auth_users','in',self._uid),('limit_to_auth','=',False)])
-        # but then we added another way people can be authorized, by task category (account_routing),
-        # so we have to include those
-        auth_categories = self.env['account.routing'].search([('auth_users','in',self._uid)]).ids
-        category_auth_subroutes = self.env['account.routing.subrouting'].search([('routing_id','in',auth_categories)]).ids
-        category_auth_analytics = self.search([('account_routing_subrouting_ids','in',category_auth_subroutes)])
-        all_auth = set.union(set(auth_ids.ids), set(category_auth_analytics.ids))
-        intersection = set.intersection(set(reviewed_ids.ids), set(all_auth))
+        auth_ids = self.search(['|',('limit_to_auth','=',False),'|',('auth_users','in',self._uid),('auth_departments','in',employee.department_id.id)])
+        intersection = set.intersection(set(reviewed_ids.ids), set(auth_ids.ids))
         return [('id','in', list(intersection))]
 
     def _search_hidden_ids(self, operator, value):
@@ -92,6 +88,9 @@ class account_analytic_account(models.Model):
         else:
             shown_ids = self.search([])
         return [('id','in', shown_ids.ids)]
+
+    def _default_depts(self):
+        return self.env.user.company_id.default_auth_departments.ids
 
     @api.multi
     def action_button_hide(self):
@@ -127,11 +126,6 @@ class account_analytic_account(models.Model):
 
     @api.multi
     def write(self, vals):
-        new_auth_user_temp = vals.get('auth_users')
-        removed_users = set()
-        if new_auth_user_temp and len(new_auth_user_temp[0]) > 2:
-            new_auth_users = new_auth_user_temp[0][2]
-            removed_users = set(self.auth_users.ids) - set(new_auth_users)
         res = super(account_analytic_account, self).write(vals)
         if 'description' in vals.keys():
             # SOW has changed, so invalidate everyone who has signed and email them notification.
@@ -150,12 +144,12 @@ class account_analytic_account(models.Model):
             for child in self.get_all_children():
                 if child.id == self.id:
                     continue
-                pms = set(child.pm_ids.ids)
-                auth_users = set(child.auth_users.ids)
-                pms.update(set(self.pm_ids.ids))
-                auth_users.update(set(self.auth_users.ids))
-                auth_users.difference_update(removed_users)
-                child.write({'pm_ids':[(6,0,list(pms))], 'auth_users': [(6,0,list(auth_users))], 'limit_to_auth': self.limit_to_auth})
+                child.write({
+                    'pm_ids':[(6,0,self.pm_ids.ids)],
+                    'auth_users': [(6,0,list(self.auth_users.ids))],
+                    'auth_departments': [(6,0,list(self.auth_departments.ids))],
+                    'limit_to_auth': self.limit_to_auth,
+                })
         # ensure that all users listed as PMs are in the Project Manager group
         pm_group_id = self.env.ref('imsar_timekeeping.group_pms_user')
         for pm in self.pm_ids:
@@ -170,7 +164,12 @@ class account_analytic_account(models.Model):
         parent = res.parent_id
         while parent:
             if parent.project_header:
-                res.write({'pm_ids':[(6,0,parent.pm_ids.ids)], 'auth_users': [(6,0,parent.auth_users.ids)], 'limit_to_auth': parent.limit_to_auth})
+                res.write({
+                    'pm_ids':[(6,0,parent.pm_ids.ids)],
+                    'auth_users': [(6,0,parent.auth_users.ids)],
+                    'auth_departments': [(6,0,list(parent.auth_departments.ids))],
+                    'limit_to_auth': parent.limit_to_auth,
+                })
                 break
             parent = parent.parent_id
         return res
@@ -362,7 +361,6 @@ class employee(models.Model):
                     pass
 
 
-
 class employee_self_edit(models.TransientModel):
     _name = "hr.employee.self.edit"
 
@@ -389,7 +387,6 @@ class res_users(models.Model):
     auth_analytics = fields.Many2many('account.analytic.account', 'analytic_user_auth_rel', 'user_id', 'analytic_id', string='Authorized Analytics')
     pm_analytics = fields.Many2many('account.analytic.account', 'analytic_user_pm_rel', 'user_id', 'analytic_id', string='Projects Managed')
     hide_analytics = fields.Many2many('account.analytic.account', 'analytic_user_hide_rel', 'user_id', 'analytic_id', string='Tasks hidden from timesheets')
-    auth_routings = fields.Many2many('account.routing', 'account_routing_user_auth_rel', 'user_id', 'account_routing_id', string='Allowed Task Categories')
     timesheet_prefs = fields.One2many('hr.timekeeping.preferences', 'user_id', string='Preferences')
 
     @api.multi
@@ -407,12 +404,6 @@ class account_move_line(models.Model):
     _inherit = "account.move.line"
 
     timekeeping_line_ids = fields.Many2many('hr.timekeeping.line', 'timekeeping_line_move_line_rel', 'move_line_id', 'timekeeping_line_id', string='Related timekeeping lines')
-
-
-class account_routing(models.Model):
-    _inherit = "account.routing"
-
-    auth_users = fields.Many2many('res.users', 'account_routing_user_auth_rel', 'account_routing_id', 'user_id', string='Category Allowed Users')
 
 
 class account_routing_subrouting(models.Model):
@@ -446,15 +437,17 @@ class account_routing_subrouting(models.Model):
 
     def _viewable_search(self, operator, value):
         sheet_id = self.env['hr.timekeeping.sheet'].browse(value)
+        employee = self.env['hr.employee'].search([('user_id','=',sheet_id.user_id.id)])
         aa_model = self.env['account.analytic.account']
         reviewed_ids = aa_model.search([('type','!=','view'),('user_review_ids','in',sheet_id.user_id.id)])
-        auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
+        # auth_ids = aa_model.search(['|',('auth_users','in',sheet_id.user_id.id),('limit_to_auth','=',False)])
+        auth_ids = aa_model.search(['|',('limit_to_auth','=',False),'|',('auth_users','in',sheet_id.user_id.id),('auth_departments','in',employee.department_id.id)])
         shown_ids = aa_model.search([('hide_from_users','not in',sheet_id.user_id.id)])
-        auth_categories = self.env['account.routing'].search([('auth_users','in',sheet_id.user_id.id)]).ids
-        category_auth_subroutes = self.env['account.routing.subrouting'].search([('routing_id','in',auth_categories)]).ids
-        category_auth_analytics = aa_model.search([('account_routing_subrouting_ids','in',category_auth_subroutes)])
-        final_auth = set.union(set(auth_ids.ids), set(category_auth_analytics.ids))
-        intersection = set.intersection(set(reviewed_ids.ids), set(shown_ids.ids), final_auth)
+        # auth_categories = self.env['account.routing'].search([('auth_users','in',sheet_id.user_id.id)]).ids
+        # category_auth_subroutes = self.env['account.routing.subrouting'].search([('routing_id','in',auth_categories)]).ids
+        # category_auth_analytics = aa_model.search([('account_routing_subrouting_ids','in',category_auth_subroutes)])
+        # final_auth = set.union(set(auth_ids.ids), set(category_auth_analytics.ids))
+        intersection = set.intersection(set(auth_ids.ids), set(reviewed_ids.ids), set(shown_ids.ids))
         subrouting_ids = self.env['account.routing.subrouting'].search([('account_analytic_id','in',list(intersection))]).ids
         # proxy timesheets have a set of always allowed tasks
         if sheet_id.type == 'proxy' and self.env.ref('imsar_timekeeping.group_timesheet_admin').id in self.env.user.groups_id.ids:

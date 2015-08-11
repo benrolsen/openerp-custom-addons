@@ -60,6 +60,10 @@
                                 <field name="global_approval_user_ids" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
                             </div>
                             <div>
+                                <label for="default_auth_departments"/>
+                                <field name="default_auth_departments" options="{'create': false, 'create_edit': false}" widget="many2many_tags"/>
+                            </div>
+                            <div>
                                 <label for="pto_accrual_rate_under_5"/><field name="pto_accrual_rate_under_5" class="oe_inline"/>
                             </div>
                             <div>
