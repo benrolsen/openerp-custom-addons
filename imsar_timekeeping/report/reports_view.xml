@@ -243,7 +243,8 @@
                         <div class="page">
                             <div class="row">
                                 <div class="col-xs-3"><h2 t-esc="sheet.name"/></div>
-                                <div class="col-xs-6 col-xs-offset-3 text-right"><h2 t-esc="sheet.employee_id.name"/></div>
+                                <div class="col-xs-6 col-xs-offset-3 text-right"><h2 t-esc="sheet.employee_id.name"/>
+                                <span t-esc="sheet.employee_id.employee_number"/> </div>
                             </div>
 
                             <div class="row mt32">
