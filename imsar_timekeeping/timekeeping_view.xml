@@ -138,7 +138,7 @@
                     <field name="past_deadline" invisible="1"/>
                     <field name="needs_correction" invisible="1"/>
                     <div class="oe_inline oe_right">
-                        <a href="http://wiki.imsar.us/w/images/b/b9/IMSAR_Policies_and_Procedures_Manual_CURRENT.pdf" target="_blank">Timekeeping Instructions</a>
+                        <a href="http://www.imsar.us/documentation/IPD_Internal_Procedure/IMSAR_Policies_and_Procedures_Manual_CURRENT.pdf" target="_blank">Timekeeping Instructions</a>
                     </div>
                     <div>
                         <h1><field name="employee_id" readonly="True"/></h1>
