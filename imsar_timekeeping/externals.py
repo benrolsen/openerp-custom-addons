@@ -239,10 +239,14 @@ class employee(models.Model):
             today = datetime.today()
             ft_employment_months = (relativedelta(today,ft_date).years * 12) + relativedelta(today,ft_date).months
             effective_months = credit_months + ft_employment_months
-            if effective_months < 60:
-                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_under_5
-            elif effective_months >= 60 and effective_months < 180:
-                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_5_to_15
+            if effective_months < 12:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_under_1
+            elif effective_months >= 12 and effective_months < 60:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_1_to_5
+            elif effective_months >= 60 and effective_months < 120:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_5_to_10
+            elif effective_months >= 120 and effective_months < 180:
+                self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_10_to_15
             elif effective_months >= 180:
                 self.pto_accrual_rate = self.user_id.company_id.pto_accrual_rate_over_15
             else:
