@@ -1,3 +1,0 @@
-id,name,parent_id/id,type
-prod_cat_fg,Finished Goods,product.product_category_all,normal
-prod_cat_raw_mat,Raw Materials,product.product_category_all,normal

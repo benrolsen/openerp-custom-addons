@@ -1,4 +1,0 @@
-id,name,parent_id/id,is_company,company_id/id,email,customer,supplier
-buyer_1,buyer 1,,True,base.main_company,,True,False
-supplier_1,supplier 1,,True,base.main_company,,False,True
-
