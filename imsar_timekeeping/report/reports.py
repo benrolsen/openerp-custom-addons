@@ -53,6 +53,12 @@ class timekeeping_lines_report(models.Model):
             ids = self.search([('payperiod_id','=',this_payperiod.id)]).ids
         elif value == 'prev_payperiod':
             ids = self.search([('payperiod_id','=',prev_payperiod.id)]).ids
+        elif value == 'this_year':
+            year = datetime.now().year
+            ids = self.search([('date','>=',date(year, 01, 01)), ('date','<=',date(year, 12, 31))]).ids
+        elif value == 'prev_year':
+            year = datetime.now().year - 1
+            ids = self.search([('date','>=',date(year, 01, 01)), ('date','<=',date(year, 12, 31))]).ids
         else:
             ids = self.search([]).ids
         return [('id','in',ids)]
