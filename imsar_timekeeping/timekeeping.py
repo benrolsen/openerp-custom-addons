@@ -643,6 +643,7 @@ class hr_timekeeping_line(models.Model):
     # At some point this will need to directly link to quant (serial) for direct MFG, warranty repair for repair order, and sales order for customer support
     # for now, we'll just leave a comment and get a report for accounting to record the expense
     serial_reference = fields.Char(string='Serial/Repair #')
+    workorders = fields.Many2many("hr.timekeeping.workorder", "tk_line_workorder_rel", 'tk_line', 'workoder', string="Job/Repair #")
     # this would be much easier with a fields.Time
     start_time = fields.Char("Start time")
     end_time = fields.Char("End time")
@@ -651,7 +652,7 @@ class hr_timekeeping_line(models.Model):
     sow = fields.Text(related='routing_subrouting_id.account_analytic_id.description', readonly=True)
     sow_examples = fields.Text(related='routing_subrouting_id.account_analytic_id.sow_examples', readonly=True)
     require_serial = fields.Boolean(related='routing_subrouting_id.require_serial', readonly=True)
-    # these fields should be removed when we stop using Quickbooks
+    # these two fields should be removed when we stop using Quickbooks
     inventory_recorded = fields.Boolean('Inv Value Recorded', default=False)
     employee_number = fields.Integer('Employee Number', related="sheet_id.employee_id.employee_number")
     adv_search = fields.Char('Advanced Filter Search', compute='_computed_fields', search='_adv_search')
@@ -1240,6 +1241,15 @@ class hr_timekeeping_holiday(models.Model):
 
     name = fields.Char('Holiday name')
     holiday_date = fields.Date('Holiday Date')
+
+
+class hr_timekeeping_workorder(models.Model):
+    _name = "hr.timekeeping.workorder"
+    _description = "Accounting Work Orders"
+    _order = 'name'
+
+    name = fields.Char('Work/Repair Number')
+    active = fields.Boolean('Active', default=True)
 
 
 class hr_timekeeping_approval_by_user(models.Model):

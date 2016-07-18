@@ -81,6 +81,13 @@
             <field name="perm_read">1</field>
         </record>
 
+        <record id="access_timekeeping_workorder" model="ir.model.access">
+            <field name="name">hr.timekeeping.workorder</field>
+            <field name="model_id" ref="model_hr_timekeeping_workorder"/>
+            <field name="group_id" ref="base.group_user"/>
+            <field name="perm_read">1</field>
+        </record>
+
         <!-- HR Officer access rights (inherits all HR Employee rights) -->
         <record id="access_timekeeping_sheet_officer" model="ir.model.access">
             <field name="name">hr.timekeeping.sheet.officer</field>
@@ -98,6 +105,25 @@
             <field name="perm_write">1</field>
             <field name="perm_create">1</field>
             <field name="perm_unlink">1</field>
+        </record>
+
+        <record id="hr_access_timekeeping_workorder" model="ir.model.access">
+            <field name="name">hr.timekeeping.workorder</field>
+            <field name="model_id" ref="model_hr_timekeeping_workorder"/>
+            <field name="group_id" ref="base.group_hr_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+        </record>
+
+        <!-- Also let Accounting edit Work Orders -->
+        <record id="accounting_access_timekeeping_workorder" model="ir.model.access">
+            <field name="name">hr.timekeeping.workorder</field>
+            <field name="model_id" ref="model_hr_timekeeping_workorder"/>
+            <field name="group_id" ref="account.group_account_user"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
         </record>
 
         <!-- HR Manager access rights (inherits all HR Officer rights) -->

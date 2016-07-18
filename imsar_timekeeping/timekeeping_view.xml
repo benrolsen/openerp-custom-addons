@@ -15,7 +15,8 @@
                             <field name="unit_amount" widget="float_time" readonly="1"/>
                             <field name="start_time" widget="time" readonly="1"/>
                             <field name="end_time" widget="time" readonly="1"/>
-                            <field name="serial_reference" readonly="1"/>
+                            <!--<field name="serial_reference" readonly="1"/>-->
+                            <field name="workorders" readonly="1"/>
                             <field name="state" invisible="True"/>
                             <field name="logging_required" invisible="True"/>
                             <field name="amount" invisible="True" />
@@ -55,7 +56,9 @@
                                     attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="start_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
                             <field name="end_time" widget="time" attrs="{'readonly':[('sheet_state','!=','draft')]}"/>
-                            <field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('require_serial','=',True)]}"/>
+                            <!--<field name="serial_reference" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('require_serial','=',True)]}"/>-->
+                            <field name="workorders" attrs="{'readonly':[('sheet_state','!=','draft')], 'required':[('require_serial','=',True)]}"
+                                   widget="many2many_tags" options="{'create': false, 'create_edit': false}" domain="[('active','=',True)]"/>
                             <field name="id" invisible="1"/>
                             <field name="require_serial" invisible="1"/>
                             <field name="state" invisible="1"/>
@@ -229,7 +232,8 @@
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"
                                            attrs="{'readonly':['|',('state','!=','open')]}"/>
                                     <field name="location" attrs="{'required':['|',('unit_amount','!=',0.0)], 'readonly':['|',('state','!=','open')]}" string="Loc"/>
-                                    <field name="serial_reference" invisible="0"/>
+                                    <!--<field name="serial_reference" invisible="0"/>-->
+                                    <field name="workorders" invisible="0"/>
                                     <button name="button_details" string="Details" type="object" class="oe_edit_only"
                                             attrs="{'invisible':[('sheet_state','!=','draft')]}"/>
                                     <!-- invisible fields -->
@@ -271,7 +275,8 @@
                                     <field name="unit_amount" widget="float_time" string="Hours" sum="Hours"/>
                                     <field name="worktype" />
                                     <field name="location" />
-                                    <field name="serial_reference" />
+                                    <!--<field name="serial_reference" />-->
+                                    <field name="workorders" />
                                     <field name="uid_is_user_id" invisible="1"/>
                                     <field name="sheet_state" invisible="1"/>
                                     <button name="button_correction" string="Amend" type="object" class="oe_edit_only"
@@ -738,6 +743,17 @@
         </record>
         <menuitem id="menu_holiday_view" action="holiday_view" parent="hr.menu_hr_configuration" name="Holidays" sequence="6"/>
 
+        <!-- Accounting Work Orders -->
+        <record id="workorder_view" model="ir.actions.act_window">
+            <field name="name">Work Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.timekeeping.workorder</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <!--<field name="view_id" eval="holiday_tree"/>-->
+        </record>
+        <menuitem id="menu_workorder_view" action="workorder_view" parent="hr.menu_hr_main" name="Work Orders" groups="base.group_hr_user,account.group_account_user" sequence="30"/>
+
         <!-- Timesheet lines for inventory report -->
         <record id="timesheet_inventory_report_tree" model="ir.ui.view">
             <field name="name">hr.timekeeping.line.inventory.tree</field>
@@ -748,7 +764,8 @@
                     <field name="employee_number" />
                     <field name="date" />
                     <field name="name" />
-                    <field name="serial_reference" />
+                    <!--<field name="serial_reference" />-->
+                    <field name="workorders" />
                     <field name="routing_id" />
                     <field name="routing_subrouting_id" />
                     <field name="unit_amount" string="Hours"/>

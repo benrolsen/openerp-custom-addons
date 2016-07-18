@@ -1,3 +1,24 @@
 These are all the custom addons for IMSAR's OpenERP implementation.
 This directory should be added to the openerp-server.conf file
 in the "addons-path" directive.
+
+Install this version of Odoo on your dev machine to match production:
+http://nightly.odoo.com/8.0/nightly/rpm/odoo_8.0.20150515.noarch.rpm
+Or find a commit from around the same time period, 2015-05-15, in the github repo.
+
+
+*** IN PRODUCTION ***
+The web server (this code) lives on the "eowyn" server, the database is the "minerva" server.
+Both are running CentOS 7.
+
+Don't update the Odoo code itself (meaning don't upgrade the RPM) because there are a couple of custom tweaks
+to the Odoo source. Updating will wipe those out.
+
+To refresh a module (for example, timekeeping) run the following as the odoo user, from the odoo dir:
+openerp-server -d imsar_prod -u imsar_timekeeping -c /etc/odoo/odoo-server-single.conf --stop-after-init
+
+To restart Odoo itself (which you'll need to do if you make any changes that affect the models), run as root:
+systemctl restart odoo-server
+Note that there's ALSO a service called "odoo", which is the one installed by the RPM. Don't use this one,
+don't start this one. The custom "odoo-server" service has the correct configuration.
+

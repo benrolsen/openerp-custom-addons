@@ -40,7 +40,7 @@
         'security/access.xml',
         'res_config_view.xml',
     ],
-    'installable': True,
+    'installable': False,
     'auto_install': False,
 }
 
