@@ -744,6 +744,16 @@
         <menuitem id="menu_holiday_view" action="holiday_view" parent="hr.menu_hr_configuration" name="Holidays" sequence="6"/>
 
         <!-- Accounting Work Orders -->
+        <record id="workorder_tree" model="ir.ui.view">
+            <field name="name">hr.timekeeping.workorder.tree</field>
+            <field name="model">hr.timekeeping.workorder</field>
+            <field name="arch" type="xml">
+                <tree string="Work Orders" >
+                    <field name="name" />
+                    <field name="active" />
+                </tree>
+            </field>
+        </record>
         <record id="workorder_view" model="ir.actions.act_window">
             <field name="name">Work Orders</field>
             <field name="type">ir.actions.act_window</field>
@@ -764,7 +774,7 @@
                     <field name="employee_number" />
                     <field name="date" />
                     <field name="name" />
-                    <!--<field name="serial_reference" />-->
+                    <field name="serial_reference" />
                     <field name="workorders" />
                     <field name="routing_id" />
                     <field name="routing_subrouting_id" />

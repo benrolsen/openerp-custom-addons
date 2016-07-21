@@ -114,13 +114,13 @@
                 <search>
                     <field name="user_id"/>
                     <field name="serial_reference"/>
-                    <filter name="not_recorded" string="Not Recorded" domain="[('inventory_recorded','=',False)]"/>
+                    <filter name="not_recorded_serials" string="Not Recorded Serials" domain="[('inventory_recorded','=',False), ('serial_reference','!=','')]"/>
+                    <filter name="not_recorded_workorders" string="Not Recorded Work Orders" domain="[('inventory_recorded','=',False), ('workorders','!=','')]"/>
                     <filter name="recorded" string="Recorded" domain="[('inventory_recorded','=',True)]"/>
                     <filter name="this_week" string="This Week" domain="[('adv_search','=','this_week')]"/>
                     <filter name="last_week" string="Last Week" domain="[('adv_search','=','last_week')]"/>
                     <group expand="0" string="Group By">
                         <filter name="group_by_user" string="User" context="{'group_by':'user_id'}"/>
-                        <filter name="group_by_serial" string="Serial" context="{'group_by':'serial_reference'}"/>
                         <filter name="group_by_taskid" string="Task ID" context="{'group_by':'routing_subrouting_id'}"/>
                     </group>
                 </search>
@@ -132,8 +132,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="timesheet_inventory_report_tree"/>
-            <field name="context">{'search_default_not_recorded':1}</field>
-            <field name="domain">[('serial_reference','!=',''),('sheet_state','=','done')]</field>
+            <field name="context">{'search_default_not_recorded_workorders':1}</field>
+            <field name="domain">[('sheet_state','=','done')]</field>
         </record>
         <menuitem id="menu_timekeeping_inventory_report" action="action_timekeeping_inventory_report" parent="menu_hr_timekeeping_reports"
                   groups="account.group_account_user" sequence="10"/>

@@ -1251,6 +1251,10 @@ class hr_timekeeping_workorder(models.Model):
     name = fields.Char('Work/Repair Number')
     active = fields.Boolean('Active', default=True)
 
+    _sql_constraints = [
+        ('workorder_name_uniq', 'unique(name)', 'Work Order names must be unique!')
+    ]
+
 
 class hr_timekeeping_approval_by_user(models.Model):
     _name = "hr.timekeeping.approval_by_user"
